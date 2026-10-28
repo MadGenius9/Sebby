@@ -1,3 +1,4 @@
+import { AgentTaskControls } from "./AgentControls";
 import { NotificationControls } from "./NotificationControls";
 import { UtilityLauncher } from "./UtilityLauncher";
 import { useEffect, useState } from "react";
@@ -53,12 +54,12 @@ export function TasksPanel({ report }: Props) {
     <>
       <h2>Keep the next step in sight.</h2>
       <p className="muted">
-        AI goals stay queued until an AI executor is connected. The separate
-        local utilities below perform real, bounded metadata work and require
-        review before completion.
+        AI goals run only after provider setup and your explicit approval. The
+        separate local utilities below perform real, bounded metadata work and
+        require review before completion.
       </p>
       <UtilityLauncher report={report} refresh={load} />
-      <h3>Queue an AI goal for later</h3>
+      <h3>Queue an AI goal</h3>
       <div className="form-grid">
         <label>
           Task title
@@ -143,6 +144,7 @@ export function TasksPanel({ report }: Props) {
               </button>
             ) : null}
           </div>
+          <AgentTaskControls task={item} report={report} refresh={load} />
           {(!item.kind || item.kind === "ai") &&
             ["failed", "interrupted"].includes(item.status) && (
               <button

@@ -42,3 +42,18 @@ Run on a disposable project folder first, never an important live repository. Pr
 - Cancellation must abort scanning; restarting must not replay a utility automatically.
 - MCP inspection is optional and should only target an endpoint you deliberately configure and trust. Native denial must cause no DNS/HTTPS request. A successful JSON-only compatible endpoint lists untrusted names/descriptions only—never runs tools or grants future access. Real network validation requires explicit consent; no automatic test endpoint is configured.
 - Enable desktop reminders only after the native privacy warning. Verify silent local display and disabled-on-restart behavior; failure or no native show event must not be reported as delivered. Disable must stop pending and future deliveries. Nothing should run while Sebby is closed.
+
+## 0.4 provider, specialist and pal acceptance (requires native Windows)
+
+These steps are a checklist, **not recorded passes**. Use a disposable project and a deliberately limited API budget. Do not use confidential files for first-run validation.
+
+1. With no credential/model, verify Chat and Tasks explain configuration without inventing responses. Provider metadata edits must not make network requests.
+2. Add a profile in Settings. Verify the masked key field clears immediately after submission; cancel native storage confirmation and verify no stored key. Approve storage only on your own machine, then restart and confirm safe availability status, never key readback. Disable OS encryption in an isolated test and verify no plaintext fallback.
+3. Choose an explicit model. Review the optional paid connection test notice, deny it and confirm no dispatch. Approve only when ready for provider charges. Confirm cancellation and sanitized failures for bad models/credentials; no raw authorization headers in errors.
+4. Send text with memory/files/skills unchecked. Confirm the native disclosure matches outbound context. Repeat with a harmless explicitly chosen file and verify the UI persists actual response/history and token usage, not estimated cost. Cancel during streaming; partial text must be labeled interrupted.
+5. Queue a harmless planning task. Review the model, tools and call/token ceilings; deny and ensure no running/completed claim. Approve a no-tools run. Verify specialist and separate coordinator output, evidence and provenance before user acceptance. Cancel and restart: no automatic paid replay.
+6. In a disposable folder, enable read/edit tools explicitly. Deny a file-read upload; verify no content sent for that action. Review an exact full-file diff, acknowledge, then deny native mutation confirmation; file must remain unchanged. Approve a safe change, externally modify it, and confirm stale preview/undo is rejected.
+7. Change Orbit/Scout/Wisp and preset/custom body/accent/glow colors. Confirm actual 3D geometry recolors, motion respects reduced-motion preferences, and disabling WebGL produces a clearly unchanged PNG fallback. Persist/restart and compare. Verify no remote texture/network fetch.
+8. Export a backup and inspect only the schema: provider metadata/appearance included, encrypted vault excluded. Restore requires consent/restart. Restoring a changed provider against an existing encrypted profile key must fail closed rather than send that key to the wrong provider.
+
+No live call, OS key store, WebGL, installer, notification or native confirmation result can be inferred from the mocked automated test suite.

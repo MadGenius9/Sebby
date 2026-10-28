@@ -902,3 +902,92 @@ input[type="datetime-local"] {
 .form-grid label {
   min-width: 0;
 }
+.change-dialog {
+  width: min(900px, 90vw);
+  max-height: 90vh;
+  overflow: auto;
+  background: #142333;
+  color: #eaf3ff;
+  border: 1px solid #6a99bb;
+  border-radius: 16px;
+  padding: 28px;
+}
+.change-dialog::backdrop {
+  background: #030912cc;
+}
+.full-review {
+  max-height: 45vh;
+  font-size: 13px;
+}
+.change-dialog h2 {
+  margin-top: 0;
+}
+
+/* Companion rendering retains an honest PNG fallback when WebGL is unavailable. */
+.pal-view {
+  position: relative;
+  display: block;
+}
+.pal-view .pal-canvas,
+.pal-view .pal-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.pal-canvas {
+  display: block;
+}
+.pal-view canvas[hidden],
+.pal-view img[hidden] {
+  display: none;
+}
+.provider-input {
+  width: 100%;
+  padding: 12px;
+  color: #eaf3ff;
+  background: #111e2b;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.file-preview table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.file-preview th,
+.file-preview td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+}
+.appearance-pal-options,
+.appearance-color-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin: 14px 0;
+}
+.appearance-color-grid label {
+  flex: 1;
+  min-width: 130px;
+}
+.appearance-color-grid input[type="color"] {
+  display: block;
+  width: 100%;
+  height: 42px;
+  background: #111e2b;
+  border: 1px solid var(--line);
+  margin: 8px 0;
+}
+.appearance-preview {
+  flex-shrink: 0;
+}
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 18px 0;
+  padding: 16px;
+}
+legend {
+  color: var(--accent);
+  padding: 0 8px;
+}

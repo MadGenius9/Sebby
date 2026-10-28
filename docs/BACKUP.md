@@ -13,8 +13,10 @@ Only these filenames are accepted in a version-1 `sebby-local-backup` JSON envel
 - `sebby-conversations.json` — history and drafts
 - `sebby-connectors.json` — disconnected endpoint bookmarks
 - `sebby-team.json` — named specialist identities and task references
+- `sebby-appearance.json` — bounded companion/palette/motion settings
+- `sebby-provider-profiles.json` — non-secret provider/model/profile metadata only
 
-Provider configuration/vaults, API tokens, OS key storage, browser local storage, project files, installed tools, and bundled assets are **not exported**. Free-form memory/prompts can nevertheless contain secrets a person pasted there; this is a plaintext backup, not secret scanning or encrypted storage. Native export confirmation should explicitly warn about that.
+Provider credential vaults, API tokens, OS key storage, browser local storage, project files, installed tools, and bundled assets are **not exported**. Free-form memory/prompts can nevertheless contain secrets a person pasted there; this is a plaintext backup, not secret scanning or encrypted storage. Native export confirmation should explicitly warn about that.
 
 ## Contract
 
@@ -59,4 +61,6 @@ Export reads files one by one; each store's atomic writes prevent ordinary half-
 
 ## Verification
 
-`node --test tests/backup.test.mjs` — seven passing tests: credential-file exclusion, traversal and unknown fields, corrupt/schema-invalid content without live mutation, approval/drain requirements, running-task interruption, preserved pre-restore originals, injected second-file failure and rollback, interrupted-transaction startup recovery, journal traversal rejection, and symlink rejection. Module syntax check passes. Native dialogs, actual app restart, Windows antivirus/file locking, Windows path normalization, and power-loss recovery are not validated by these unit tests.
+`node --test tests/backup.test.mjs` — nine passing tests: credential-file exclusion, traversal and unknown fields, corrupt/schema-invalid content without live mutation, approval/drain requirements, running-task interruption, preserved pre-restore originals, injected second-file failure and rollback, interrupted-transaction startup recovery, journal traversal rejection, and symlink rejection. Module syntax check passes. Native dialogs, actual app restart, Windows antivirus/file locking, Windows path normalization, and power-loss recovery are not validated by these unit tests.
+
+Provider profile backup deliberately excludes the entire `sebby-profile-vault` directory and all `.credential` files. Restored profile metadata does not restore keys, prove connection, or authorize requests. The profile document is validated by the registry’s strict pure validator without seeding defaults during backup staging.

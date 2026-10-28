@@ -35,7 +35,7 @@ Methods: `load`, `list`, `get(id)`, `create(input)`, `transition(id,status,{mess
 
 Running tasks become interrupted when storage loads after restart. They are **never automatically replayed**; prior side effects may already have happened. Queued tasks remain queued. Retrying increments the attempt count only when work really starts. Active queued/running/awaiting-review tasks must be cancelled before removal. Awaiting-review results persist across restart without replay. Task cancellation records intent/status; the integrating executor must also abort its actual in-flight operation. No module can terminate a subprocess it does not own.
 
-Limits: 100 tasks, 100 latest log entries per task, 160-byte title, 16 KB prompt, 32 KB result, 2 KB log entries, 4 MiB total JSON. Workspace values are metadata, not trusted grants of filesystem access. Roles are labels and prompts, not privileges. Task kind is immutable metadata: ai (default and legacy), local-inventory, or local-brief. Only dedicated controlled local utilities execute the latter; an arbitrary app goal is never relabeled as an inventory. Do not return raw secrets in logs/results. A future executor must separately enforce selected workspace, tool policy, credentials, usage limits, and human approvals.
+Limits: 100 tasks, 100 latest log entries per task, 160-byte title, 16 KB prompt, 32 KB result, 2 KB log entries, 4 MiB total JSON. Workspace values are metadata, not trusted grants of filesystem access. Roles are labels and prompts, not privileges. Task kind is immutable metadata: ai (default and legacy), local-inventory, or local-brief. Only dedicated controlled local utilities execute the latter; an arbitrary app goal is never relabeled as an inventory. Do not return raw secrets in logs/results. The implemented AgentRuntime enforces selected workspace, tool scopes, credential availability, request/output budgets and native approvals for AI tasks. LocalExecutor separately handles only its exact deterministic utility types. Neither executor starts automatically on queue creation or restart.
 
 ### IPC integration rule
 
@@ -59,7 +59,7 @@ Methods: `load`, `list`, `get(id)`, `importSkill(input)`, `remove(id)`. Imported
 
 Limits: 50 imported skills, 32 KB instructions per skill, 2 MiB total JSON. Built-in playbooks are `trust: bundled-instructions`; this means shipped source provenance, **not authorization**. Every skill remains instruction content subordinate to user/system policy. Imported text may contain prompt injection; displaying or including it does not make it safe. No YAML parser, dependency installation, script hooks, remote URLs, or dynamic module loading are used.
 
-For model integration, explicitly label imported text as untrusted and keep it out of privileged system instructions. User approval for using a skill is not approval for any requested command or connector operation. Render instruction text as text, not HTML.
+The implemented model integration labels imported text as untrusted and keeps it in explicit user-context data, not privileged system instructions. User approval for using a skill is not approval for any requested command or connector operation. Render instruction text as text, not HTML.
 
 ## Persistence and recovery
 
@@ -67,4 +67,4 @@ Files: `sebby-tasks.json` and `sebby-skills.json` in app data. Both are plain lo
 
 ## Verification
 
-`node --test tests/tasks.test.mjs tests/skills.test.mjs` — eight tests passing. Covers lifecycle, restart interruption, no replay, retry attempts, durable clone-safe state, concurrent writes, log bounds, invalid payloads, corruption preservation, bundled immutability, import persistence, trust spoofing, executable-field rejection, ID traversal, and bounded instruction text. No external network/API call was made. End-to-end UI/executor integration is separately owned by the main app integration.
+`node --test tests/tasks.test.mjs tests/skills.test.mjs` — focused service tests passing. Covers lifecycle, restart interruption, no replay, retry attempts, durable clone-safe state, concurrent writes, log bounds, invalid payloads, corruption preservation, bundled immutability, import persistence, trust spoofing, executable-field rejection, ID traversal, and bounded instruction text. No external network/API call was made in these tests. Provider-backed runtime and coordinator orchestration are implemented and covered separately by mocked tests; this does not establish live API or Windows functionality.

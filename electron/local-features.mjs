@@ -13,6 +13,7 @@ export async function installLocalFeatures({
   confirm,
   onConnectorRemoved = () => {},
   cancelActiveTask = async () => null,
+  beforeRemoveConversation = () => {},
 }) {
   const team = new TeamStore(directory),
     connectors = new ConnectorStore(directory),
@@ -130,16 +131,36 @@ export async function installLocalFeatures({
     });
     return conversations.saveDraft(item.id, input.text);
   });
+  let conversationRemovalPending = false;
   register("remove-conversation", async (id) => {
-    const item = conversations.get(id);
-    if (
-      !(await confirm(
-        "Delete saved conversation?",
-        `Delete “${item.title}” and its local messages?`,
-      ))
-    )
-      return { removed: false };
-    return conversations.remove(id, { confirmed: true });
+    if (conversationRemovalPending)
+      throw Error("Finish the pending conversation removal first.");
+    conversationRemovalPending = true;
+    try {
+      beforeRemoveConversation(id);
+      const item = conversations.get(id);
+      if (
+        !(await confirm(
+          "Delete saved conversation?",
+          `Delete “${item.title}” and its local messages?`,
+        ))
+      )
+        return { removed: false };
+      beforeRemoveConversation(id);
+      return await conversations.remove(id, { confirmed: true });
+    } finally {
+      conversationRemovalPending = false;
+    }
   });
-  return { tasks, skills, reminders, conversations, connectors, team };
+  return {
+    tasks,
+    skills,
+    reminders,
+    conversations,
+    connectors,
+    team,
+    get conversationRemovalPending() {
+      return conversationRemovalPending;
+    },
+  };
 }

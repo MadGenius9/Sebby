@@ -117,7 +117,8 @@ export class DevelopmentTools {
         "The target changed since preview. Nothing was overwritten.",
       );
   }
-  async replace(relative, content, root, expectedHash) {
+  async replace(relative, content, root, expectedHash, { signal } = {}) {
+    signal?.throwIfAborted();
     await this.unchanged(relative, root, expectedHash);
     const target =
       expectedHash === null
@@ -138,6 +139,7 @@ export class DevelopmentTools {
         await handle.close();
       }
       await this.unchanged(relative, root, expectedHash);
+      signal?.throwIfAborted();
       if (expectedHash === null) {
         await fs.link(temporary, target);
       } else {
@@ -149,7 +151,8 @@ export class DevelopmentTools {
       });
     }
   }
-  async applyProposal(id) {
+  async applyProposal(id, { signal } = {}) {
+    signal?.throwIfAborted();
     if (this.busy || this.running.size)
       throw new Error("Finish the current file or command operation first.");
     const entry = this.proposals.get(id);
@@ -165,19 +168,25 @@ export class DevelopmentTools {
         entry.root,
         entry.proposal.beforeHash,
       );
+      signal?.throwIfAborted();
       if (
-        !(await this.approve({
-          ...structuredClone(entry.proposal),
-          operation: entry.proposal.kind,
-          kind: "apply-edit",
-        }))
+        !(await this.approve(
+          {
+            ...structuredClone(entry.proposal),
+            operation: entry.proposal.kind,
+            kind: "apply-edit",
+          },
+          { signal },
+        ))
       )
         return { applied: false };
+      signal?.throwIfAborted();
       await this.unchanged(
         entry.proposal.path,
         entry.root,
         entry.proposal.beforeHash,
       );
+      signal?.throwIfAborted();
       await fs.mkdir(this.backupRoot, { recursive: true, mode: 0o700 });
       if (entry.before !== null)
         await fs.writeFile(
@@ -193,11 +202,13 @@ export class DevelopmentTools {
         }),
         { flag: "wx", mode: 0o600 },
       );
+      signal?.throwIfAborted();
       await this.replace(
         entry.proposal.path,
         entry.content,
         entry.root,
         entry.proposal.beforeHash,
+        { signal },
       );
       this.history.set(id, entry);
       if (this.history.size > 20)

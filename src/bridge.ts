@@ -308,3 +308,24 @@ export interface NotificationBridge {
 export const notifications: NotificationBridge | null = desktop
   ? (window.sebby as Bridge & NotificationBridge)
   : null;
+export type PendingChange = {
+  id: string;
+  kind: string;
+  path: string;
+  workspace: string;
+  operation: string;
+  afterHash: string;
+  diff: string;
+  removedLines: number;
+  addedLines: number;
+};
+export interface ChangeReviewBridge {
+  pendingChangeReview(): Promise<PendingChange | null>;
+  respondChangeReview(input: {
+    id: string;
+    accepted: boolean;
+  }): Promise<{ acknowledged: boolean }>;
+}
+export const changeReviews: ChangeReviewBridge | null = desktop
+  ? (window.sebby as Bridge & ChangeReviewBridge)
+  : null;

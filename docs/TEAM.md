@@ -30,16 +30,18 @@ The maximum is 32 identities including retired members, with eight authored name
 
 ## Honest execution state
 
-These are durable identities, **not functioning autonomous subagents yet**. Active records remain `executor-not-connected` even when a task reference exists. Do not animate them as working or claim output solely because a task was assigned.
+These are durable identities connected to the implemented, approval-gated `AgentRuntime` and deterministic `LocalExecutor`. The legacy stored value `executor-not-connected` is static identity metadata, **not live provider status**. The UI derives activity and review state from the actual assigned TaskStore record. A name or assignment alone does not start work or prove a provider is configured. Live model connectivity has not been tested; mocked tests establish runtime behavior only.
 
 The main process must validate that assigned tasks really exist, have the same role, belong to the approved project, and are appropriate for assignment. Task status, logs, and results must come from the actual TaskStore/executor, not independent team UI state. Roles/names do not grant permissions. The API accepts no tools, credentials, commands, or authority fields.
 
-A future coordinator should review specialist evidence and route findings before accepting completion. This module does not fake a coordinator or mark a task completed. Cancelling a task must abort its real executor; retiring an identity is not a substitute for cancelling running work.
+For a configured and explicitly approved AI run, the implemented runtime makes a specialist request and a separate real provider coordinator-review request. Both outputs and evidence remain awaiting-review until native user acceptance. No coordinator response is fabricated when a provider is missing. TeamStore itself never marks tasks completed. Cancelling a task must abort its real executor; retiring an identity is not a substitute for cancelling running work.
+
+If an AI run omits a selected identity, Sebby reuses the task’s assigned matching specialist or creates a distinct authored name and local job description before approval. Denial leaves an unused local identity but no provider call or running task. The same idle identity can be reused for that task rather than consuming a new name on each denied attempt.
 
 ## Backup and privacy
 
-Version-1 local backup now includes `sebby-team.json` as the seventh allowlisted store. Unknown fields are rejected, including injected authority. Task references may be orphaned if a backup includes team but omits task history; show an unavailable-task state rather than inventing an execution result. Jobs and names are plain local data, not encrypted secrets.
+Version-1 local backup now includes `sebby-team.json` among the fixed allowlisted stores. Unknown fields are rejected, including injected authority. Task references may be orphaned if a backup includes team but omits task history; show an unavailable-task state rather than inventing an execution result. Jobs and names are plain local data, not encrypted secrets.
 
 ## Verification
 
-`node --test tests/team.test.mjs tests/backup.test.mjs tests/tasks.test.mjs` covers deterministic distinct names, concurrent creation, persistence, cloned reads, renaming, task-reference honesty, retirement, invalid inputs/authority fields, corruption preservation, team backup schema, and researcher task roles. Main-process/UI assignment checks and actual subagent execution are separate integration work.
+`node --test tests/team.test.mjs tests/backup.test.mjs tests/tasks.test.mjs` covers deterministic distinct names, concurrent creation, persistence, cloned reads, renaming, task-reference honesty, retirement, invalid inputs/authority fields, corruption preservation, team backup schema, and researcher task roles. Runtime mocked tests additionally cover named execution, separate coordinator calls, context consent, bounded tools, cancellation, and acceptance. No real provider authentication, model quality, or native Windows behavior is established by those tests. See [agent runtime](AGENTS.md).

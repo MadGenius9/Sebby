@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "default": "orbit",
+  "provenance": "Original procedurally authored companion designs created for Sebby. No third-party meshes, textures, or character references used. Blender built-in font is not included in these model assets.",
+  "coordinates": "glTF standard Y-up, recentered around character body; units arbitrary",
+  "palette_contract": "Match mesh.material.name exactly. Set material.color for body/accent/visor/eyes/glow. For eyes or glow materials with nonblack emissive, also set material.emissive to same color; preserve emissiveIntensity. Keep visor and dark creature eyes dark enough for contrast. PNG previews are fixed-color; runtime palettes require GLB material updates.",
+  "models": {
+    "orbit": {
+      "glb": "sebby_orbit_v1.glb",
+      "preview": "sebby_orbit_v1.png",
+      "blend": "sebby_orbit_v1.blend",
+      "materials": [
+        "accent",
+        "eyes",
+        "glow",
+        "body",
+        "visor"
+      ],
+      "parts": {
+        "01 Orbit | crown seam": "accent",
+        "01 Orbit | ear fin": "accent",
+        "01 Orbit | ear fin.001": "accent",
+        "01 Orbit | gentle smile": "eyes",
+        "01 Orbit | hover emitter": "glow",
+        "01 Orbit | luminous eye": "eyes",
+        "01 Orbit | luminous eye.001": "eyes",
+        "01 Orbit | seamless shell": "body",
+        "01 Orbit | side hinge": "visor",
+        "01 Orbit | side hinge.001": "visor",
+        "01 Orbit | smoked visor": "visor"
+      }
+    },
+    "scout": {
+      "glb": "sebby_scout_v1.glb",
+      "preview": "sebby_scout_v1.png",
+      "blend": "sebby_scout_v1.blend",
+      "materials": [
+        "accent",
+        "glow",
+        "visor",
+        "body",
+        "eyes"
+      ],
+      "parts": {
+        "02 Scout | antenna": "accent",
+        "02 Scout | antenna light": "glow",
+        "02 Scout | antenna socket": "visor",
+        "02 Scout | chest status": "glow",
+        "02 Scout | foot": "body",
+        "02 Scout | foot.001": "body",
+        "02 Scout | head": "body",
+        "02 Scout | inset visor": "visor",
+        "02 Scout | light eye": "eyes",
+        "02 Scout | light eye.001": "eyes",
+        "02 Scout | quiet smile": "eyes",
+        "02 Scout | shoulder": "visor",
+        "02 Scout | shoulder.001": "visor",
+        "02 Scout | soft arm": "body",
+        "02 Scout | soft arm.001": "body",
+        "02 Scout | torso": "accent"
+      }
+    },
+    "wisp": {
+      "glb": "sebby_wisp_v1.glb",
+      "preview": "sebby_wisp_v1.png",
+      "blend": "sebby_wisp_v1.blend",
+      "materials": [
+        "glow",
+        "accent",
+        "eyes",
+        "body"
+      ],
+      "parts": {
+        "03 Wisp | eye glint": "glow",
+        "03 Wisp | eye glint.001": "glow",
+        "03 Wisp | floating satellite": "accent",
+        "03 Wisp | graphite eye": "eyes",
+        "03 Wisp | graphite eye.001": "eyes",
+        "03 Wisp | rounded star shell": "body",
+        "03 Wisp | smile": "eyes",
+        "03 Wisp | subtle cheek accent": "accent",
+        "03 Wisp | subtle cheek accent.001": "accent"
+      }
+    }
+  }
+}

@@ -9,6 +9,8 @@ import { ReminderStore } from "./reminders.mjs";
 import { ConversationStore } from "./conversations.mjs";
 import { ConnectorStore } from "./connectors.mjs";
 import { TeamStore } from "./team.mjs";
+import { AppearanceStore } from "./appearance.mjs";
+import { validateProfilesDocument } from "./provider-profiles.mjs";
 
 const FORMAT = "sebby-local-backup",
   MAX_BYTES = 20 * 1024 * 1024;
@@ -20,6 +22,8 @@ const FILES = Object.freeze([
   "sebby-conversations.json",
   "sebby-connectors.json",
   "sebby-team.json",
+  "sebby-appearance.json",
+  "sebby-provider-profiles.json",
 ]);
 export const BACKUP_FILES = FILES;
 const JOURNAL = ".sebby-restore.json";
@@ -37,6 +41,12 @@ function each(value, fn) {
   value.forEach(fn);
 }
 function strict(name, data) {
+  if (name === "sebby-provider-profiles.json") validateProfilesDocument(data);
+  if (name === "sebby-appearance.json") {
+    exact(data, ["version", "appearance"]);
+    exact(data.appearance, ["pal", "palettePreset", "colors", "motion"]);
+    exact(data.appearance.colors, ["body", "accent", "glow"]);
+  }
   if (name === "sebby-team.json") {
     exact(data, ["version", "team"]);
     each(data.team, (item) =>
@@ -176,9 +186,14 @@ async function validateStores(stores) {
       "sebby-conversations.json": ConversationStore,
       "sebby-connectors.json": ConnectorStore,
       "sebby-team.json": TeamStore,
+      "sebby-appearance.json": AppearanceStore,
     };
     const normalized = {};
     for (const name of Object.keys(stores)) {
+      if (name === "sebby-provider-profiles.json") {
+        normalized[name] = validateProfilesDocument(stores[name]);
+        continue;
+      }
       const service = new constructors[name](stage);
       await service.load();
       normalized[name] = JSON.parse(await read(path.join(stage, name)));

@@ -64,6 +64,51 @@ contextBridge.exposeInMainWorld(
     enableNotifications: () => ipcRenderer.invoke("sebby:enable-notifications"),
     disableNotifications: () =>
       ipcRenderer.invoke("sebby:disable-notifications"),
+    pendingChangeReview: () =>
+      ipcRenderer.invoke("sebby:pending-change-review"),
+    respondChangeReview: (input) =>
+      ipcRenderer.invoke("sebby:respond-change-review", input),
+    providerStatus: (input) =>
+      ipcRenderer.invoke("sebby:provider-status", input),
+    listProviderProfiles: (input) =>
+      ipcRenderer.invoke("sebby:list-provider-profiles", input),
+    createProviderProfile: (input) =>
+      ipcRenderer.invoke("sebby:create-provider-profile", input),
+    updateProviderProfile: (input) =>
+      ipcRenderer.invoke("sebby:update-provider-profile", input),
+    selectProviderProfile: (input) =>
+      ipcRenderer.invoke("sebby:select-provider-profile", input),
+    saveProviderKey: (input) =>
+      ipcRenderer.invoke("sebby:save-provider-key", input),
+    removeProviderKey: (input) =>
+      ipcRenderer.invoke("sebby:remove-provider-key", input),
+    removeProviderProfile: (input) =>
+      ipcRenderer.invoke("sebby:remove-provider-profile", input),
+    testProviderProfile: (input) =>
+      ipcRenderer.invoke("sebby:test-provider-profile", input),
+    cancelProviderTest: (input) =>
+      ipcRenderer.invoke("sebby:cancel-provider-test", input),
+    startChat: (input) => ipcRenderer.invoke("sebby:start-chat", input),
+    chatStatus: (input) => ipcRenderer.invoke("sebby:chat-status", input),
+    cancelChat: (input) => ipcRenderer.invoke("sebby:cancel-chat", input),
+    startAgent: (input) => ipcRenderer.invoke("sebby:start-agent", input),
+    agentStatus: (input) => ipcRenderer.invoke("sebby:agent-status", input),
+    cancelAgent: (input) => ipcRenderer.invoke("sebby:cancel-agent", input),
+    reviewAgent: (input) => ipcRenderer.invoke("sebby:review-agent", input),
+    getAppearance: (input) => ipcRenderer.invoke("sebby:get-appearance", input),
+    saveAppearance: (input) =>
+      ipcRenderer.invoke("sebby:save-appearance", input),
+    onChatEvent: (callback) => {
+      const listener = (_event, payload) => callback(payload);
+      ipcRenderer.on("sebby:chat-event", listener);
+      return () => ipcRenderer.removeListener("sebby:chat-event", listener);
+    },
+    onProviderChanged: (callback) => {
+      const listener = () => callback();
+      ipcRenderer.on("sebby:provider-changed", listener);
+      return () =>
+        ipcRenderer.removeListener("sebby:provider-changed", listener);
+    },
     getState: () => ipcRenderer.invoke("sebby:get-state"),
     saveMemory: (text) => ipcRenderer.invoke("sebby:save-memory", text),
     savePersonality: (value) =>

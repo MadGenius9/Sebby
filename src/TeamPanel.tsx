@@ -18,6 +18,8 @@ export function TeamPanel({ report }: { report: (s: string) => void }) {
   }
   useEffect(() => {
     void load();
+    const timer = setInterval(() => void load(), 1500);
+    return () => clearInterval(timer);
   }, []);
   return (
     <>
@@ -31,8 +33,9 @@ export function TeamPanel({ report }: { report: (s: string) => void }) {
         <h3>Coordinator: Sebby</h3>
         <p>
           Coordinates the plan and reviews specialist results before calling
-          work done. AI coordination and execution are not connected yet; the
-          team registry and task assignments are local and persistent.
+          work done. Configure an API profile in Settings, then start a queued
+          AI goal in Tasks. Specialist and coordinator responses require your
+          acceptance. Idle identities do not make background requests.
         </p>
       </div>
       {!team ? (
@@ -91,7 +94,11 @@ export function TeamPanel({ report }: { report: (s: string) => void }) {
                       {member.specialty} ·{" "}
                       {member.status === "retired"
                         ? "Retired"
-                        : "AI executor not connected"}
+                        : task?.status === "running"
+                          ? "Assigned task running"
+                          : task?.status === "awaiting-review"
+                            ? "Result awaiting acceptance"
+                            : "Available for approved runs"}
                     </small>
                     <h3>
                       <Users size={17} /> {member.name}
@@ -171,8 +178,10 @@ export function TeamPanel({ report }: { report: (s: string) => void }) {
                       <div className="callout">
                         <h3>{task.title}</h3>
                         <p>
-                          Task state: {task.status} · no executor currently
-                          running
+                          Task state: {task.status} ·{" "}
+                          {task.kind === "ai"
+                            ? "provider-backed goal"
+                            : "deterministic local utility"}
                         </p>
                         <p>{task.logs.at(-1)?.message}</p>
                       </div>

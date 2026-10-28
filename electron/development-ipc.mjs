@@ -7,15 +7,17 @@ export function installDevelopment({
   directory,
   confirm,
   chooseGit,
+  reviewChange,
 }) {
   const tools = new DevelopmentTools(workspace, {
     backupRoot: path.join(directory, "edit-backups"),
-    approve: async (request) => {
+    approve: async (request, options = {}) => {
       if (request.kind === "run-command")
         return confirm(
           "Run this project command?",
           `${request.display}\nFolder: ${request.workspace}\nExecutable: ${request.executable}\n\n${request.warning}\n\n${request.scripts ? JSON.stringify(request.scripts, null, 2) : ""}`,
         );
+      if (reviewChange && !(await reviewChange(request, options))) return false;
       return confirm(
         request.kind === "undo-edit"
           ? "Undo this file change?"

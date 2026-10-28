@@ -1,0 +1,149 @@
+{
+  "version": 1,
+  "defaultPal": "orbit",
+  "catalogIds": [
+    "orbit",
+    "scout",
+    "wisp",
+    "luma",
+    "nook",
+    "finch",
+    "tidal",
+    "moss",
+    "piper"
+  ],
+  "sourceManifestVersion": 2,
+  "provenance": "Original procedural Blender geometry and materials authored for Sebby. No external meshes, textures, character references or downloaded assets. No rig or third-party character licenses included.",
+  "materialPolicy": {
+    "editable": ["body", "accent", "glow"],
+    "preserved": ["eyes", "visor"]
+  },
+  "optionalModels": [
+    {
+      "id": "luma",
+      "name": "Luma",
+      "description": "The bright little fox",
+      "materials": ["accent", "body", "eyes", "glow"],
+      "triangles": 24076,
+      "assets": {
+        "glb": {
+          "path": "./pals/luma.glb",
+          "sourceFilename": "sebby_luma_v2.glb",
+          "bytes": 583448,
+          "sha256": "5cb8018b79035f935ba6e8ed360241ba1dbc1a8c6f51eea5eef3740cd47614c7"
+        },
+        "png": {
+          "path": "./pals/luma.png",
+          "sourceFilename": "sebby_luma_v2.png",
+          "bytes": 583285,
+          "sha256": "de428dcae6e67436f4ae300a1df46e81082118377e761ef14095e81233d53880"
+        }
+      }
+    },
+    {
+      "id": "nook",
+      "name": "Nook",
+      "description": "The thoughtful owl",
+      "materials": ["accent", "body", "eyes", "glow"],
+      "triangles": 22832,
+      "assets": {
+        "glb": {
+          "path": "./pals/nook.glb",
+          "sourceFilename": "sebby_nook_v2.glb",
+          "bytes": 548784,
+          "sha256": "590b7fda45dff712f101813457c43dcbd26b3c754d2298d7c9084a1c9a8173c3"
+        },
+        "png": {
+          "path": "./pals/nook.png",
+          "sourceFilename": "sebby_nook_v2.png",
+          "bytes": 532739,
+          "sha256": "eeaab4f80561d4885ac071952a05710927fdc269fba7ca5879cb897c36e74ee8"
+        }
+      }
+    },
+    {
+      "id": "finch",
+      "name": "Finch",
+      "description": "The gentle little dragon",
+      "materials": ["accent", "body", "eyes", "glow"],
+      "triangles": 28904,
+      "assets": {
+        "glb": {
+          "path": "./pals/finch.glb",
+          "sourceFilename": "sebby_finch_v2.glb",
+          "bytes": 681612,
+          "sha256": "52813ccbe4d934e040a3effed87919a4c9fdc6be22290ab9fbac4370e36d6550"
+        },
+        "png": {
+          "path": "./pals/finch.png",
+          "sourceFilename": "sebby_finch_v2.png",
+          "bytes": 605722,
+          "sha256": "c69905525d34bc2ce0c209abdfa85a22f56284da6a55f541d6ba6d6ad0acafb4"
+        }
+      }
+    },
+    {
+      "id": "tidal",
+      "name": "Tidal",
+      "description": "The floating daydreamer",
+      "materials": ["accent", "body", "eyes", "glow"],
+      "triangles": 24776,
+      "assets": {
+        "glb": {
+          "path": "./pals/tidal.glb",
+          "sourceFilename": "sebby_tidal_v2.glb",
+          "bytes": 581264,
+          "sha256": "0d9aac73edf0287a8e0a5afa1c64741b9485b0e0070c2be66199b4e3787fbb00"
+        },
+        "png": {
+          "path": "./pals/tidal.png",
+          "sourceFilename": "sebby_tidal_v2.png",
+          "bytes": 523210,
+          "sha256": "a65df75f1d4a9d9052c8a24239b550c27f90b26ee6d9be63b5fcf1f7874ca3f7"
+        }
+      }
+    },
+    {
+      "id": "moss",
+      "name": "Moss",
+      "description": "The grounded sprout",
+      "materials": ["accent", "body", "eyes", "glow"],
+      "triangles": 19432,
+      "assets": {
+        "glb": {
+          "path": "./pals/moss.glb",
+          "sourceFilename": "sebby_moss_v2.glb",
+          "bytes": 482812,
+          "sha256": "f9d6ca1f0e0fe23790df5b10de67f0eda5f0b19186d9a1126248601f3b4d187e"
+        },
+        "png": {
+          "path": "./pals/moss.png",
+          "sourceFilename": "sebby_moss_v2.png",
+          "bytes": 497714,
+          "sha256": "289241bf41904769a832dadceaad50b52336c42ee55621f15070122d8a6a1465"
+        }
+      }
+    },
+    {
+      "id": "piper",
+      "name": "Piper",
+      "description": "The four-legged helper",
+      "materials": ["accent", "body", "eyes", "glow", "visor"],
+      "triangles": 11316,
+      "assets": {
+        "glb": {
+          "path": "./pals/piper.glb",
+          "sourceFilename": "sebby_piper_v2.glb",
+          "bytes": 281732,
+          "sha256": "8ab171a46b023905fa7d35a308c64d3ba7e4029818ce3443cdf5ae694f18f381"
+        },
+        "png": {
+          "path": "./pals/piper.png",
+          "sourceFilename": "sebby_piper_v2.png",
+          "bytes": 539432,
+          "sha256": "5548476c9f375635d1a701163a982ab55ee3ffbff0f9cf62194ae90709cb82da"
+        }
+      }
+    }
+  ]
+}

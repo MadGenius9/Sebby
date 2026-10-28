@@ -1,24 +1,24 @@
-# Delivery status — 0.3 local workbench
+# Delivery status — 0.4 personal workbench
 
-## Implemented and tested without external services
+## Implemented in source
 
-Persistent local memory/personality/drafts; instruction skill import; named specialist identities; task queue and restart interruption; reminders; disconnected connector bookmarks; reviewed file changes with backup/undo; fixed command runner policy; real deterministic local inventory/brief execution with separate review; opt-in read-only MCP discovery transport (mocked network tests); session-only native-notification adapter/controller (mocked OS tests); validated app-data export/restore; React UI wiring and authored Orbit assets.
+Local memory/personality/drafts, instruction skills, named specialists, durable tasks, reminders, bounded workspace operations, full-diff review with native confirmation and hash checks, backups/undo, fixed Git status, deterministic local utilities, read-only MCP metadata discovery, opt-in session notifications, and validated app-data backup/restore.
 
-## Still requires a credential decision
+New: OpenAI Responses, Anthropic Messages and xAI Responses adapters; streaming chat/history/cancel with explicit context; per-provider model profiles and output budgets; OS-encrypted BYOK vault with provider/profile binding; native-approved connection test; bounded specialist read/edit tool loop and separate model coordinator review, followed by user acceptance. Configured keys are not proof of connection. All provider tests use injected mock transports; no paid requests or real credential reads/writes occurred.
 
-Real OpenAI integration is paused at the installed secure-credential workflow. No usable key was available. No provider adapter was implemented past that mandatory gate; no key was created or read, no model request made, and no usage/billing claimed. User must decide on secure provider setup. Never paste a key in chat, source, renderer, memory, or a bookmark.
+Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss and Piper are original editable assets. The renderer loads local GLBs and changes actual material colors, with static PNG fallback. All nine are optional choices; Orbit stays the default.
 
-## Still requires implementation plus runtime validation
+## Remaining implementation and validation
 
-- Streaming/model context/history/usage budgets and real tool orchestration.
-- GitHub authentication and MCP tool execution. MCP metadata discovery exists, but is JSON-only, read-only and not live-endpoint validated.
-- Real AI specialist execution and coordinator reasoning/review. Named identities can label actual deterministic local utilities; this is not model-based agency.
-- Windows Job Object child-process containment before npm build/test execution.
-- Project preview processes, rich voice input/output, animated expressions, desktop/browser automation, and optional cloud continuation. OS reminder delivery is implemented behind session consent but requires native validation.
-- Signed release/update chain; native Windows installation, security, accessibility, and end-to-end tests.
+- Live provider/model/account validation after secure user setup; current key-reuse decision is resolved, not a code gate.
+- Native Windows encrypted storage, UI, dialogs, notifications, GLB rendering and PowerShell verification.
+- Windows Job Object process containment before package scripts, development preview processes and fuller app-build workflows.
+- Authenticated GitHub and MCP tool execution; metadata discovery is only a JSON read-only subset, mock-tested.
+- Rich voice input/output, companion expressions, desktop/browser automation and optional cloud continuation.
+- Signed installer, trusted updates, commercial licensing/distribution review, accessibility and native end-to-end testing.
 
-These are not marked complete simply because an interface or service foundation exists. The first useful autonomous app-developer milestone remains the end of phase 3 with real AI and a safe tested tool loop.
+No seven-phase completion claim is made. The safe app-developer milestone still needs tested build/test/preview execution and real-model validation.
 
-## Known environment blockers
+## Environment limits
 
-Cloud browser cannot reach the execution workspace's loopback server. Local Chromium cannot launch under current sandbox socket restrictions; an escalation attempt failed during sandbox construction. Direct file navigation is disallowed by the cloud browser URL policy. Electron binary, PowerShell, Windows, and signing credentials are unavailable. No bypass was attempted. DOM/service tests therefore complement but do not replace native/browser verification.
+Cloud browser cannot reach the workspace loopback server. Local Chromium socket access is restricted; an escalation failed during sandbox construction. Cloud file navigation is blocked. No bypass was attempted. Electron binary, Windows, PowerShell and signing credentials are unavailable. DOM and service tests do not replace native release verification.

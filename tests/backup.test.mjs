@@ -206,3 +206,36 @@ test("backup includes team identities and rejects injected authority fields", as
   data.stores["sebby-team.json"].team[0].permissions = ["all"];
   await assert.rejects(backup.previewImport(JSON.stringify(data)), /unknown/);
 });
+
+test("appearance is backed up as strict metadata; asset URLs and CSS cannot be imported", async (t) => {
+  const { directory, backup } = await fixture(t);
+  const { AppearanceStore } = await import("../electron/appearance.mjs");
+  const appearance = new AppearanceStore(directory);
+  await appearance.load();
+  await appearance.save({ pal: "scout", palettePreset: "mint", motion: false });
+  const payload = await backup.exportJSON(),
+    data = JSON.parse(payload);
+  assert.equal(data.stores["sebby-appearance.json"].appearance.pal, "scout");
+  await backup.previewImport(payload);
+  data.stores["sebby-appearance.json"].appearance.url =
+    "https://untrusted/model.glb";
+  await assert.rejects(backup.previewImport(JSON.stringify(data)), /unknown/);
+});
+
+test("provider profile metadata exports but credentials and vault stay excluded", async (t) => {
+  const { directory, backup } = await fixture(t);
+  const { ProviderProfiles } =
+    await import("../electron/provider-profiles.mjs");
+  const profiles = new ProviderProfiles(directory);
+  await profiles.load();
+  const vault = path.join(directory, "sebby-profile-vault");
+  await fs.mkdir(vault);
+  await fs.writeFile(path.join(vault, "private.credential"), "DO NOT EXPORT");
+  const payload = await backup.exportJSON(),
+    data = JSON.parse(payload);
+  assert.ok(data.stores["sebby-provider-profiles.json"]);
+  assert.ok(!payload.includes("DO NOT EXPORT"));
+  await backup.previewImport(payload);
+  data.stores["sebby-provider-profiles.json"].profiles[0].apiKey = "forbidden";
+  await assert.rejects(backup.previewImport(JSON.stringify(data)));
+});

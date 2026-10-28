@@ -2,7 +2,7 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.3: a real local workbench, not yet a connected AI coding agent.** Model execution, authenticated connectors, and autonomous AI sub-agents are not available. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.4: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -21,30 +21,36 @@ npm start
 
 | Area | Implemented | Honest boundary |
 |---|---|---|
-| Chat | Editable persistent draft; named local saved drafts | No AI request, response, streaming, or model usage |
+| Chat | Persistent conversations, streaming/cancel, explicit memory/skills/files context, reported token usage | Requires own API key and explicit model; native approval before dispatch; no live calls tested |
 | Memory | Personal and folder-scoped editable memory | Plaintext; never store keys/passwords |
 | Workspace | Native folder selection; bounded text browsing; confirmed note creation | No unrestricted filesystem access |
 | File changes | Hash-checked whole-file previews, native approval, original backups, session undo | Not an adversarial filesystem sandbox; ACL/xattr preservation and Windows behavior unverified |
 | Commands | Fixed Git status after native trusted-executable selection and per-run approval | No shell; no arbitrary commands; npm execution unavailable in UI and disabled on Windows pending process-tree containment |
 | Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
-| Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; AI executor/coordination not connected |
-| Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals remain queued; utilities do not pretend to reason or build apps |
+| Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; provider reasoning requires approved runs |
+| Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals require provider setup and native approval; bounded tools and separate coordinator review, then user acceptance |
 | Connections | GitHub/MCP bookmarks; explicit read-only MCP tool-name discovery with DNS/TLS/size/time safeguards | No authentication or tool execution; JSON-only 2026-07-28 subset, no real endpoint tested |
-| Companion | Persisted personality preferences, Orbit artwork, optional local voice preview | Authored preview, not model behavior; device-local English voice required; no microphone |
+| Companion | Persisted personality, Nine original 3D pals, material palettes, optional local voice preview | Authored preview, not model behavior; device-local English voice required; no microphone |
 | Reminders | Durable dates, due state, snooze/dismiss; opt-in silent desktop notifications until quit | Native display unverified; no notifications before consent and nothing runs when closed |
 | Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
 
 These paths have service/component test coverage, not Windows-native release certification. Read [verification](docs/VERIFICATION.md) before treating this as a finished product.
 
+## Bring your own API account
+
+In **Settings**, select OpenAI GPT, Anthropic Claude, or xAI Grok; enter an explicit model ID and output budget. Use an enabled provider-specific environment key or store a key through the masked field and native confirmation. Never paste keys in chat, project memory, source, or GitHub. The password field is transient renderer memory, not React state or local storage. Secure storage is not available in browser preview. Key availability does not prove account/model access. An optional native-approved connection test may incur API charges. Consumer chat subscriptions do not include API billing. See [existing-key setup](docs/EXISTING-KEY.md), [providers](docs/PROVIDERS.md), and [privacy](docs/PRIVACY.md).
+
+In **Settings → Appearance**, select Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss or Piper and change body/accent/glow colors. Actual GLB material rendering requires WebGL; otherwise an explicitly unchanged original PNG is shown. Orbit remains the default; changing the pal does not change Sebby’s identity or permissions.
+
 ## Meet Sebby’s team
 
-In **Team**, choose a specialty and describe the job. Sebby assigns a distinct name—Mira for a planner, Finn for a coder, Sage for a reviewer, Nova for a researcher, with more names available. You can rename or retire them. Create a matching-role task under **Tasks**, then assign it. The UI shows real queue state and plainly reports that the AI executor is not connected. You can run an explicitly labeled deterministic inventory or project-brief-template utility, optionally attach a matching unassigned specialist name, read its observed report, then separately approve that utility as complete. This does not complete an arbitrary AI/app-building goal.
+In **Team**, choose a specialty and describe the job. Sebby assigns a distinct name—Mira for a planner, Finn for a coder, Sage for a reviewer, Nova for a researcher, with more names available. You can rename or retire them. Create a matching-role task under **Tasks**, then assign it. The UI shows real queue state. With a configured provider, start an AI goal explicitly in Tasks; Sebby assigns a specialist, runs bounded approved work, obtains a separate coordinator review, and waits for your acceptance. You can run an explicitly labeled deterministic inventory or project-brief-template utility, optionally attach a matching unassigned specialist name, read its observed report, then separately approve that utility as complete. This does not complete an arbitrary AI/app-building goal.
 
-Future connected specialists inherit permission limits. Sebby must review their evidence before reporting completion; a role or name never grants access.
+Specialists inherit permission limits. Sebby reviews their evidence before user acceptance; a role or name never grants access.
 
 ## Local data and control
 
-Desktop data lives in Electron's `userData` location, normally `%APPDATA%/Sebby/` on Windows. Versioned JSON files hold settings, conversations, skills, tasks, team, reminders, and connector bookmarks. Draft text also uses renderer local storage. Memory, logs, edit backups and exports are **not encrypted**. No credential store is implemented.
+Desktop data lives in Electron's `userData` location, normally `%APPDATA%/Sebby/` on Windows. Versioned JSON files hold settings, conversations, skills, tasks, team, reminders, and connector bookmarks. Draft text also uses renderer local storage. Memory, logs, edit backups and exports are **not encrypted**. API keys are separately OS-encrypted and excluded from backups. Storage fails closed if secure OS encryption is unavailable; see [BYOK](docs/BYOK.md).
 
 Folder selection is not restored automatically. Reselect the same folder to restore its memory. Named drafts, task records and team are app-wide; task workspace references are metadata, not access grants. The composer draft is also app-wide. Existing file edits require a preview and native confirmation. Undo is session-only; original content persists under `edit-backups` for manual recovery. Restoring app data restarts Sebby and does not undo project-file edits.
 

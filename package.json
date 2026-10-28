@@ -1,8 +1,8 @@
 {
   "name": "sebby-desktop",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
-  "description": "Sebby local workbench and named companion team",
+  "description": "Sebby personal workbench with approved AI and customizable pals",
   "type": "module",
   "main": "electron/main.mjs",
   "scripts": {
@@ -19,7 +19,8 @@
   "dependencies": {
     "lucide-react": "^0.468.0",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",
@@ -27,6 +28,7 @@
     "@testing-library/user-event": "^14.6.8",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.186.0",
     "electron": "45.1.0",
     "electron-builder": "26.18.0",
     "jsdom": "^30.1.3",

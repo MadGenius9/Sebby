@@ -1,3 +1,7 @@
+import { ChatPanel } from "./ChatPanel";
+import { AppearancePanel } from "./Appearance";
+import { ProviderSettings } from "./ProviderSettings";
+import { ChangeReviewDialog } from "./ChangeReviewDialog";
 import { useEffect, useState } from "react";
 import {
   MessageSquare,
@@ -7,10 +11,7 @@ import {
   Link,
   Settings,
   ShieldCheck,
-  ArrowUp,
   ChevronRight,
-  FileText,
-  Code,
   Check,
   Copy,
   ListTodo,
@@ -21,12 +22,7 @@ import { bridge, desktop, isBusy, type State } from "./bridge";
 import { skills } from "./skills";
 import { Workspace, Memory, Connections, PersonalityPanel } from "./Panels";
 import { TeamPanel } from "./TeamPanel";
-import {
-  TasksPanel,
-  RemindersPanel,
-  ImportedSkills,
-  SavedDrafts,
-} from "./LocalPanels";
+import { TasksPanel, RemindersPanel, ImportedSkills } from "./LocalPanels";
 const sections = [
   ["Chat", MessageSquare],
   ["Workspace", Folder],
@@ -37,6 +33,7 @@ const sections = [
   ["Reminders", Clock],
   ["Connections", Link],
   ["Personality", Settings],
+  ["Settings", Settings],
 ] as const;
 export function App() {
   const [page, setPage] = useState("Chat"),
@@ -82,6 +79,7 @@ export function App() {
   }
   return (
     <div className="app">
+      <ChangeReviewDialog />
       <aside className="sidebar">
         <div className="brand">
           <img src="./orbit.png" alt="" />
@@ -110,7 +108,7 @@ export function App() {
           </div>
           <div>
             <i />
-            AI not connected
+            Configure AI in Settings
           </div>
           {!desktop && <small>Browser preview · local storage only</small>}
         </div>
@@ -151,57 +149,20 @@ export function App() {
         {!state ? (
           <div className="loading">Loading your local settings…</div>
         ) : page === "Chat" ? (
-          <div className="chat">
-            <div className="welcome">
-              <img
-                className="companion"
-                src="./orbit.png"
-                alt="Sebby, your ice-blue Orbit companion"
-              />
-              <h2>
-                What shall we <em>build?</em>
-              </h2>
-              <p>A fresh project. A tricky bug. A little less busywork.</p>
-              <div className="suggestions">
-                {skills.map((skill, i) => (
-                  <button key={skill.id} onClick={() => useSkill(skill.prompt)}>
-                    {i === 1 ? <Code size={21} /> : <FileText size={21} />}
-                    <span>{skill.name}</span>
-                    <ChevronRight size={16} />
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="composer">
-              <label className="sr-only" htmlFor="draft">
-                Your local chat draft
-              </label>
-              <textarea
-                id="draft"
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="Describe what you want to make…"
-              />
-              <div className="composer-bottom">
-                <small>
-                  <ShieldCheck size={14} />
-                  AI is not connected. Your drafts stay on this device.
-                </small>
-                <button
-                  className="send"
-                  disabled
-                  title="AI integration is not available in this build"
-                  aria-label="Send unavailable: AI not connected"
-                >
-                  <ArrowUp size={22} />
-                </button>
-              </div>
-            </div>
-            <SavedDrafts draft={draft} useDraft={setDraft} report={setError} />
-          </div>
+          <ChatPanel
+            draft={draft}
+            setDraft={setDraft}
+            useSkill={useSkill}
+            report={setError}
+          />
         ) : (
           <div className="page-content">
-            {page === "Team" ? (
+            {page === "Settings" ? (
+              <>
+                <ProviderSettings report={setError} />
+                <AppearancePanel report={setError} />
+              </>
+            ) : page === "Team" ? (
               <TeamPanel report={setError} />
             ) : page === "Tasks" ? (
               <TasksPanel report={setError} />
@@ -308,7 +269,7 @@ export function App() {
         </div>
         <div className="version">
           <Check size={13} />
-          Sebby 0.3 · Local workbench
+          Sebby 0.4 · Personal workbench
         </div>
       </aside>
     </div>
