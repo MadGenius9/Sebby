@@ -1,0 +1,32 @@
+using System.Diagnostics;
+using System.Text.Json;
+
+// Benign, finite fixtures only. Template extension prevents the parent helper's
+// default C# compile glob from accidentally including a second Main method.
+internal static class Program
+{
+    private static async Task<int> Main(string[] args)
+    {
+        if (args.Length != 2 || !Path.IsPathFullyQualified(args[1]) || !Directory.Exists(args[1])) return 90;
+        string mode = args[0], evidence = Path.GetFullPath(args[1]);
+        if (!new[] { "success", "nonzero", "sleep", "overflow", "tree", "child", "leaf" }.Contains(mode)) return 91;
+        using var current = Process.GetCurrentProcess();
+        var identity = new { pid = current.Id, startUtcTicks = current.StartTime.ToUniversalTime().Ticks.ToString(), executable = Environment.ProcessPath, mode };
+        string marker = Path.Combine(evidence, $"{current.Id}.json");
+        await File.WriteAllTextAsync(marker + ".tmp", JsonSerializer.Serialize(identity));
+        File.Move(marker + ".tmp", marker);
+        // Independent watchdog: even an uncontained fixture dies within 60 seconds.
+        _ = Task.Run(async () => { await Task.Delay(TimeSpan.FromSeconds(60)); Environment.Exit(92); });
+        if (mode == "success") { Console.WriteLine("SEBBY_FIXTURE_STDOUT"); Console.Error.WriteLine("SEBBY_FIXTURE_STDERR"); return 0; }
+        if (mode == "nonzero") return 23;
+        if (mode == "overflow") { var data = new string('x', 4096); while (true) { Console.Write(data); Console.Out.Flush(); } }
+        if (mode is "tree" or "child")
+        {
+            var info = new ProcessStartInfo(Environment.ProcessPath!) { UseShellExecute = false };
+            info.ArgumentList.Add(mode == "tree" ? "child" : "leaf"); info.ArgumentList.Add(evidence);
+            using var descendant = Process.Start(info) ?? throw new InvalidOperationException("Fixture child failed.");
+            // Intentionally leave descendants to the supervisor/job rather than masking cleanup bugs.
+        }
+        await Task.Delay(TimeSpan.FromSeconds(60)); return 0;
+    }
+}

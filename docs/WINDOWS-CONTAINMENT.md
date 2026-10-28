@@ -67,3 +67,37 @@ Windows `npm.cmd` normally needs a shell, and npm scripts may execute arbitrary 
 7. Produce a signed/pinned reviewed helper artifact, rerun tests against that exact binary, and explicitly opt in in main-process policy. Only then consider separately authorized UI integration.
 
 No SDK, binary, service, account connection, native test, permission escalation or runtime integration was performed for this checkpoint.
+
+## Manual offline fixture harness (source only; NOT RUN)
+
+A separately reviewed Windows test host can use `scripts/test-job-runner-windows.ps1`. The script is not an npm command, an Actions workflow, an installer, or app startup code. It never enables Sebby's runner policy. **This workspace has not executed or compiled the harness/fixture/helper, and passing Node source assertions is not a native acceptance result.**
+
+Prerequisites: 64-bit Windows, PowerShell 7+, an already installed stable .NET 10 SDK and all required local framework/apphost packs. The script pins a discovered installed 10.x SDK in its temporary `global.json`, clears NuGet sources/fallback folders, supplies an empty local feed, disables auditing/workload update checks, and builds with `--no-restore` after the offline restore step. Reusable MSBuild nodes/servers and shared compiler processes are disabled for owned SDK commands. Both SDK and helper processes receive a cleared environment with only fixed Windows/temp/CLI settings—no inherited provider/GitHub/signing keys, proxies or startup hooks. The package cache is isolated inside the temporary root. Directory.Build props/targets and Directory.Packages imports are disabled, with fixed empty files at the root to prevent ancestor discovery. Missing packs cause failure; it does not install an SDK, download dependencies, modify system settings or fall back to an online feed. Resolve missing prerequisites separately rather than weakening those guards.
+
+After reading the source, the operator can explicitly choose to execute:
+
+```powershell
+pwsh -NoProfile -File .\scripts\test-job-runner-windows.ps1 -RunNativeFixtures
+```
+
+No execution-policy bypass, elevation or service installation is requested. Omitting the opt-in flag fails before native work.
+
+The harness creates a unique temporary directory, copies only the helper's fixed C# source/project and a benign fixture template, and compiles within that directory. `fixtures/Program.cs.txt` deliberately is not a `.cs` file in the source tree, so the main helper's recursive compile glob does not accidentally include a second entry point. It becomes `Program.cs` only in the isolated fixture build directory.
+
+Seven cases inspect actual protocol/exit evidence when run:
+
+- successful stdout/stderr and exit 0;
+- nonzero fixture exit 23;
+- bounded timeout;
+- explicit cancellation with child and grandchild;
+- parent-input EOF with child and grandchild;
+- output overflow/truncation;
+- abrupt supervisor termination with child and grandchild, killing **only** the supervisor at the assertion stage so recursive parent cleanup cannot mask a failed kill-on-job-close test.
+
+Tree cases require three recorded fixture identities before cancellation. Identity records include exact executable, PID and process-start ticks; assertions verify those processes disappear. A reused PID is not killed as a fixture. Each benign fixture also has an independent 60-second exit watchdog. The work phase has a 300-second global deadline, each SDK command a 90-second bound, helper waits a 10-second bound, and post-exit pipe/descendant checks a 5-second bound. Cleanup may add bounded per-owned-process waits. Child output is bounded by the helper request; harness drains stdout/stderr concurrently and rejects oversized diagnostics after collection, but its `ReadToEndAsync` capture is not a streaming-memory sandbox for a maliciously modified SDK/helper.
+
+`finally` cleans only created process handles, identity-checked fixture processes and the exact random temporary directory. It never kills by name or system-wide PID lists. Source-only fixtures do not create junctions or mutate external files. Do not replace the fixture executable or introduce arbitrary user projects into this harness. The trusted test-host account/filesystem remains a boundary, not an adversarial-host guarantee.
+
+The script prints a JSON result with case results, failure text and elapsed time, and returns nonzero on failure. Temporary build binaries/evidence are removed, so capture stdout yourself if keeping a validation record. It does not sign, publish, store secrets or retain an artifact for runtime integration.
+
+Remaining tests beyond this harness include creation/assignment/resume race injection, inherited-job incompatibilities, exact inherited-handle auditing, hostile reparse/hardlink/executable replacement cases, malformed protocol stress, argument/environment isolation, Windows-version matrix, antivirus behavior, architecture/ABI review and signed artifact verification. The fixed fixtures are not malicious-code isolation proof. Every native item remains **NOT RUN** until the operator supplies actual Windows evidence; Windows npm and runtime integration remain disabled.

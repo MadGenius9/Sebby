@@ -1,6 +1,8 @@
-# Delivery status — 0.7 personal workbench
+# Delivery status — 0.8 personal workbench
 
 ## Implemented in source
+
+New in 0.8: explicit opt-in, offline Windows containment fixture harness source; native acceptance and phase-gap checklists; real-IPC publication DOM tests. The harness has only source-policy tests here—PowerShell/.NET/Windows execution is NOT RUN and the helper remains disabled. See [phase gaps](PHASE-GAPS.md).
 
 New in 0.7: default-denied, exact-repository GitHub publication authority; immutable full-diff proposals; new `sebby/*` branch commits, separately approved draft PRs and explicit read-only commit checks. No existing branch update, force, merge or deletion. Metadata-only journals retain uncertain partial failures without automatic retry. All GitHub network tests are mocked; no live app publication occurred.
 

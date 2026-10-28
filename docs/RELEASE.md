@@ -12,7 +12,7 @@ Open PowerShell in the repository and explicitly run:
 .\scripts\verify-windows.ps1
 ```
 
-The script performs `npm ci`, service/security tests, React component tests, TypeScript/production build, then local NSIS packaging in order. It stops on the first failure and returns that command's nonzero exit code (preflight errors return 1). `npm ci` installs locked development dependencies, including Electron, and executes dependency lifecycle scripts: review the source and lockfile before choosing to run it. It does not install Node or other global software. It explicitly forbids publishing and refuses common inherited signing configuration. It never launches the app or installer.
+The script performs `npm ci`, service/security tests, React component tests, TypeScript/production build, then local NSIS packaging in order. It stops on the first failure and returns that command's nonzero exit code (preflight errors return 1). `npm ci` installs locked development dependencies, including Electron, and executes dependency lifecycle scripts: review the source and lockfile before choosing to run it. It does not install Node or other global software. It invokes the reviewed `package:win` script with `--publish never` and refuses common inherited signing configuration. Dependency lifecycle scripts and build hooks execute code: these flags are not a sandbox against an altered/untrusted script. It never launches the app or installer.
 
 Options:
 
@@ -49,8 +49,10 @@ Only after your normal trust review, run `npm start` to test the development app
 - Drafts/history, task-state transitions, skill imports, reminder due/snooze/dismiss, and connector bookmarks preserve honest status. Queued tasks are not autonomous workers; configured connector bookmarks are not connected services; reminders do not promise delivery while closed.
 - Backup/export and restore preview/confirmation operate on disposable settings. Verify crash recovery/restart paths before trusting restoration. Backups contain plaintext personal data; protect them appropriately.
 - Second-instance behavior does not open competing settings writers. Corrupt settings show an actionable error without silently discarding data.
-- Production navigation/popups/downloads, microphone, external network and unexpected permissions remain denied. No credentials appear in renderer state, logs, chat, memory, backups, or source.
+- Production privileged-window navigation/popups/downloads and unexpected permissions remain denied. Microphone requests require explicit voice capture consent; main-process provider/GitHub/audio requests require separate native approval. Configured credentials never return to the renderer; the masked user-entered input exists transiently in renderer memory and clears immediately on submit. No credentials persist in renderer storage, logs, chat, memory, backups, or source.
 - Installer installation, launch, uninstall, reinstall and user-data retention/removal behavior are observed in a disposable environment and documented rather than assumed.
+
+Use the feature-specific [native acceptance matrix](NATIVE-ACCEPTANCE.md) to distinguish offline checks from optional account/cost checks.
 
 The filesystem protections are not a sandbox against an adversarial process concurrently mutating files. Capture and triage failures; do not change the acceptance criteria to match a failure.
 

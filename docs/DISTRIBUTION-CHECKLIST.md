@@ -16,7 +16,7 @@ Optional create-only output in the workspace (choose a new filename; existing fi
 node scripts/release-readiness.mjs --output docs/release-readiness-review.json
 ```
 
-`--check` returns nonzero until **all** gates are passing; signing/native/legal gates intentionally remain unresolved. A proposal for package.json is `"release:readiness": "node scripts/release-readiness.mjs --check"`; it has not been added automatically.
+`--check` returns nonzero until **all** gates are passing; signing/native/legal gates intentionally remain unresolved. The same check is available as `npm run release:readiness`.
 
 The manifest omits timestamps/absolute paths for reproducible comparisons and hashes package/lock/source inputs, candidate application files, installed production metadata and license text. It does not read app data, hidden files or secret-named paths, invoke subprocesses/network, build installers, inspect environment values, sign or publish. Findings may show forbidden path **names**, never their contents. Output is confined to a non-source workspace JSON path and cannot follow symlink parents.
 
@@ -31,6 +31,7 @@ dist/**/*
 electron/**/*
 skills/**/*
 package.json
+docs/THIRD-PARTY-NOTICES.md
 ```
 
 That list excludes source tests, temporary files and the uncompiled `native/windows-job-runner` prototype by location. The report scans included application directories for hidden/sensitive named paths and refuses broadened patterns or unreviewed extra-files/resources/hooks. It does not waive an artifact audit. electron-builder also includes production `node_modules` automatically, regardless of this list. [Version-matched application contents documentation](https://www.electron.build/v26/docs/contents/)

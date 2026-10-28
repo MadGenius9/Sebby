@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "project": {
     "name": "sebby-desktop",
-    "version": "0.7.0",
+    "version": "0.8.0",
     "private": true
   },
-  "packageJsonSha256": "7449660e8ab724989180219d5abdee2e300adadcb12038be9f42a7d8a57094ec",
-  "lockfileSha256": "121959abd1e93a256152e8b2296723d1f31079a48a3f8d6332e3221766a52c45",
+  "packageJsonSha256": "6c9e009a20dd29dbb68ec5f70b12ac597fee80a8ab710915570b6100b005583c",
+  "lockfileSha256": "cfe7d4596ed9654195f08760c9fa623567d5d1bc571d035843363694280e58dc",
   "source": [
     {
       "path": "build/icon.ico",
@@ -291,12 +291,12 @@
     {
       "path": "package-lock.json",
       "bytes": 205056,
-      "sha256": "121959abd1e93a256152e8b2296723d1f31079a48a3f8d6332e3221766a52c45"
+      "sha256": "cfe7d4596ed9654195f08760c9fa623567d5d1bc571d035843363694280e58dc"
     },
     {
       "path": "package.json",
       "bytes": 1789,
-      "sha256": "7449660e8ab724989180219d5abdee2e300adadcb12038be9f42a7d8a57094ec"
+      "sha256": "6c9e009a20dd29dbb68ec5f70b12ac597fee80a8ab710915570b6100b005583c"
     },
     {
       "path": "public/orbit.png",
@@ -409,6 +409,11 @@
       "sha256": "d1bb33120652e1b8b7ad2e614a14d6ecf919a3f822103adea50ca2b88693e1ab"
     },
     {
+      "path": "scripts/test-job-runner-windows.ps1",
+      "bytes": 14964,
+      "sha256": "efcc6ae690da14e8e6023eb6d47617b61cb92581f267a451cac400abb42c1910"
+    },
+    {
       "path": "scripts/verify-windows.ps1",
       "bytes": 4680,
       "sha256": "0948b0473b93c13d132d4cea51b31060736073c178b852d1fd11598b89b128c9"
@@ -441,7 +446,7 @@
     {
       "path": "src/App.tsx",
       "bytes": 8711,
-      "sha256": "902c898d339b32d688bd5c4f31e1f7b97eb3439227df9b34d9934b446455e131"
+      "sha256": "e046cba6d0f9a794a57878418a2529ca8b6651f35e19c617f10d387dcd0620cf"
     },
     {
       "path": "src/Appearance.tsx",
@@ -592,9 +597,9 @@
         "sha256": "c5a44646b88834afdb59e66a0ebb0bfdbadfab3746f327ec4921279de62e5207"
       },
       {
-        "path": "dist/assets/index-BqMQj0sF.js",
+        "path": "dist/assets/index-BCe1qEFB.js",
         "bytes": 338762,
-        "sha256": "a25d2355440ca59f40a21c6c815e9105be2cf20f007e18ffb7bbb002af2b4ac8"
+        "sha256": "bc5276b33c20661c847b9b3ee86c09ebd7d101c218da93d876d787ce26c20d23"
       },
       {
         "path": "dist/assets/index-DdhHbXKG.css",
@@ -614,7 +619,7 @@
       {
         "path": "dist/index.html",
         "bytes": 559,
-        "sha256": "8b30c017d825633f5fc022e69748c671af43ac68fa5cd6ceebf3c54c9eaa981f"
+        "sha256": "cbfdd516bdd77069142629585feed2bedbef7f371dedf874823d629fd73b87a9"
       },
       {
         "path": "dist/orbit.png",
@@ -959,7 +964,7 @@
       {
         "path": "package.json",
         "bytes": 1789,
-        "sha256": "7449660e8ab724989180219d5abdee2e300adadcb12038be9f42a7d8a57094ec"
+        "sha256": "6c9e009a20dd29dbb68ec5f70b12ac597fee80a8ab710915570b6100b005583c"
       },
       {
         "path": "skills/app-plan.md",
@@ -977,7 +982,16 @@
         "sha256": "edc9ed5f35fe2575f2da1241b8eba58e2ad7b0216a09916da2733f5c7d7aa269"
       }
     ],
-    "findings": []
+    "findings": [
+      {
+        "path": "native/windows-job-runner/fixtures/Program.cs.txt",
+        "reason": "sensitive-or-generated-source-not-read"
+      },
+      {
+        "path": "native/windows-job-runner/fixtures/Sebby.JobFixture.csproj",
+        "reason": "sensitive-or-generated-source-not-read"
+      }
+    ]
   },
   "productionDependencies": [
     {
@@ -1110,7 +1124,7 @@
   "checks": [
     {
       "id": "packaging-source-policy",
-      "status": "pass",
+      "status": "blocked",
       "details": "Reviewed explicit app patterns; production node_modules remain automatically included by electron-builder. No artifact exists to audit."
     },
     {

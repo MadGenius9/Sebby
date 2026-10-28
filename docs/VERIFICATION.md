@@ -1,4 +1,4 @@
-# Verification — 0.7 personal workbench
+# Verification — 0.8 personal workbench
 
 Checked 2026-10-28 in a Linux cloud execution workspace. No user Windows desktop attached.
 
@@ -6,8 +6,8 @@ Checked 2026-10-28 in a Linux cloud execution workspace. No user Windows desktop
 
 - `npm run format:check`: all source/config/test files conform to Prettier.
 - `npm run build`: TypeScript plus Vite production bundle; 1,594 modules; core renderer ~339 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
-- `npm test`: **283/283 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
-- `npm run test:components`: **65/65 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
+- `npm test`: **288/288 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
+- `npm run test:components`: **67/67 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
 - `npm audit --json`: **zero reported vulnerabilities** across production and development dependencies at check time. This is not a complete supply-chain assessment.
 - Main/preload syntax checks: pass. Every Electron service is parsed/exercised through tests or syntax checks.
 - Original selected Orbit PNG and deterministic ICO conversion exist; no concept-board crop is used as the character.
@@ -51,3 +51,7 @@ Mocked GitHub token/config/IPC/read transport, tree/blob hashes, binary/oversize
 ## 0.7 additions
 
 Default-denied exact-repository publication authority, durable metadata history/restart uncertainty, immutable full diffs, bounded direct HTTPS request schemas, new-ref-only commits, separate draft PRs and recorded-commit check reads are mock-tested. Independent tests cover proposal tampering, revoked authority, native denial, consumed proposal replay, pending-operation locks and shutdown during consent. Six publication DOM tests exercise review and controls without real API requests. See [incremental review](SECURITY-REVIEW-0.7.md). All 283 Node and 65 DOM tests pass. No actual GitHub account, branch, PR, workflow, token storage or native dialog was exercised.
+
+## 0.8 additions
+
+The manual Windows harness defines seven benign native cases with fixed owned source, empty offline package feeds, minimal child environments, disabled ambient build imports, bounded waits and precise fixture cleanup. Five static harness-policy tests pass; they do not parse/execute PowerShell, compile C#, establish Windows containment or enable the helper. No PowerShell/.NET/Windows runtime is available and no tooling was downloaded. Two added DOM integration tests use actual publication handlers/stores with injected transport to verify denied publication and new-branch/draft-PR flow. Native acceptance and remaining implementation gates are recorded separately.
