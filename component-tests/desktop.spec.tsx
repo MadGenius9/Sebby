@@ -12,13 +12,31 @@ import path from "node:path";
 import { installLocalFeatures } from "../electron/local-features.mjs";
 const directory = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-component-"));
 const handlers = new Map();
-await installLocalFeatures({
+const { Workspace } = await import("../electron/services.mjs");
+const { installLocalExecutor } =
+  await import("../electron/local-executor-ipc.mjs");
+const workspace = new Workspace();
+await fs.mkdir(path.join(directory, "project"));
+await fs.writeFile(
+  path.join(directory, "project", "README.md"),
+  "Real fixture text",
+);
+await workspace.select(path.join(directory, "project"));
+const services = await installLocalFeatures({
   directory,
   register: (name, fn) => handlers.set(name, fn),
-  workspace: { root: null },
+  workspace,
   confirm: async () => false,
 });
+const executor = installLocalExecutor({
+  ...services,
+  workspace,
+  register: (name, fn) => handlers.set(name, fn),
+  confirm: async () => true,
+});
 const methods = {
+  startLocalUtility: "start-local-utility",
+  reviewLocalUtility: "review-local-utility",
   listTeam: "list-team",
   createTeamMember: "create-team-member",
   renameTeamMember: "rename-team-member",
@@ -51,6 +69,7 @@ const { TasksPanel, RemindersPanel, ImportedSkills } =
   await import("../src/LocalPanels");
 afterEach(cleanup);
 afterAll(async () => {
+  await executor.shutdown();
   await fs.rm(directory, { recursive: true, force: true });
   delete window.sebby;
 });
@@ -139,6 +158,34 @@ describe("desktop components using real local IPC service handlers", () => {
         "dismissed",
       ),
     );
+    expect(errors).toEqual([]);
+  });
+  it("runs actual local inventory and requires separate review before completion", async () => {
+    const errors = [];
+    render(<TasksPanel report={(s) => errors.push(s)} />);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Review and start utility…" }),
+    );
+    await screen.findByRole("heading", {
+      name: "Local utility: workspace inventory",
+    });
+    await waitFor(
+      () =>
+        expect(screen.getByText("researcher · awaiting-review")).toBeTruthy(),
+      { timeout: 4000 },
+    );
+    expect(screen.getByText(/# Workspace inventory/)).toBeTruthy();
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Review and accept this utility result…",
+      }),
+    );
+    await screen.findByText("researcher · completed");
+    const utility = (await handlers.get("list-tasks")()).find(
+      (t) => t.kind === "local-inventory",
+    );
+    expect(utility.result).toContain("README.md");
+    expect(utility.result).toContain("not AI analysis");
     expect(errors).toEqual([]);
   });
 });

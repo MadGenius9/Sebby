@@ -1,4 +1,11 @@
-import { app, BrowserWindow, ipcMain, dialog, session } from "electron";
+import {
+  app,
+  BrowserWindow,
+  ipcMain,
+  dialog,
+  session,
+  Notification,
+} from "electron";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { BackupService } from "./backup.mjs";
@@ -6,6 +13,9 @@ import { installBackup } from "./backup-ipc.mjs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { Store, Workspace, validateNote } from "./services.mjs";
 import { installLocalFeatures } from "./local-features.mjs";
+import { installNotifications } from "./notification-ipc.mjs";
+import { installLocalExecutor } from "./local-executor-ipc.mjs";
+import { installNetworkFeatures } from "./network-ipc.mjs";
 import { installDevelopment } from "./development-ipc.mjs";
 import { allowedResource } from "./resource-policy.mjs";
 
@@ -21,6 +31,11 @@ let prompting = false;
 let maintenance = false;
 let activeRequests = 0;
 let developmentTools;
+let discovery;
+let localFeatures;
+let localExecutor;
+let notificationController;
+let reminderTimer;
 const trusted = (event) => {
   if (
     !window ||
@@ -86,6 +101,7 @@ async function createWindow() {
   await window.loadURL(appURL);
 }
 app.setName("Sebby");
+if (process.platform === "win32") app.setAppUserModelId("dev.sebby.companion");
 const hasInstanceLock = app.requestSingleInstanceLock();
 if (!hasInstanceLock) app.quit();
 app.on("second-instance", () => {
@@ -141,6 +157,10 @@ if (hasInstanceLock)
         store.savePersonality(value, workspace.root),
       );
       register("choose-workspace", async () => {
+        if (localExecutor?.isActive)
+          throw Error(
+            "Finish or cancel the active local utility before changing workspace.",
+          );
         if (prompting) throw new Error("Finish the open dialog first.");
         prompting = true;
         try {
@@ -203,10 +223,37 @@ if (hasInstanceLock)
         }
       };
       try {
-        await installLocalFeatures({
+        localFeatures = await installLocalFeatures({
           directory: app.getPath("userData"),
           register,
           workspace,
+          confirm,
+          onConnectorRemoved: (id) => discovery?.disconnect(id),
+          cancelActiveTask: (id) =>
+            localExecutor?.active?.taskId === id
+              ? localExecutor.cancel(id)
+              : null,
+        });
+        notificationController = installNotifications({
+          reminders: localFeatures.reminders,
+          register,
+          confirm,
+          Notification,
+        });
+        reminderTimer = setInterval(() => {
+          if (!maintenance) void notificationController.tick().catch(() => {});
+        }, 30000);
+        reminderTimer.unref?.();
+        localExecutor = installLocalExecutor({
+          tasks: localFeatures.tasks,
+          team: localFeatures.team,
+          workspace,
+          register,
+          confirm,
+        });
+        discovery = installNetworkFeatures({
+          connectors: localFeatures.connectors,
+          register,
           confirm,
         });
         developmentTools = installDevelopment({
@@ -266,7 +313,9 @@ if (hasInstanceLock)
           if (
             activeRequests !== 1 ||
             developmentTools.running.size ||
-            developmentTools.busy
+            developmentTools.busy ||
+            localExecutor?.isActive ||
+            notificationController?.status().busy
           )
             return false;
           maintenance = true;
@@ -290,7 +339,33 @@ if (hasInstanceLock)
       );
       app.quit();
     });
-app.on("before-quit", () => developmentTools?.shutdown());
+let shutdownStarted = false,
+  allowQuit = false;
+app.on("before-quit", (event) => {
+  if (allowQuit) return;
+  event.preventDefault();
+  if (shutdownStarted) return;
+  shutdownStarted = true;
+  maintenance = true;
+  developmentTools?.shutdown();
+  discovery?.shutdown();
+  clearInterval(reminderTimer);
+  notificationController?.shutdown();
+  const drain = (async () => {
+    await localExecutor?.shutdown().catch(() => {});
+    await Promise.allSettled(
+      [
+        store?.queue,
+        ...Object.values(localFeatures || {}).map((service) => service?.queue),
+      ].filter(Boolean),
+    );
+  })();
+  const deadline = new Promise((resolve) => setTimeout(resolve, 3000));
+  void Promise.race([drain, deadline]).finally(() => {
+    allowQuit = true;
+    app.quit();
+  });
+});
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });

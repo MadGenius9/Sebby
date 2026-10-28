@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
-import { connectors, type Connector } from "./bridge";
+import {
+  connectors,
+  discovery,
+  type McpSnapshot,
+  type Connector,
+} from "./bridge";
 export function ConnectorBookmarks({
   report,
 }: {
   report: (s: string) => void;
 }) {
+  const [snapshots, setSnapshots] = useState<Record<string, McpSnapshot>>({});
+  const [checking, setChecking] = useState<string | null>(null);
   const [items, setItems] = useState<Connector[]>([]),
     [name, setName] = useState(""),
     [type, setType] = useState<"github" | "mcp">("github"),
@@ -86,6 +93,100 @@ export function ConnectorBookmarks({
                 Requested future scope: {item.requestedScopes.join(", ")} · no
                 grant made
               </p>
+              {item.type === "mcp" && discovery && (
+                <div className="callout">
+                  <h3>Read-only tool discovery</h3>
+                  <p>
+                    Fetch tool names and descriptions only after native consent.
+                    No authentication, project context, or tool execution.
+                    JSON-only MCP 2026-07-28 subset.
+                  </p>
+                  <div className="button-row">
+                    <button
+                      className="secondary"
+                      disabled={checking !== null}
+                      onClick={async () => {
+                        setChecking(item.id);
+                        try {
+                          const result = await discovery!.discoverMcp(item.id);
+                          setSnapshots((current) => ({
+                            ...current,
+                            [item.id]: result,
+                          }));
+                        } catch (e) {
+                          report((e as Error).message);
+                        } finally {
+                          setChecking(null);
+                        }
+                      }}
+                    >
+                      {checking === item.id
+                        ? "Inspecting…"
+                        : "Inspect tool names…"}
+                    </button>
+                    {(checking === item.id || snapshots[item.id]) && (
+                      <button
+                        className="text-button"
+                        onClick={async () => {
+                          try {
+                            const result = await discovery!.disconnectMcp(
+                              item.id,
+                            );
+                            setSnapshots((current) => ({
+                              ...current,
+                              [item.id]: result,
+                            }));
+                          } catch (e) {
+                            report((e as Error).message);
+                          }
+                        }}
+                      >
+                        {checking === item.id
+                          ? "Cancel request"
+                          : "Clear discovery"}
+                      </button>
+                    )}
+                  </div>
+                  {snapshots[item.id] && (
+                    <>
+                      <p role="status">
+                        {snapshots[item.id].status === "connected-read-only"
+                          ? "Catalog checked · read-only, no persistent session"
+                          : snapshots[item.id].status}
+                        {snapshots[item.id].checkedAt
+                          ? " · " +
+                            new Date(
+                              snapshots[item.id].checkedAt!,
+                            ).toLocaleString()
+                          : ""}
+                      </p>
+                      {snapshots[item.id].error && (
+                        <p>{snapshots[item.id].error}</p>
+                      )}
+                      {snapshots[item.id].truncated && (
+                        <p>
+                          Partial catalog. Pagination or additional tools were
+                          not fetched.
+                        </p>
+                      )}
+                      <details>
+                        <summary>
+                          Untrusted server descriptions (
+                          {snapshots[item.id].tools.length})
+                        </summary>
+                        {snapshots[item.id].tools.map((tool, index) => (
+                          <div key={index}>
+                            <h4>{tool.name}</h4>
+                            <p>
+                              {tool.description || "No description supplied."}
+                            </p>
+                          </div>
+                        ))}
+                      </details>
+                    </>
+                  )}
+                </div>
+              )}
               <button
                 className="text-button"
                 onClick={async () => {

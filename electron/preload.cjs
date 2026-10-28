@@ -53,6 +53,17 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.invoke("sebby:retire-team-member", input),
     assignTeamTask: (input) =>
       ipcRenderer.invoke("sebby:assign-team-task", input),
+    discoverMcp: (id) => ipcRenderer.invoke("sebby:discover-mcp", id),
+    mcpStatus: (id) => ipcRenderer.invoke("sebby:mcp-status", id),
+    disconnectMcp: (id) => ipcRenderer.invoke("sebby:disconnect-mcp", id),
+    startLocalUtility: (input) =>
+      ipcRenderer.invoke("sebby:start-local-utility", input),
+    reviewLocalUtility: (id) =>
+      ipcRenderer.invoke("sebby:review-local-utility", id),
+    notificationStatus: () => ipcRenderer.invoke("sebby:notification-status"),
+    enableNotifications: () => ipcRenderer.invoke("sebby:enable-notifications"),
+    disableNotifications: () =>
+      ipcRenderer.invoke("sebby:disable-notifications"),
     getState: () => ipcRenderer.invoke("sebby:get-state"),
     saveMemory: (text) => ipcRenderer.invoke("sebby:save-memory", text),
     savePersonality: (value) =>

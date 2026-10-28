@@ -75,6 +75,7 @@ function strict(name, data) {
         "title",
         "prompt",
         "role",
+        "kind",
         "workspace",
         "status",
         "attempts",

@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 export const TASK_STATUSES = Object.freeze([
   "queued",
   "running",
+  "awaiting-review",
   "completed",
   "failed",
   "cancelled",
@@ -18,7 +19,8 @@ export const TASK_ROLES = Object.freeze([
 ]);
 const transitions = {
   queued: ["running", "cancelled"],
-  running: ["completed", "failed", "cancelled", "interrupted"],
+  running: ["awaiting-review", "failed", "cancelled", "interrupted"],
+  "awaiting-review": ["completed", "failed", "cancelled"],
   interrupted: ["queued", "cancelled"],
   failed: ["queued"],
   completed: [],
@@ -57,6 +59,7 @@ function validateRecord(value) {
     !value ||
     typeof value.id !== "string" ||
     !/^[a-f0-9-]{36}$/.test(value.id) ||
+    !["ai", "local-inventory", "local-brief"].includes(value.kind ?? "ai") ||
     !TASK_ROLES.includes(value.role) ||
     !TASK_STATUSES.includes(value.status) ||
     !Number.isSafeInteger(value.attempts) ||
@@ -70,6 +73,7 @@ function validateRecord(value) {
     title: text(value.title, 160, "task title"),
     prompt: text(value.prompt, 16000, "task prompt"),
     role: value.role,
+    kind: value.kind ?? "ai",
     workspace:
       value.workspace === null
         ? null
@@ -182,6 +186,9 @@ export class TaskStore {
   async create(input) {
     if (!input || !TASK_ROLES.includes(input.role))
       throw new Error("Choose planner, coder, reviewer, or researcher.");
+    const kind = input.kind ?? "ai";
+    if (!["ai", "local-inventory", "local-brief"].includes(kind))
+      throw Error("Invalid task kind.");
     const title = text(input.title, 160, "task title"),
       prompt = text(input.prompt, 16000, "task prompt");
     const workspace =
@@ -195,6 +202,7 @@ export class TaskStore {
         title,
         prompt,
         role: input.role,
+        kind,
         workspace,
         status: "queued",
         attempts: 0,
@@ -228,12 +236,21 @@ export class TaskStore {
       options.result == null
         ? null
         : text(options.result, 32000, "task result", true);
-    if (result !== null && status !== "completed" && status !== "failed")
-      throw new Error("Results belong to completed or failed tasks only.");
+    if (
+      result !== null &&
+      !["awaiting-review", "completed", "failed"].includes(status)
+    )
+      throw new Error(
+        "Results belong to awaiting-review, completed or failed tasks only.",
+      );
     return this.update((records) => {
       const task = this.find(records, id);
       if (!transitions[task.status].includes(status))
         throw new Error(`Cannot move a ${task.status} task to ${status}.`);
+      if (status === "awaiting-review" && !result?.trim())
+        throw Error("A real result is required before review.");
+      if (status === "completed" && !task.result?.trim())
+        throw Error("Review a real result before completion.");
       task.status = status;
       task.updatedAt = new Date().toISOString();
       if (status === "running") task.attempts += 1;
@@ -266,7 +283,7 @@ export class TaskStore {
   async remove(id) {
     return this.update((records) => {
       const task = this.find(records, id);
-      if (["queued", "running"].includes(task.status))
+      if (["queued", "running", "awaiting-review"].includes(task.status))
         throw new Error("Cancel an active task before removing it.");
       records.splice(records.indexOf(task), 1);
       return { removed: true };

@@ -308,7 +308,7 @@ export function App() {
         </div>
         <div className="version">
           <Check size={13} />
-          Sebby 0.2 · Local workbench
+          Sebby 0.3 · Local workbench
         </div>
       </aside>
     </div>

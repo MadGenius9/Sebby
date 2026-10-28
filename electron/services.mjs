@@ -159,7 +159,8 @@ export class Workspace {
       await handle.close();
     }
   }
-  async list() {
+  async list({ signal } = {}) {
+    signal?.throwIfAborted();
     if (!this.root) return [];
     if (
       (await fs.realpath(this.root)) !== this.root ||
@@ -170,6 +171,7 @@ export class Workspace {
     const root = this.root;
     let scanned = 0;
     const walk = async (directory, prefix = "", depth = 0) => {
+      signal?.throwIfAborted();
       if (depth > 5 || results.length >= 300 || scanned >= this.scanLimit)
         return;
       if (this.root !== root)
@@ -179,6 +181,7 @@ export class Workspace {
       const handle = await fs.opendir(directory);
       try {
         while (scanned < this.scanLimit && results.length < 300) {
+          signal?.throwIfAborted();
           const entry = await handle.read();
           if (!entry) break;
           scanned++;
@@ -212,6 +215,7 @@ export class Workspace {
       }
     };
     await walk(root);
+    signal?.throwIfAborted();
     return results.sort((a, b) => a.path.localeCompare(b.path));
   }
 

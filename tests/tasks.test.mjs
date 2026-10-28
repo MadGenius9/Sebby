@@ -24,6 +24,10 @@ test("task lifecycle persists real state and validates transitions", async (t) =
   await assert.rejects(store.transition(task.id, "completed"), /Cannot move/);
   await assert.rejects(store.remove(task.id), /Cancel/);
   await store.transition(task.id, "running");
+  await assert.rejects(store.transition(task.id, "completed"), /Cannot move/);
+  await store.transition(task.id, "awaiting-review", {
+    result: "Reviewed; no commands executed.",
+  });
   const done = await store.transition(task.id, "completed", {
     result: "Reviewed; no commands executed.",
   });

@@ -89,6 +89,8 @@ export const bridge = new Proxy(implementation, {
 }) as Bridge;
 
 export type Task = {
+  kind?: string;
+  result?: string | null;
   id: string;
   title: string;
   prompt: string;
@@ -262,4 +264,47 @@ export interface TeamBridge {
 }
 export const team: TeamBridge | null = desktop
   ? (window.sebby as Bridge & TeamBridge)
+  : null;
+export type McpSnapshot = {
+  connectorId: string;
+  status: string;
+  checkedAt: number | null;
+  tools: { name: string; description: string }[];
+  protocolVersion?: string;
+  truncated?: boolean;
+  error?: string;
+};
+export interface DiscoveryBridge {
+  discoverMcp(id: string): Promise<McpSnapshot>;
+  mcpStatus(id: string): Promise<McpSnapshot>;
+  disconnectMcp(id: string): Promise<McpSnapshot>;
+}
+export const discovery: DiscoveryBridge | null = desktop
+  ? (window.sebby as Bridge & DiscoveryBridge)
+  : null;
+
+export interface UtilityBridge {
+  startLocalUtility(input: {
+    kind: "workspace-inventory" | "project-brief";
+    memberId?: string;
+  }): Promise<{ started: boolean; runId?: string; task?: Task }>;
+  reviewLocalUtility(id: string): Promise<{ reviewed: boolean; task: Task }>;
+}
+export const utilities: UtilityBridge | null = desktop
+  ? (window.sebby as Bridge & UtilityBridge)
+  : null;
+export type NotificationStatus = {
+  supported: boolean;
+  enabled: boolean;
+  busy: boolean;
+  lastError: string | null;
+  lastCheckedAt: number | null;
+};
+export interface NotificationBridge {
+  notificationStatus(): Promise<NotificationStatus>;
+  enableNotifications(): Promise<NotificationStatus>;
+  disableNotifications(): Promise<NotificationStatus>;
+}
+export const notifications: NotificationBridge | null = desktop
+  ? (window.sebby as Bridge & NotificationBridge)
   : null;

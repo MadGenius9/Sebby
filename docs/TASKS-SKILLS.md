@@ -17,7 +17,9 @@ const task = await tasks.create({
 // The approved executor, not arbitrary renderer input, controls these:
 await tasks.transition(task.id, 'running');
 await tasks.appendLog(task.id, {level: 'info', message: 'Read the approved file.'});
-await tasks.transition(task.id, 'completed', {result: 'Evidence-backed result'});
+await tasks.transition(task.id, 'awaiting-review', {result: 'Evidence-backed result'});
+// Only after separate review:
+await tasks.transition(task.id, 'completed');
 ```
 
 Methods: `load`, `list`, `get(id)`, `create(input)`, `transition(id,status,{message?,result?})`, `appendLog(id,{level,message})`, `remove(id)`. Reads return clones. Mutations serialize and write a unique temporary file followed by rename. Errors preserve the previously committed state. One process/instance owns each store; this is not a multi-process database.
@@ -25,14 +27,15 @@ Methods: `load`, `list`, `get(id)`, `create(input)`, `transition(id,status,{mess
 ### Lifecycle
 
 - queued → running or cancelled
-- running → completed, failed, cancelled, or interrupted
+- running → awaiting-review, failed, cancelled, or interrupted
+- awaiting-review → completed, failed, or cancelled
 - interrupted → queued or cancelled
 - failed → queued
 - completed and cancelled → no further transitions
 
-Running tasks become interrupted when storage loads after restart. They are **never automatically replayed**; prior side effects may already have happened. Queued tasks remain queued. Retrying increments the attempt count only when work really starts. Active queued/running tasks must be cancelled before removal. Task cancellation records intent/status; the integrating executor must also abort its actual in-flight operation. No module can terminate a subprocess it does not own.
+Running tasks become interrupted when storage loads after restart. They are **never automatically replayed**; prior side effects may already have happened. Queued tasks remain queued. Retrying increments the attempt count only when work really starts. Active queued/running/awaiting-review tasks must be cancelled before removal. Awaiting-review results persist across restart without replay. Task cancellation records intent/status; the integrating executor must also abort its actual in-flight operation. No module can terminate a subprocess it does not own.
 
-Limits: 100 tasks, 100 latest log entries per task, 160-byte title, 16 KB prompt, 32 KB result, 2 KB log entries, 4 MiB total JSON. Workspace values are metadata, not trusted grants of filesystem access. Roles are labels and prompts, not privileges. Do not return raw secrets in logs/results. A future executor must separately enforce selected workspace, tool policy, credentials, usage limits, and human approvals.
+Limits: 100 tasks, 100 latest log entries per task, 160-byte title, 16 KB prompt, 32 KB result, 2 KB log entries, 4 MiB total JSON. Workspace values are metadata, not trusted grants of filesystem access. Roles are labels and prompts, not privileges. Task kind is immutable metadata: ai (default and legacy), local-inventory, or local-brief. Only dedicated controlled local utilities execute the latter; an arbitrary app goal is never relabeled as an inventory. Do not return raw secrets in logs/results. A future executor must separately enforce selected workspace, tool policy, credentials, usage limits, and human approvals.
 
 ### IPC integration rule
 

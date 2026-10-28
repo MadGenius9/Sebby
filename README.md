@@ -2,7 +2,7 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.2: a real local workbench, not yet a connected AI coding agent.** Model execution, live connectors, and autonomous sub-agents are not available. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.3: a real local workbench, not yet a connected AI coding agent.** Model execution, authenticated connectors, and autonomous AI sub-agents are not available. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -28,17 +28,17 @@ npm start
 | Commands | Fixed Git status after native trusted-executable selection and per-run approval | No shell; no arbitrary commands; npm execution unavailable in UI and disabled on Windows pending process-tree containment |
 | Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
 | Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; AI executor/coordination not connected |
-| Tasks | Durable queue/logs, cancel/retry, restart interruption | No simulated work; running/completed state cannot be set by renderer |
-| Connections | Validated persistent GitHub/MCP bookmarks | Configured—not connected; no authentication, network, or tool grants |
+| Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals remain queued; utilities do not pretend to reason or build apps |
+| Connections | GitHub/MCP bookmarks; explicit read-only MCP tool-name discovery with DNS/TLS/size/time safeguards | No authentication or tool execution; JSON-only 2026-07-28 subset, no real endpoint tested |
 | Companion | Persisted personality preferences, Orbit artwork, optional local voice preview | Authored preview, not model behavior; device-local English voice required; no microphone |
-| Reminders | Durable in-app dates, due state, snooze/dismiss | No OS notification or background execution when closed |
+| Reminders | Durable dates, due state, snooze/dismiss; opt-in silent desktop notifications until quit | Native display unverified; no notifications before consent and nothing runs when closed |
 | Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
 
 These paths have service/component test coverage, not Windows-native release certification. Read [verification](docs/VERIFICATION.md) before treating this as a finished product.
 
 ## Meet Sebby’s team
 
-In **Team**, choose a specialty and describe the job. Sebby assigns a distinct name—Mira for a planner, Finn for a coder, Sage for a reviewer, Nova for a researcher, with more names available. You can rename or retire them. Create a matching-role task under **Tasks**, then assign it. The UI shows real queue state and plainly reports that the AI executor is not connected.
+In **Team**, choose a specialty and describe the job. Sebby assigns a distinct name—Mira for a planner, Finn for a coder, Sage for a reviewer, Nova for a researcher, with more names available. You can rename or retire them. Create a matching-role task under **Tasks**, then assign it. The UI shows real queue state and plainly reports that the AI executor is not connected. You can run an explicitly labeled deterministic inventory or project-brief-template utility, optionally attach a matching unassigned specialist name, read its observed report, then separately approve that utility as complete. This does not complete an arbitrary AI/app-building goal.
 
 Future connected specialists inherit permission limits. Sebby must review their evidence before reporting completion; a role or name never grants access.
 
@@ -71,6 +71,7 @@ Additional tests: `npm run test:ui` uses Playwright and requires a locally avail
 - `electron/services.mjs`: bounded workspace and memory services.
 - `electron/development*.mjs`: reviewed file operations and fixed command runner/IPC.
 - `electron/{tasks,team,skills,conversations,reminders,connectors}.mjs`: separately testable local stores.
+- `electron/{local-executor,mcp-discovery,notifications}*.mjs`: approved local utility execution, read-only network discovery, and session-only notification control.
 - `electron/backup*.mjs`: schema-validated backup/recovery and native path selection.
 - `skills/*.md`: authoritative desktop bundled instruction documents; `src/skills.ts` is the offline preview/suggestion mirror.
 - `public/orbit.png`, `build/icon.ico`: original chosen Orbit render and deterministic icon-format conversion.

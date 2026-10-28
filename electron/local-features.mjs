@@ -11,6 +11,8 @@ export async function installLocalFeatures({
   register,
   workspace,
   confirm,
+  onConnectorRemoved = () => {},
+  cancelActiveTask = async () => null,
 }) {
   const team = new TeamStore(directory),
     connectors = new ConnectorStore(directory),
@@ -61,6 +63,7 @@ export async function installLocalFeatures({
     const item = connectors.get(id);
     if (!(await confirm("Remove connector bookmark?", item.name)))
       return { removed: false };
+    onConnectorRemoved(id);
     return connectors.remove(id, { confirmed: true });
   });
   register("list-tasks", () => tasks.list());
@@ -72,16 +75,22 @@ export async function installLocalFeatures({
       workspace: workspace.root,
     }),
   );
-  register("cancel-task", (id) =>
-    tasks.transition(id, "cancelled", {
+  register("cancel-task", async (id) => {
+    const handled = await cancelActiveTask(id);
+    if (handled) return handled;
+    return tasks.transition(id, "cancelled", {
       message: "Cancelled by you. No automatic retry.",
-    }),
-  );
-  register("retry-task", (id) =>
-    tasks.transition(id, "queued", {
+    });
+  });
+  register("retry-task", (id) => {
+    if (tasks.get(id).kind !== "ai")
+      throw Error(
+        "Start a fresh local utility with a new approval instead of retrying this result.",
+      );
+    return tasks.transition(id, "queued", {
       message: "Queued again by you. Waiting for an approved executor.",
-    }),
-  );
+    });
+  });
   register("remove-task", async (id) => {
     const task = tasks.get(id);
     if (
@@ -132,5 +141,5 @@ export async function installLocalFeatures({
       return { removed: false };
     return conversations.remove(id, { confirmed: true });
   });
-  return { tasks, skills, reminders, conversations };
+  return { tasks, skills, reminders, conversations, connectors, team };
 }

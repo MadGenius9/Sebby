@@ -1,8 +1,8 @@
-# Delivery status — 0.2 local workbench
+# Delivery status — 0.3 local workbench
 
 ## Implemented and tested without external services
 
-Persistent local memory/personality/drafts; instruction skill import; named specialist identities; task queue and restart interruption; reminders; disconnected connector bookmarks; reviewed file changes with backup/undo; fixed command runner policy; validated app-data export/restore; React UI wiring and authored Orbit assets.
+Persistent local memory/personality/drafts; instruction skill import; named specialist identities; task queue and restart interruption; reminders; disconnected connector bookmarks; reviewed file changes with backup/undo; fixed command runner policy; real deterministic local inventory/brief execution with separate review; opt-in read-only MCP discovery transport (mocked network tests); session-only native-notification adapter/controller (mocked OS tests); validated app-data export/restore; React UI wiring and authored Orbit assets.
 
 ## Still requires a credential decision
 
@@ -11,10 +11,10 @@ Real OpenAI integration is paused at the installed secure-credential workflow. N
 ## Still requires implementation plus runtime validation
 
 - Streaming/model context/history/usage budgets and real tool orchestration.
-- GitHub authentication and MCP execution (current entries are bookmarks only).
-- Real specialist execution and coordinator review (current identities and queue are genuine local metadata).
+- GitHub authentication and MCP tool execution. MCP metadata discovery exists, but is JSON-only, read-only and not live-endpoint validated.
+- Real AI specialist execution and coordinator reasoning/review. Named identities can label actual deterministic local utilities; this is not model-based agency.
 - Windows Job Object child-process containment before npm build/test execution.
-- Project preview processes, rich voice input/output, animated expressions, OS reminders, desktop/browser automation, and optional cloud continuation.
+- Project preview processes, rich voice input/output, animated expressions, desktop/browser automation, and optional cloud continuation. OS reminder delivery is implemented behind session consent but requires native validation.
 - Signed release/update chain; native Windows installation, security, accessibility, and end-to-end tests.
 
 These are not marked complete simply because an interface or service foundation exists. The first useful autonomous app-developer milestone remains the end of phase 3 with real AI and a safe tested tool loop.

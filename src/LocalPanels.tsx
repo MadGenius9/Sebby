@@ -1,3 +1,5 @@
+import { NotificationControls } from "./NotificationControls";
+import { UtilityLauncher } from "./UtilityLauncher";
 import { useEffect, useState } from "react";
 import {
   Plus,
@@ -10,6 +12,7 @@ import {
 } from "lucide-react";
 import {
   local,
+  utilities,
   type Task,
   type Reminder,
   type Skill,
@@ -42,15 +45,20 @@ export function TasksPanel({ report }: Props) {
   }
   useEffect(() => {
     void load();
+    const timer = setInterval(() => void load(), 1500);
+    return () => clearInterval(timer);
   }, []);
   if (!local) return <DesktopOnly />;
   return (
     <>
       <h2>Keep the next step in sight.</h2>
       <p className="muted">
-        A durable queue for future specialist agents. Tasks are saved, not
-        executed: the AI executor is not connected.
+        AI goals stay queued until an AI executor is connected. The separate
+        local utilities below perform real, bounded metadata work and require
+        review before completion.
       </p>
+      <UtilityLauncher report={report} refresh={load} />
+      <h3>Queue an AI goal for later</h3>
       <div className="form-grid">
         <label>
           Task title
@@ -117,7 +125,9 @@ export function TasksPanel({ report }: Props) {
               <h3>{item.title}</h3>
               <p>{item.prompt}</p>
             </div>
-            {["queued", "interrupted"].includes(item.status) ? (
+            {["queued", "running", "interrupted", "awaiting-review"].includes(
+              item.status,
+            ) ? (
               <button
                 className="secondary"
                 onClick={async () => {
@@ -133,21 +143,48 @@ export function TasksPanel({ report }: Props) {
               </button>
             ) : null}
           </div>
-          {["failed", "interrupted"].includes(item.status) && (
-            <button
-              className="text-button"
-              onClick={async () => {
-                try {
-                  await local!.retryTask(item.id);
-                  await load();
-                } catch (e) {
-                  report((e as Error).message);
-                }
-              }}
-            >
-              Queue again
-            </button>
+          {(!item.kind || item.kind === "ai") &&
+            ["failed", "interrupted"].includes(item.status) && (
+              <button
+                className="text-button"
+                onClick={async () => {
+                  try {
+                    await local!.retryTask(item.id);
+                    await load();
+                  } catch (e) {
+                    report((e as Error).message);
+                  }
+                }}
+              >
+                Queue again
+              </button>
+            )}
+          {item.kind && item.kind !== "ai" && (
+            <small>Deterministic local utility · not an AI task</small>
           )}
+          {item.result && (
+            <details className="spaced">
+              <summary>Read result and limitations</summary>
+              <pre className="change-diff">{item.result}</pre>
+            </details>
+          )}
+          {item.kind !== "ai" &&
+            item.status === "awaiting-review" &&
+            utilities && (
+              <button
+                className="primary spaced"
+                onClick={async () => {
+                  try {
+                    await utilities!.reviewLocalUtility(item.id);
+                    await load();
+                  } catch (e) {
+                    report((e as Error).message);
+                  }
+                }}
+              >
+                Review and accept this utility result…
+              </button>
+            )}
           <details>
             <summary>Activity log</summary>
             {item.logs.map((log, i) => (
@@ -156,7 +193,7 @@ export function TasksPanel({ report }: Props) {
               </p>
             ))}
           </details>
-          {!["queued", "running"].includes(item.status) && (
+          {!["queued", "running", "awaiting-review"].includes(item.status) && (
             <button
               className="text-button"
               onClick={async () => {
@@ -200,9 +237,11 @@ export function RemindersPanel({ report }: Props) {
     <>
       <h2>Leave a nudge for later.</h2>
       <p className="muted">
-        Local in-app reminders. Due items appear here when Sebby is open; this
-        build does not send system notifications or run when closed.
+        Due items appear here when Sebby is open. Desktop notifications are
+        optional and disabled until you explicitly enable them below. Nothing
+        runs when Sebby is closed.
       </p>
+      <NotificationControls report={report} />
       <label className="field-label" htmlFor="reminder-title">
         Reminder
       </label>
