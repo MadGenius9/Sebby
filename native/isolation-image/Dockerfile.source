@@ -1,0 +1,16 @@
+# SOURCE TEMPLATE ONLY. No image was built, pulled or approved.
+# BASE_IMAGE has deliberately NO DEFAULT. An audited Linux Node image pinned by
+# digest must be supplied explicitly; never substitute a floating tag.
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG WRAPPER_SHA256
+LABEL dev.sebby.contract-version="1"
+LABEL dev.sebby.wrapper-sha256="${WRAPPER_SHA256}"
+# Build context must contain a reviewed cache for each exact lock SHA. This
+# repository does NOT supply dependency caches or permit automatic downloads.
+COPY --chown=0:0 --chmod=0444 runner.mjs /opt/sebby/runner.mjs
+COPY --chown=0:0 --chmod=0444 empty-npmrc /opt/sebby/empty-npmrc
+COPY --chown=0:0 dependencies/ /opt/sebby/dependencies/
+USER 65532:65532
+WORKDIR /work
+ENTRYPOINT ["/usr/local/bin/node", "/opt/sebby/runner.mjs"]

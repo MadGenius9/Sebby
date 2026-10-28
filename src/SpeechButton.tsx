@@ -1,6 +1,11 @@
+import { useVoiceSession } from "./VoiceSession";
 import { useEffect, useRef, useState } from "react";
 /** Explicit device-local speech only. Never silently substitute a remote voice. */
 export function SpeechButton({ text }: { text: string }) {
+  const session = useVoiceSession();
+  const micBusy = ["starting", "recording", "stopping"].includes(
+    session.capture,
+  );
   const [speaking, setSpeaking] = useState(false),
     [note, setNote] = useState("");
   const utterance = useRef<SpeechSynthesisUtterance | null>(null);
@@ -10,19 +15,21 @@ export function SpeechButton({ text }: { text: string }) {
       utterance.current = null;
       if ("speechSynthesis" in window) window.speechSynthesis.cancel();
       setSpeaking(false);
+      session.setSpeech("idle");
     };
     window.addEventListener("sebby:stop-local-speech", stop);
     return () => {
       window.removeEventListener("sebby:stop-local-speech", stop);
       stop();
     };
-  }, []);
+  }, [session.setSpeech]);
   return (
     <div className="button-row">
       <button
         className="text-button"
-        disabled={!text.trim() || text.length > 6000}
+        disabled={micBusy || !text.trim() || text.length > 6000}
         onClick={() => {
+          if (micBusy) return;
           if (
             !("speechSynthesis" in window) ||
             !("SpeechSynthesisUtterance" in window)
@@ -34,6 +41,7 @@ export function SpeechButton({ text }: { text: string }) {
             window.speechSynthesis.cancel();
             utterance.current = null;
             setSpeaking(false);
+            session.setSpeech("idle");
             return;
           }
           const voice = window.speechSynthesis
@@ -57,6 +65,7 @@ export function SpeechButton({ text }: { text: string }) {
             if (utterance.current === value) {
               utterance.current = null;
               setSpeaking(false);
+              session.setSpeech("idle");
             }
           };
           value.onend = finish;
@@ -65,9 +74,23 @@ export function SpeechButton({ text }: { text: string }) {
             finish();
             setNote("Local speech could not finish.");
           };
-          setNote("Device-local voice · no cloud audio request");
+          value.onstart = () => {
+            if (utterance.current === value) {
+              session.setSpeech("reading");
+              setNote(
+                "Reading with a device-local voice · no cloud audio request",
+              );
+            }
+          };
+          setNote("Local speech queued; waiting for device playback.");
+          session.setSpeech("queued");
           setSpeaking(true);
-          window.speechSynthesis.speak(value);
+          try {
+            window.speechSynthesis.speak(value);
+          } catch {
+            finish();
+            setNote("Local speech could not start.");
+          }
         }}
       >
         {speaking ? "Stop reading" : "Read response aloud locally"}

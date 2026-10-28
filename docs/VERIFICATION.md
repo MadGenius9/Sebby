@@ -1,13 +1,13 @@
-# Verification — 0.9 personal workbench
+# Verification — 0.10 personal workbench
 
 Checked 2026-10-28 in a Linux cloud execution workspace. No user Windows desktop attached.
 
 ## Passed
 
 - `npm run format:check`: all source/config/test files conform to Prettier.
-- `npm run build`: TypeScript plus Vite production bundle; 1,597 modules; core renderer ~360 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
-- `npm test`: **357/357 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
-- `npm run test:components`: **80/80 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
+- `npm run build`: TypeScript plus Vite production bundle; 1,598 modules; core renderer ~364 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
+- `npm test`: **366/366 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
+- `npm run test:components`: **87/87 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
 - `npm audit --json`: **zero reported vulnerabilities** across production and development dependencies at check time. This is not a complete supply-chain assessment.
 - Main/preload syntax checks: pass. Every Electron service is parsed/exercised through tests or syntax checks.
 - Original selected Orbit PNG and deterministic ICO conversion exist; no concept-board crop is used as the character.
@@ -65,3 +65,11 @@ Reviewed MCP tests cover endpoint/credential binding, strict schema/input parsin
 Isolation preparation tests perform actual local bounded file copies/hash verification/quarantine with fixed disposable fixtures. Container lifecycle argv/ownership/resource controls run only through a test-double adapter; production run is unavailable, and no Docker/WSL/VM process/image was used. Native file permissions, UID mappings, engine trust and audited image recipes remain blocking gates. UI tests cover honest unavailable state and local snapshot controls.
 
 See [incremental independent review](SECURITY-REVIEW-0.9.md). Backup/import and packaging tests exclude orchestration authority/evidence, MCP vault/history and isolation configuration/staging; these exclusions do not constitute a full secret-content scanner.
+
+## 0.10 additions
+
+Voice-session tests use synthetic media/speech/chat adapters: separate voice-only versus current-chat stop, actual utterance-start state, capture/playback exclusion, delayed run-ID cancellation and robust cleanup after exceptions. No microphone/device speech or provider request ran.
+
+Image-wrapper tests import inert source and inject benign fixture execution. They validate bounded stdin envelopes, exact file/lock/wrapper identity, materialization and bounded regular artifacts without launching Docker, npm, image builds, dependency installs or user project scripts. The fixed wrapper source is not an isolation boundary; production engine execution remains unavailable. Windows first-run instructions are a recipe, not observed Windows evidence.
+
+Independent incremental review: [0.10 source review](SECURITY-REVIEW-0.10.md). Final aggregate checks for this checkpoint are 366 Node and 87 DOM tests, with TypeScript/Vite, formatting, syntax and zero-reported-vulnerability npm audit passing. Native and live tests remain NOT RUN.

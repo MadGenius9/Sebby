@@ -29,3 +29,9 @@ Fake-only node tests cover consent order, multipart serialization, normalization
 ## Local response reading
 
 An explicit button on actual assistant messages reads at most 6,000 characters using only an English voice marked `localService` by the OS speech engine. No remote voice fallback or autoplay. Starting microphone capture stops speech first; stop/navigation releases the current utterance. Engine locality and actual audio output remain native-unverified.
+
+## Turn-based session controls (0.10)
+
+The chat panel coordinates observed capture/transcription/chat/local-speech state. Recording and local playback do not overlap intentionally. “Stop voice activity” stops capture/upload and local reading without cancelling unrelated tasks; “Stop voice and current chat” additionally requests cancellation of the panel-owned chat, including a run ID received after the stop request. It never cancels other agents or plans.
+
+Every stage is deliberate: start capture, stop, approve transcription upload, review draft, send chat, choose local read-aloud. No automatic upload, send, next recording or reading occurs. Reading status follows the actual speech-start callback, not just queueing an utterance. Late/stale callbacks are guarded and independent cleanup continues when a device API throws. Stop is a request, not proof of remote rollback or refunded charges. This is **not realtime conversation**, and native device behavior remains untested.

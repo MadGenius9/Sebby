@@ -1,3 +1,4 @@
+import { useVoiceSession } from "./VoiceSession";
 import { useEffect, useRef, useState } from "react";
 type Result = { status: string; text?: string; error?: string };
 type VoiceApi = {
@@ -24,6 +25,7 @@ export function VoiceControls({
   report: (message: string) => void;
   onTranscript: (text: string) => void;
 }) {
+  const session = useVoiceSession();
   const api = (window as unknown as { sebby?: VoiceApi }).sebby;
   const [model, setModel] = useState("");
   const [ready, setReady] = useState(false),
@@ -44,12 +46,24 @@ export function VoiceControls({
     phaseRef = useRef("idle");
   const change = (next: string) => {
     phaseRef.current = next;
+    session.setCapture(next);
     if (alive.current) setPhase(next);
   };
   const release = () => {
     clearTimeout(timer.current);
-    stream.current?.getTracks().forEach((t) => t.stop());
+    const current = stream.current;
     stream.current = null;
+    try {
+      current?.getTracks().forEach((t) => {
+        try {
+          t.stop();
+        } catch {
+          /* Release other tracks too. */
+        }
+      });
+    } catch {
+      /* No additional media is requested. */
+    }
   };
   const discard = () => {
     generation.current++;
@@ -58,7 +72,11 @@ export function VoiceControls({
     if (recorder.current) {
       recorder.current.onstop = null;
       recorder.current.ondataavailable = null;
-      if (recorder.current.state !== "inactive") recorder.current.stop();
+      try {
+        if (recorder.current.state !== "inactive") recorder.current.stop();
+      } catch {
+        /* Tracks still release below. */
+      }
     }
     recorder.current = null;
     release();
@@ -67,6 +85,10 @@ export function VoiceControls({
     if (id) void api?.cancelVoice(id).catch(() => {});
     change("idle");
   };
+  useEffect(
+    () => session.registerCapture(discard),
+    [api, session.registerCapture],
+  );
   async function refreshAvailability() {
     if (!api?.voiceStatus || phaseRef.current !== "idle") return;
     try {
@@ -120,7 +142,17 @@ export function VoiceControls({
         video: false,
       });
       if (!alive.current || epoch !== generation.current) {
-        media.getTracks().forEach((t) => t.stop());
+        try {
+          media.getTracks().forEach((t) => {
+            try {
+              t.stop();
+            } catch {
+              /* Continue cleanup. */
+            }
+          });
+        } catch {
+          /* Stale stream is never used. */
+        }
         return;
       }
       stream.current = media;
@@ -198,6 +230,7 @@ export function VoiceControls({
       if (!alive.current || epoch !== generation.current) return;
       if (result.status === "completed" && result.text) {
         onTranscript(result.text);
+        session.setDraftReady(true);
         setNote("Transcript added to your draft. Review before sending.");
         discard();
       } else {

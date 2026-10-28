@@ -2,9 +2,11 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.9: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.10: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
+
+First Windows launch? Use the [short first-run guide](docs/WINDOWS-FIRST-RUN.md): check existing prerequisites, explicitly choose dependency installation, then test local features without any API key.
 
 Prerequisites: Node.js 24 LTS and npm. In PowerShell, from this project:
 
@@ -108,3 +110,7 @@ Tasks can coordinate up to four sequential named specialists under one locked wo
 The separate **Reviewed MCP tools** panel supports manually provisioned bearer tokens, not full OAuth. Review the exact endpoint, tool schema and complete JSON input. Server claims of safety/read-only behavior are untrusted; remote effects can be irreversible or charged. Post-dispatch failures are uncertain, not rolled back. Outputs are inert text, not model instructions. See [MCP boundaries](docs/MCP-REVIEWED.md).
 
 **Isolated build preparation** copies and verifies selected bounded local source files after native consent. Engine configuration, fixed command policy and artifact quarantine have source/mock coverage only. Production execution remains unavailable: no Docker/VM process, image pull, npm install or build is launched. Native engine trust, audited dependency-specific images and mount/permission validation remain required. See [execution path](docs/ISOLATED-EXECUTION.md) and [phase gaps](docs/PHASE-GAPS.md).
+
+Voice now has explicit **turn-based session controls** showing observed microphone, transcription, chat and local-reading state. “Stop voice activity” does not cancel unrelated work; the separate “Stop voice and current chat” also cancels the owned chat request. Nothing records, uploads, sends or reads automatically. This is not realtime voice conversation.
+
+A reviewed **image-wrapper source contract** now transfers bounded snapshot content through stdin rather than mounting private host files. It validates the exact dependency-lock identity before a fixed web build/test recipe, with preprovisioned dependencies only. No image has been built, pulled or run; production execution remains disabled and container/daemon trust still needs native validation. The wrapper is not a sandbox or proof against hostile project code.

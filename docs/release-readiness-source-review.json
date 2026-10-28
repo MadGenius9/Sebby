@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "project": {
     "name": "sebby-desktop",
-    "version": "0.9.0",
+    "version": "0.10.0",
     "private": true
   },
-  "packageJsonSha256": "a7d578e3778cf1beadf5ff04abf40f38fd2c199dbdddfc98abddeeddbe7ca4d6",
-  "lockfileSha256": "eab1104f374dd9f04b7aa70be1cde2249ed46a31f87fb0915c54f636e7d6f3bf",
+  "packageJsonSha256": "76ead7e269740d2637607f2348e5693d8f29cb0228998fefd217bb0b1a3cd785",
+  "lockfileSha256": "82b0ce7cc9d95b627a76feaa903ba39ebd0651a260f43be346e9b2aab2f2a605",
   "source": [
     {
       "path": "build/icon.ico",
@@ -130,8 +130,8 @@
     },
     {
       "path": "electron/isolation-runner.mjs",
-      "bytes": 12817,
-      "sha256": "c4805b0fee9eb561de3db7ba54016664a0b99471c7c8597a1f1849b37b2f206d"
+      "bytes": 15795,
+      "sha256": "d10a1a55e4ab3aec57d6dbb9d31e4d7ca68f2a44701beb9f7914689fd81b5789"
     },
     {
       "path": "electron/isolation-snapshot.mjs",
@@ -345,13 +345,13 @@
     },
     {
       "path": "package-lock.json",
-      "bytes": 205056,
-      "sha256": "eab1104f374dd9f04b7aa70be1cde2249ed46a31f87fb0915c54f636e7d6f3bf"
+      "bytes": 205058,
+      "sha256": "82b0ce7cc9d95b627a76feaa903ba39ebd0651a260f43be346e9b2aab2f2a605"
     },
     {
       "path": "package.json",
-      "bytes": 1789,
-      "sha256": "a7d578e3778cf1beadf5ff04abf40f38fd2c199dbdddfc98abddeeddbe7ca4d6"
+      "bytes": 1833,
+      "sha256": "76ead7e269740d2637607f2348e5693d8f29cb0228998fefd217bb0b1a3cd785"
     },
     {
       "path": "public/orbit.png",
@@ -500,8 +500,8 @@
     },
     {
       "path": "src/App.tsx",
-      "bytes": 8711,
-      "sha256": "07606ac4d223e15e365308e46df0bc7c8c5075263f810b62e24885c18a045980"
+      "bytes": 8712,
+      "sha256": "0a8e39bf79bdba5e700226b3a63d1e86b17175c14c409f52eaf79b9be01ee8b0"
     },
     {
       "path": "src/Appearance.tsx",
@@ -525,8 +525,8 @@
     },
     {
       "path": "src/ChatPanel.tsx",
-      "bytes": 18205,
-      "sha256": "5da3bfe866387232da5ddf16c8844a0693ea7477995122b01334a4c930648934"
+      "bytes": 19447,
+      "sha256": "89e739e9459e223515fe4652d7d08f6772478843f0745c51fe7102c636296a26"
     },
     {
       "path": "src/ConnectorBookmarks.tsx",
@@ -605,8 +605,8 @@
     },
     {
       "path": "src/SpeechButton.tsx",
-      "bytes": 2764,
-      "sha256": "ab0c3737797d509b743a8960d486f8118d9dc07b1d76ed3f0006024d82e819c4"
+      "bytes": 3556,
+      "sha256": "958ac4b16afbf09879d0d0f1b47266cedf3d2d14a6ceeb5e38f5b6a63b1cdd00"
     },
     {
       "path": "src/styles.css",
@@ -630,8 +630,13 @@
     },
     {
       "path": "src/VoiceControls.tsx",
-      "bytes": 8923,
-      "sha256": "b737d67ed47874f977dd1899f49b13a28b3d695a628f26dc959e2eea7718b537"
+      "bytes": 9676,
+      "sha256": "6d17036b0918d582a9a34e9032a14da29dc4e714b97a7936929423a54544520b"
+    },
+    {
+      "path": "src/VoiceSession.tsx",
+      "bytes": 4477,
+      "sha256": "d6fe3cbd873bf8575d94591b22fcef0df178c576f7a46a24f1245b737e716f41"
     },
     {
       "path": "tsconfig.json",
@@ -667,9 +672,9 @@
         "sha256": "c5a44646b88834afdb59e66a0ebb0bfdbadfab3746f327ec4921279de62e5207"
       },
       {
-        "path": "dist/assets/index-D0uaNAH9.js",
-        "bytes": 360282,
-        "sha256": "997d4e4bab7a8c3c58cca100067eeef81c36eb83b0f8dd04aecc315f4ce875a3"
+        "path": "dist/assets/index-BXaotMZE.js",
+        "bytes": 363717,
+        "sha256": "9125c07b66f9bd24de50f64a4fed510e1f99f939720b8fe02f685e82fe07bca3"
       },
       {
         "path": "dist/assets/index-DdhHbXKG.css",
@@ -689,7 +694,7 @@
       {
         "path": "dist/index.html",
         "bytes": 559,
-        "sha256": "9340d463bc68e7f1b3433945e4bacd667794983ae3b379666bf6ec2cbd7d4acb"
+        "sha256": "aaa484581a5a298690a31a7367b99a4c6e06366ff0a6b76804c0531f6b30c6c2"
       },
       {
         "path": "dist/orbit.png",
@@ -913,8 +918,8 @@
       },
       {
         "path": "electron/isolation-runner.mjs",
-        "bytes": 12817,
-        "sha256": "c4805b0fee9eb561de3db7ba54016664a0b99471c7c8597a1f1849b37b2f206d"
+        "bytes": 15795,
+        "sha256": "d10a1a55e4ab3aec57d6dbb9d31e4d7ca68f2a44701beb9f7914689fd81b5789"
       },
       {
         "path": "electron/isolation-snapshot.mjs",
@@ -1088,8 +1093,8 @@
       },
       {
         "path": "package.json",
-        "bytes": 1789,
-        "sha256": "a7d578e3778cf1beadf5ff04abf40f38fd2c199dbdddfc98abddeeddbe7ca4d6"
+        "bytes": 1833,
+        "sha256": "76ead7e269740d2637607f2348e5693d8f29cb0228998fefd217bb0b1a3cd785"
       },
       {
         "path": "skills/app-plan.md",

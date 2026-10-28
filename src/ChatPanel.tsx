@@ -1,3 +1,8 @@
+import {
+  VoiceSessionProvider,
+  VoiceSessionStatus,
+  useVoiceSession,
+} from "./VoiceSession";
 import { SpeechButton } from "./SpeechButton";
 import { VoiceControls } from "./VoiceControls";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -70,7 +75,15 @@ const terminal = new Set([
   "denied",
   "not-configured",
 ]);
-export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
+export function ChatPanel(props: Props) {
+  return (
+    <VoiceSessionProvider>
+      <ChatPanelContent {...props} />
+    </VoiceSessionProvider>
+  );
+}
+function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
+  const voiceSession = useVoiceSession();
   const api =
     typeof (window.sebby as unknown as ChatApi | undefined)?.startChat ===
     "function"
@@ -89,6 +102,7 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
     [historyBusy, setHistoryBusy] = useState(false),
     [historyNotice, setHistoryNotice] = useState(""),
     [draftTitle, setDraftTitle] = useState("");
+  const cancelPendingStart = useRef(false);
   const runId = useRef<string | null>(null),
     startingRef = useRef(false),
     alive = useRef(true),
@@ -96,6 +110,9 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
     reportRef = useRef(report);
   reportRef.current = report;
   const busy = starting || historyBusy || !terminal.has(run.status);
+  useEffect(() => {
+    if (!draft.trim()) voiceSession.setDraftReady(false);
+  }, [draft, voiceSession.setDraftReady]);
   const refreshProfile = useCallback(async () => {
     if (!api) return;
     try {
@@ -150,12 +167,16 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
       if (runId.current && event.runId !== runId.current) return;
       if (!runId.current && !startingRef.current) return;
       runId.current = event.runId;
+      if (cancelPendingStart.current) void cancel();
       if (event.conversationId && event.type === "dispatched")
         void load(event.conversationId);
       if (event.type === "delta" && typeof event.delta === "string") {
         setPartial((value) => (value + event.delta).slice(0, 262144));
       }
-      if (event.type === "dispatched") setDraft("");
+      if (event.type === "dispatched") {
+        setDraft("");
+        voiceSession.setDraftReady(false);
+      }
       if (event.status) setRun((previous) => ({ ...previous, ...event }));
       if (event.status && terminal.has(event.status)) {
         void refreshList();
@@ -206,6 +227,7 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
       report("Choose at most five distinct file paths and five skill IDs.");
       return;
     }
+    cancelPendingStart.current = false;
     startingRef.current = true;
     setStarting(true);
     runId.current = null;
@@ -220,6 +242,7 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
         skillIds: selectedSkills,
       });
       runId.current = next.runId;
+      if (cancelPendingStart.current) await cancel();
       const state = await api.chatStatus(next.runId);
       if (alive.current) {
         setRun(state);
@@ -242,10 +265,14 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
     }
   }
   async function cancel() {
-    if (!api || !runId.current) return;
+    if (!api) return;
+    if (startingRef.current) cancelPendingStart.current = true;
+    if (!runId.current) return;
+    const ownedRunId = runId.current;
+    cancelPendingStart.current = false;
     try {
-      await api.cancelChat(runId.current);
-      const state = await api.chatStatus(runId.current);
+      await api.cancelChat(ownedRunId);
+      const state = await api.chatStatus(ownedRunId);
       if (alive.current) setRun(state);
     } catch {
       report(
@@ -253,6 +280,19 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
       );
     }
   }
+  useEffect(
+    () => voiceSession.registerChat(cancel),
+    [api, voiceSession.registerChat],
+  );
+  useEffect(() => {
+    voiceSession.setChat(
+      terminal.has(run.status)
+        ? "idle"
+        : run.dispatched || run.status === "streaming"
+          ? "waiting for response"
+          : "preparing or awaiting approval",
+    );
+  }, [run.status, run.dispatched, voiceSession.setChat]);
   async function saveDraftLocally() {
     if (!api?.saveConversationDraft || busy || !draft.trim()) return;
     setHistoryBusy(true);
@@ -491,6 +531,7 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
           </fieldset>
         </details>
       )}
+      <VoiceSessionStatus />
       <VoiceControls
         report={report}
         onTranscript={(text) => setDraft(draft ? `${draft}\n${text}` : text)}

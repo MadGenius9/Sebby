@@ -1,6 +1,6 @@
 {
   "name": "sebby-desktop",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": true,
   "description": "Sebby personal workbench with approved AI and customizable pals",
   "type": "module",
@@ -14,7 +14,7 @@
     "test:ui": "playwright test",
     "preview": "vite preview --host 127.0.0.1",
     "test:components": "vitest run",
-    "format:check": "prettier --check src electron tests component-tests e2e *.ts *.json",
+    "format:check": "prettier --check src electron tests component-tests e2e scripts/*.mjs native/isolation-image/*.mjs *.ts *.json",
     "release:readiness": "node scripts/release-readiness.mjs --check"
   },
   "dependencies": {

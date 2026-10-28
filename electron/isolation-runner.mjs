@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import { constants } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { exact, hash, noLinks, isolationStatus } from "./isolation-config.mjs";
@@ -16,6 +17,62 @@ function relativeArtifact(value) {
   )
     throw Error("Unsupported artifact path.");
   return value;
+}
+export async function imageContract() {
+  return {
+    version: 1,
+    wrapperSha256: hash(
+      await fs.readFile(
+        new URL("../native/isolation-image/runner.mjs", import.meta.url),
+      ),
+    ),
+  };
+}
+async function snapshotInput(snapshot, recipe) {
+  const files = [];
+  for (const file of snapshot.files) {
+    const target = path.join(snapshot.directory, file.path);
+    await noLinks(target);
+    const handle = await fs.open(
+      target,
+      constants.O_RDONLY | (constants.O_NOFOLLOW ?? 0),
+    );
+    let bytes;
+    try {
+      const buffer = Buffer.alloc(file.bytes + 1);
+      let length = 0;
+      while (length < buffer.length) {
+        const next = await handle.read(
+          buffer,
+          length,
+          buffer.length - length,
+          null,
+        );
+        if (!next.bytesRead) break;
+        length += next.bytesRead;
+      }
+      bytes = buffer.subarray(0, length);
+    } finally {
+      await handle.close();
+    }
+    if (bytes.length !== file.bytes || hash(bytes) !== file.sha256)
+      throw Error("Snapshot changed before input delivery.");
+    files.push({
+      path: file.path,
+      base64: bytes.toString("base64"),
+      sha256: file.sha256,
+    });
+  }
+  const input = JSON.stringify({
+    format: "sebby-snapshot-v1",
+    recipe,
+    snapshotHash: snapshot.snapshotHash,
+    lockSha256: snapshot.lockSha256,
+    files,
+  });
+  if (Buffer.byteLength(input) > 8 * 1024 * 1024)
+    throw Error("Snapshot input limit exceeded.");
+  return input;
 }
 export class IsolationRunner {
   constructor({
@@ -67,11 +124,15 @@ export class IsolationRunner {
       attempted = false,
       cleanupVerified = false,
       configuration,
-      snapshot;
+      snapshot,
+      contract;
     const nonce = randomUUID(),
       name = "sebby-" + nonce;
     let result, engineConfig;
-    const invoke = async (args, { cleanup = false, maximum = 15000 } = {}) => {
+    const invoke = async (
+      args,
+      { cleanup = false, maximum = 15000, stdin } = {},
+    ) => {
       if (!cleanup) cancelled(controller.signal);
       const signal = cleanup ? undefined : controller.signal;
       let timer, onAbort;
@@ -97,6 +158,7 @@ export class IsolationRunner {
               ...args,
             ],
             environment: {},
+            ...(stdin === undefined ? {} : { stdin }),
             timeoutMs: maximum,
             maxOutputBytes: 2 * 1024 * 1024,
             signal,
@@ -120,7 +182,7 @@ export class IsolationRunner {
         if (signal && onAbort) signal.removeEventListener("abort", onAbort);
       }
     };
-    const ownership = async (cleanup = false) => {
+    const ownership = async (cleanup = false, requireStopped = false) => {
       if (!id) throw Error("Container identity is uncertain.");
       const raw = await invoke(["inspect", "--format={{json .}}", id], {
         cleanup,
@@ -136,23 +198,30 @@ export class IsolationRunner {
         doc.Id !== id ||
         doc.Name !== "/" + name ||
         doc.Config?.Image !== configuration.image ||
-        doc.Config?.Labels?.["dev.sebby.operation"] !== nonce
+        doc.Config?.Labels?.["dev.sebby.operation"] !== nonce ||
+        doc.Config?.Labels?.["dev.sebby.wrapper-sha256"] !==
+          contract.wrapperSha256 ||
+        doc.Config?.Labels?.["dev.sebby.contract-version"] !==
+          String(contract.version)
       )
         throw Error("Container ownership not verified.");
+      if (requireStopped && doc.State?.Running !== false)
+        throw Error("Container has not stopped.");
     };
     try {
       cancelled(controller.signal);
       configuration = await this.config.verifyExecutable();
       snapshot = await this.snapshots.verify(request.snapshotId);
+      contract = await imageContract();
       cancelled(controller.signal);
-      if (/[\r\n,]/.test(snapshot.directory))
-        throw Error("Unsupported staged mount path.");
+
       if (
         (await this.approve({
           action: "test-isolated-web-recipe",
           mode: "test-double-only",
           recipe: request.recipe,
           image: configuration.image,
+          contract,
           daemonEndpoint: configuration.daemonEndpoint,
           snapshotHash: snapshot.snapshotHash,
           files: snapshot.files,
@@ -184,9 +253,30 @@ export class IsolationRunner {
       await noLinks(this.root, true);
       engineConfig = path.join(this.root, "cli-" + nonce);
       await fs.mkdir(engineConfig, { mode: 0o700 });
+      const inspected = JSON.parse(
+        await invoke([
+          "image",
+          "inspect",
+          "--format={{json .}}",
+          configuration.image,
+        ]),
+      );
+      if (
+        !Array.isArray(inspected.RepoDigests) ||
+        !inspected.RepoDigests.includes(configuration.image) ||
+        inspected.Config?.Labels?.["dev.sebby.wrapper-sha256"] !==
+          contract.wrapperSha256 ||
+        inspected.Config?.Labels?.["dev.sebby.contract-version"] !==
+          String(contract.version)
+      )
+        throw Error("Unverified immutable image recipe identity.");
+      if ((await imageContract()).wrapperSha256 !== contract.wrapperSha256)
+        throw Error("Wrapper source changed after consent.");
+      const stdin = await snapshotInput(snapshot, request.recipe);
       const args = [
         "create",
         "--pull=never",
+        "--interactive",
         "--name",
         name,
         "--label",
@@ -207,8 +297,6 @@ export class IsolationRunner {
         "--restart=no",
         "--init",
         "--log-driver=none",
-        "--mount",
-        `type=bind,src=${snapshot.directory},dst=/input,readonly,bind-propagation=rprivate`,
         "--tmpfs",
         "/work:rw,noexec,nosuid,nodev,size=536870912,mode=1777",
         "--tmpfs",
@@ -217,12 +305,15 @@ export class IsolationRunner {
         "--entrypoint=/usr/local/bin/node",
         configuration.image,
         "/opt/sebby/runner.mjs",
+        "--reviewed-container-wrapper",
         "--recipe",
         request.recipe,
         "--snapshot-sha256",
         snapshot.snapshotHash,
         "--lock-sha256",
         snapshot.lockSha256,
+        "--wrapper-sha256",
+        contract.wrapperSha256,
       ];
       attempted = true;
       const created = (await invoke(args)).trim();
@@ -230,13 +321,15 @@ export class IsolationRunner {
         throw Error("Unverified created container ID.");
       id = created;
       await ownership();
-      const payload = await invoke(["start", "--attach", id], {
+      const payload = await invoke(["start", "--attach", "--interactive", id], {
         maximum: 60000,
+        stdin,
       });
       await ownership();
       const exit = (await invoke(["wait", id], { maximum: 5000 })).trim();
       if (!/^[0-9]{1,3}$/.test(exit))
         throw Error("Invalid container exit evidence.");
+      await ownership(false, true);
       let document;
       try {
         document = JSON.parse(payload);
@@ -245,6 +338,8 @@ export class IsolationRunner {
       }
       exact(document, [
         "format",
+        "contractVersion",
+        "wrapperSha256",
         "recipe",
         "snapshotHash",
         "lockSha256",
@@ -254,6 +349,8 @@ export class IsolationRunner {
       ]);
       if (
         document.format !== "sebby-isolated-web-v1" ||
+        document.contractVersion !== contract.version ||
+        document.wrapperSha256 !== contract.wrapperSha256 ||
         document.recipe !== request.recipe ||
         document.snapshotHash !== snapshot.snapshotHash ||
         document.lockSha256 !== snapshot.lockSha256 ||

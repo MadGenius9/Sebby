@@ -5,7 +5,10 @@ import path from "node:path";
 import os from "node:os";
 import { IsolationConfig, hash } from "../electron/isolation-config.mjs";
 import { WorkspaceSnapshot } from "../electron/isolation-snapshot.mjs";
-import { IsolationRunner } from "../electron/isolation-runner.mjs";
+import {
+  IsolationRunner,
+  imageContract,
+} from "../electron/isolation-runner.mjs";
 async function setup(t) {
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-isolation-"));
   t.after(() => fs.rm(root, { recursive: true, force: true }));
@@ -55,6 +58,7 @@ function mock(snapshot, overrides = {}) {
     calls,
     execute: async (request) => {
       calls.push(request);
+      const contract = await imageContract();
       const args = request.args.slice(4),
         verb = args[0];
       const ok = (stdout) => ({ exitCode: 0, stdout, stderr: "" });
@@ -62,6 +66,18 @@ function mock(snapshot, overrides = {}) {
         const value = await overrides.execute(verb, request);
         if (value) return value;
       }
+      if (verb === "image")
+        return ok(
+          JSON.stringify({
+            RepoDigests: [request.args.at(-1)],
+            Config: {
+              Labels: {
+                "dev.sebby.wrapper-sha256": contract.wrapperSha256,
+                "dev.sebby.contract-version": "1",
+              },
+            },
+          }),
+        );
       if (verb === "create") {
         name = args[args.indexOf("--name") + 1];
         nonce = args[args.indexOf("--label") + 1].split("=")[1];
@@ -72,11 +88,14 @@ function mock(snapshot, overrides = {}) {
         return ok(
           JSON.stringify({
             Id: id,
+            State: { Running: false },
             Name: "/" + name,
             Config: {
               Image: image,
               Labels: {
                 "dev.sebby.operation": overrides.wrongOwner ? "wrong" : nonce,
+                "dev.sebby.wrapper-sha256": contract.wrapperSha256,
+                "dev.sebby.contract-version": "1",
               },
             },
           }),
@@ -86,6 +105,8 @@ function mock(snapshot, overrides = {}) {
         return ok(
           JSON.stringify({
             format: "sebby-isolated-web-v1",
+            contractVersion: 1,
+            wrapperSha256: contract.wrapperSha256,
             recipe: "web-build",
             snapshotHash: snapshot.snapshotHash,
             lockSha256: snapshot.lockSha256,
@@ -197,10 +218,13 @@ test("production run cannot execute and fake transport has hardened fixed lifecy
   ])
     assert.ok(create.args.includes(flag));
   assert.ok(
-    create.args.some(
-      (x) => x.includes("src=" + snap.directory) && x.includes("readonly"),
+    !create.args.some(
+      (x) => x === "--mount" || x === "--volume" || x.includes(snap.directory),
     ),
   );
+  const attached = transport.calls.find((x) => x.args[4] === "start");
+  assert.ok(attached.args.includes("--interactive"));
+  assert.equal(JSON.parse(attached.stdin).snapshotHash, snap.snapshotHash);
   assert.ok(!create.args.some((x) => x.includes("src=" + workspace)));
   assert.deepEqual(create.environment, {});
   assert.equal(transport.calls.at(-1).args[4], "rm");
@@ -331,7 +355,7 @@ test("unverified partial create is uncertain and does not delete by guessed iden
   );
   assert.equal(result.status, "uncertain-test-double");
   assert.equal(result.cleanupRequired, true);
-  assert.equal(transport.calls.length, 1);
+  assert.equal(transport.calls.length, 2);
 });
 test("configuration change during native consent cannot invoke an older approved CLI or image", async (t) => {
   const { workspace, snapshots, runner, config, input } = await setup(t),

@@ -42,7 +42,7 @@ await runner.run(); // ALWAYS rejects: native execution unavailable
 await runner.runWithTestTransport({ snapshotId, recipe: 'web-build', signal }, fakeTransport);
 ```
 
-Only fixed recipes `web-build` and `web-test` exist. The test transport has `kind:'test-double'` and `execute({executable,args,environment,timeoutMs,maxOutputBytes,signal})`, returning `{exitCode,stdout,stderr}`. The kind marker is an API assertion, not a security sandbox. No renderer, model, skill or configuration can supply such a transport, and main must not expose the test entry point. Production functionality requires a separately reviewed implementation—not merely a different marker value.
+Only fixed recipes `web-build` and `web-test` exist. The test transport has `kind:'test-double'` and `execute({executable,args,environment,timeoutMs,maxOutputBytes,signal,stdin?})`, returning `{exitCode,stdout,stderr}`. The kind marker is an API assertion, not a security sandbox. No renderer, model, skill or configuration can supply such a transport, and main must not expose the test entry point. Production functionality requires a separately reviewed implementation—not merely a different marker value.
 
 The fixed argv plan creates an owned random-name/nonce container with:
 
@@ -51,33 +51,26 @@ The fixed argv plan creates an owned random-name/nonce container with:
 - network none, IPC none, private cgroup namespace and default private process namespace;
 - nonroot UID/GID 65532, read-only root filesystem, all capabilities dropped, no-new-privileges;
 - 64-process limit, 512 MiB memory including equal swap limit, one CPU and bounded open files;
-- a **read-only copied snapshot** bind mount at `/input`, never a live project, daemon socket, device, host namespace or arbitrary caller mount;
+- **no host mounts at all**: reviewed snapshot bytes are delivered as a bounded JSON stdin envelope, never a live project, daemon socket, device, host namespace or arbitrary caller mount;
 - bounded noexec/nosuid/nodev tmpfs at `/work` (512 MiB) and `/tmp` (64 MiB);
 - fixed Node entrypoint and image-owned `/opt/sebby/runner.mjs`, no caller command or arguments;
 - no restart policy and no daemon log persistence; attached output is bounded by the test transport/result validator.
 
-The private host staging directory (0700) and files (0400) will generally not be readable by container UID 65532 through a Linux bind mount without an explicitly reviewed identity/mapping/delivery design. That native delivery issue remains unresolved: do not make source files world-readable or loosen permissions merely to get a passing build. The read-only mount argv is a tested intended policy, not evidence of a working image.
+Host staging stays 0700/0400. The new source wrapper receives selected bytes on stdin and materializes files as the container UID in tmpfs, eliminating the planned host bind mount and its UID-readability mismatch. No host permission weakening is needed. Actual engine stdin/EOF delivery and containment remain native-validation gates, not proven by mocked argv.
 
 Docker's default seccomp policy is not independently established by these flags. A future engine validator must confirm an effective reviewed seccomp policy, Linux containers and all required isolation features before any production use. `noexec` deliberately prevents many native build products from executing; unsupported projects should fail, not silently weaken the boundary.
 
-Lifecycle: create → verify ownership by full container ID **and** exact random name, nonce label and image reference → start/attach → verify ownership → wait → validate result → quarantine artifacts → reverify ownership → remove only that owned container. A returned ID alone is never cleanup authority. Partial create without verified identity, cancellation, timeout or ownership mismatch is recorded as uncertain; no global cleanup/retry/assumed rollback occurs. Creation is bounded to 15 seconds, attached execution to 60, and inspect/wait/cleanup operations to 5 seconds each. Cancellation/shutdown propagates to active test transport and attempts bounded owned cleanup. A misbehaving transport may outlive its promise deadline; this is another reason no unvalidated production transport is exposed.
+Lifecycle: inspect immutable image digest and source-wrapper SHA/contract labels → create → verify ownership by full container ID **and** exact random name, nonce label and image reference → start/attach → verify ownership → wait → verify stopped container → validate result → quarantine artifacts → reverify ownership → remove only that owned container. A returned ID alone is never cleanup authority. Partial create without verified identity, cancellation, timeout or ownership mismatch is recorded as uncertain; no global cleanup/retry/assumed rollback occurs. Creation is bounded to 15 seconds, attached execution to 60, and inspect/wait/cleanup operations to 5 seconds each. Cancellation/shutdown propagates to active test transport and attempts bounded owned cleanup. A misbehaving transport may outlive its promise deadline; this is another reason no unvalidated production transport is exposed.
 
-## Required image recipe contract — NOT SUPPLIED OR VALIDATED
+## Image recipe source — NOT BUILT OR NATIVELY VALIDATED
 
-No image or image-build script is supplied in this checkpoint. The immutable approved image must contain an independently reviewed runner and **preprovisioned dependencies for the exact package-lock SHA-256**, not just a generic Node image. The runner must validate that lock match, copy reviewed `/input` into ephemeral `/work`, use only the baked dependency set, then invoke the fixed project's `build` or `test` script within the container. It must not run `npm install`/`npm ci` against the network, modify dependency declarations, accept arbitrary scripts/flags from main, or claim dependencies are locked without checking. Project scripts remain arbitrary project code; the proposed isolation boundary, not their names, limits them. A missing image, lock-specific dependency set or recipe must fail closed.
+`native/isolation-image/runner.mjs` now implements the source wrapper. Its inert exports are tested with a benign injected executor only; actual npm/project code is never executed in those tests. `Dockerfile.source` has no default base image and no supplied dependency cache, and is not an automatic build/install instruction. See [the image source contract](../native/isolation-image/README.md).
 
-The image runner's sole stdout result must be a JSON object with exact fields:
+Main sends `{format:'sebby-snapshot-v1',recipe,snapshotHash,lockSha256,files:[{path,base64,sha256}]}` over stdin (8 MiB encoded / 5 MiB decoded maximum), not a host mount. The wrapper validates duplicate/prototype keys, canonical bytes, Unicode path collisions and all hashes before writes. It creates regular files in container tmpfs and links only to the fixed image-owned dependency cache matching the exact package-lock SHA. The cache and wrapper must be immutable to the project user. No npm install/ci, online resolution or arbitrary main-supplied command exists.
 
-```text
-format: 'sebby-isolated-web-v1'
-recipe: 'web-build' | 'web-test'
-snapshotHash, lockSha256: approved hashes
-exitCode: integer matching container wait status
-logs: at most 64 KiB of inert, untrusted text
-artifacts: [{path, base64, sha256}]
-```
+The intended fixed image recipe is Node + npm `run build|test --offline --ignore-scripts` with scrubbed env, 45-second deadline and separately bounded stdout/stderr. Explicit project scripts remain arbitrary code, may invoke a shell and can target same-UID processes. The wrapper is not a sandbox, and process-group killing cannot prove all descendants stopped. The outer engine must enforce whole-container limits and verified stop/cleanup. No image, dependency cache, production transport or native execution proof exists yet.
 
-The wrapper must capture child logs instead of letting arbitrary project output forge this envelope. Digest trust includes that wrapper. Both envelope and artifact bytes are still treated as untrusted data by main.
+Results have exact fields `format:'sebby-isolated-web-v1'`, `contractVersion:1`, `wrapperSha256`, `recipe`, `snapshotHash`, `lockSha256`, `exitCode`, `logs` and `artifacts:[{path,base64,sha256}]`. Wrapper source hash/version are checked against image labels, arguments and output; image digest/audit binds intended identity, not semantic safety. Same-UID hostile project code may attack the wrapper/output, so a matching envelope is not authenticated successful-build provenance. Main treats all output as untrusted and verifies the container is stopped before quarantine.
 
 ## Artifact boundary
 
@@ -93,4 +86,4 @@ Before a production adapter: validate engine identity/version and supported poli
 
 ## Evidence
 
-Local Node tests cover configuration defaults/unknown authority fields, native save refusal, real file staging and changed-source detection, sensitive paths/link rejection, fixed hardened command construction, verified owned cleanup, artifact validation and cancellation/shutdown with a test double. No container, CLI, daemon, VM, native recipe or actual app build/test was executed. The interface is deliberately unavailable for live execution until those gaps are closed.
+Local Node tests cover configuration defaults/unknown authority fields, native save refusal, real file staging and changed-source detection, sensitive paths/link rejection, fixed hardened command construction, verified owned cleanup, artifact validation and cancellation/shutdown with a test double. Additional image-wrapper tests exercise parser validation, actual temporary-file materialization, immutable-cache checks and artifact collection with a benign injected writer only. No container, CLI, daemon, VM, native recipe or actual app build/test was executed. The interface is deliberately unavailable for live execution until those gaps are closed.

@@ -1,6 +1,8 @@
-# Delivery status — 0.9 personal workbench
+# Delivery status — 0.10 personal workbench
 
 ## Implemented in source
+
+New in 0.10: meaningful turn-based voice-session coordination with explicit stop controls and late-event guards; a bounded stdin image-wrapper source contract avoiding host snapshot mounts, with exact dependency-lock checks and mock-only execution tests; a concise Windows first-run guide. No image/engine/native audio/live API ran. Realtime conversation, production build execution and native validation remain unavailable.
 
 New in 0.9: sequential four-specialist plans with locked scopes/profile, conservative reserved budgets, per-child reviews and one separately approved final critique; manual authenticated MCP tool calls with endpoint-bound vault, exact session grants/full input review and durable uncertain outcomes; real bounded local isolation snapshots plus mock-only hardened execution/artefact policy. No production container/VM runner exists; no remote calls occurred during tests.
 
