@@ -25,6 +25,8 @@ import { installAI } from "./ai-ipc.mjs";
 import { VoiceController } from "./voice-controller.mjs";
 import { mediaPermissionPolicy } from "./media-permissions.mjs";
 import { installGitHub } from "./github-ipc.mjs";
+import { PreviewService } from "./preview.mjs";
+import { previewWindowAdapter } from "./preview-window.mjs";
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const dev = !app.isPackaged && process.argv.includes("--dev");
 const appURL = dev
@@ -43,6 +45,7 @@ let window,
   aiServices,
   voiceController,
   github,
+  preview,
   reminderTimer;
 let prompting = false,
   maintenance = false,
@@ -143,6 +146,7 @@ async function createWindow() {
   });
   window.webContents.on("destroyed", () => {
     void voiceController?.shutdown();
+    void preview?.close().catch(() => {});
   });
   await window.loadURL(appURL);
 }
@@ -184,6 +188,13 @@ if (hasLock)
       store = new Store(dataDirectory);
       await store.load();
       register("get-state", () => currentState());
+      register("third-party-notices", async () => {
+        const file = path.join(directory, "../docs/THIRD-PARTY-NOTICES.md");
+        const stat = await fs.lstat(file);
+        if (!stat.isFile() || stat.isSymbolicLink() || stat.size > 512 * 1024)
+          throw Error("Bundled notices are unavailable.");
+        return fs.readFile(file, "utf8");
+      });
       register("save-memory", async (text) => {
         await store.saveMemory(workspace.root, text);
         return currentState();
@@ -196,7 +207,8 @@ if (hasLock)
         if (
           localExecutor?.isActive ||
           aiServices?.isBusy() ||
-          developmentTools?.busy
+          developmentTools?.busy ||
+          preview?.isBusy
         )
           throw Error(
             "Finish or cancel active work before changing workspace.",
@@ -211,11 +223,13 @@ if (hasLock)
           maintenance ||
           localExecutor?.isActive ||
           aiServices?.isBusy() ||
-          developmentTools?.busy
+          developmentTools?.busy ||
+          preview?.isBusy
         )
           throw Error(
             "Active work changed while choosing a folder. Finish it before changing workspace.",
           );
+        await preview?.close();
         await workspace.select(result.filePaths[0]);
         return currentState();
       });
@@ -346,6 +360,33 @@ if (hasLock)
         register,
         confirm,
       });
+      preview = new PreviewService({
+        workspace,
+        ...previewWindowAdapter({ BrowserWindow, session }),
+        approve: (request) =>
+          confirm(
+            "Open a static HTML/CSS preview?",
+            `${request.path}\nWorkspace: ${request.workspace}\nSHA-256: ${request.sha256}\nBytes: ${request.bytes}\n\n${request.warning}\nDo not enter credentials or private data in preview content. Native preview isolation still requires platform validation.`,
+          ),
+      });
+      const previewStatus = () => {
+        const value = preview.status();
+        return {
+          status: value.phase,
+          path: value.active?.path,
+          hash: value.active?.sha256,
+          outcome: value.lastOutcome,
+        };
+      };
+      register("preview-status", previewStatus);
+      register("open-preview", async (input) => {
+        await preview.open(input);
+        return previewStatus();
+      });
+      register("close-preview", async () => {
+        await preview.close();
+        return previewStatus();
+      });
       const guardedDialogs = {
         showSaveDialog: (...args) => guardedDialog("showSaveDialog", ...args),
         showOpenDialog: (...args) => guardedDialog("showOpenDialog", ...args),
@@ -364,10 +405,12 @@ if (hasLock)
             localExecutor.isActive ||
             notificationController.status().busy ||
             aiServices.isBusy() ||
-            github.isBusy()
+            github.isBusy() ||
+            preview.isBusy
           )
             return false;
           maintenance = true;
+          await preview.shutdown();
           return true;
         },
         restart: () =>
@@ -405,6 +448,7 @@ app.on("before-quit", (event) => {
       localExecutor?.shutdown(),
       voiceController?.shutdown(),
       github?.shutdown(),
+      preview?.shutdown(),
       aiServices?.shutdown(),
     ]);
     await Promise.allSettled(

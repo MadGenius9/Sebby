@@ -1,3 +1,4 @@
+import { NoticesPanel } from "./NoticesPanel";
 import { ChatPanel } from "./ChatPanel";
 import { AppearancePanel } from "./Appearance";
 import { ProviderSettings } from "./ProviderSettings";
@@ -161,6 +162,7 @@ export function App() {
               <>
                 <ProviderSettings report={setError} />
                 <AppearancePanel report={setError} />
+                <NoticesPanel report={setError} />
               </>
             ) : page === "Team" ? (
               <TeamPanel report={setError} />
@@ -269,7 +271,7 @@ export function App() {
         </div>
         <div className="version">
           <Check size={13} />
-          Sebby 0.5 · Personal workbench
+          Sebby 0.6 · Personal workbench
         </div>
       </aside>
     </div>

@@ -1,0 +1,1108 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "sebby-desktop",
+    "version": "0.6.0",
+    "private": true
+  },
+  "packageJsonSha256": "79442ac2bae71df748aae3435279d07090f608aee2ef6509ccc8764e06eb3ccf",
+  "lockfileSha256": "b1278c5b1caf7bd298880ecbc2ef9c1e61eb711cb3c251e892b3366cc91162ba",
+  "source": [
+    {
+      "path": "build/icon.ico",
+      "bytes": 74104,
+      "sha256": "1a8f4665826274a14ee724cf27c63a310f57cbf930f78f7687e44b8fd05a9818"
+    },
+    {
+      "path": "electron/agent-runtime.mjs",
+      "bytes": 26875,
+      "sha256": "4c306b655ca9392737d573a1492d2472eeb0ce682a03d443fc1997c37acd1d7b"
+    },
+    {
+      "path": "electron/ai-ipc.mjs",
+      "bytes": 11974,
+      "sha256": "785b2e2163a084a19578255943b2a0e255fd01ce9204744098a0f7d73a4e4ef6"
+    },
+    {
+      "path": "electron/anthropic-provider.mjs",
+      "bytes": 17021,
+      "sha256": "e0dccc492ed7424501c3bb3d68a7cc9ed9bc110c94af89752bc1c1b96b72ff46"
+    },
+    {
+      "path": "electron/appearance.mjs",
+      "bytes": 4346,
+      "sha256": "beaf4a4017346b6a73603b3a72f486b5f7fa5cc08ce1a5bce854475c261194b8"
+    },
+    {
+      "path": "electron/backup-ipc.mjs",
+      "bytes": 2550,
+      "sha256": "11eb42f9a9370982f440e41c50f7f4a0518aec80b2302d07e49d8081ce563209"
+    },
+    {
+      "path": "electron/backup.mjs",
+      "bytes": 13800,
+      "sha256": "ad1cfac9c8a09665d9ca702a4c00e3e7c2568808168683d6b5a9757b7ac29a0c"
+    },
+    {
+      "path": "electron/change-review.mjs",
+      "bytes": 2553,
+      "sha256": "04aa42310f0fdf19adf8a9aff37e68f87a9700f20a1739dd2e0ed4522677aa49"
+    },
+    {
+      "path": "electron/chat.mjs",
+      "bytes": 16875,
+      "sha256": "2337a90614d0a0c032641d86da76238aba24886017e9c5fd4be75169569b06b7"
+    },
+    {
+      "path": "electron/connectors.mjs",
+      "bytes": 8651,
+      "sha256": "799ef2cb21efa820943489eace915f22ef0e836d5cd7dae0acf7020acdcad18b"
+    },
+    {
+      "path": "electron/conversations.mjs",
+      "bytes": 7359,
+      "sha256": "69497862eaf3caadd58c5588d39760c3b005929c53a997e10b853873bc439402"
+    },
+    {
+      "path": "electron/credentials.mjs",
+      "bytes": 3937,
+      "sha256": "9380a4a4acae3be333d1c7332b385b345495df7b0d93429346537dde1cedb49c"
+    },
+    {
+      "path": "electron/development-ipc.mjs",
+      "bytes": 2885,
+      "sha256": "1075cf1bf493edf03d20be4518fdcb5ff21cc0cb6c58177273c4a45ea7959fc1"
+    },
+    {
+      "path": "electron/development.mjs",
+      "bytes": 16795,
+      "sha256": "c60ec265f9b1d6709fddce6330d18d13138a09f419b35d3758bbe50e4a8de242"
+    },
+    {
+      "path": "electron/github-ipc.mjs",
+      "bytes": 3620,
+      "sha256": "d82c66b61ba5220f84bd573f950b7730c470d17fca710f94ab0d5dcd29e1784e"
+    },
+    {
+      "path": "electron/github-reader.mjs",
+      "bytes": 14398,
+      "sha256": "ecfdaf603e0053232aa55fc3ef553f50c9205a871464a2edabdf249b7951c54a"
+    },
+    {
+      "path": "electron/github-storage.mjs",
+      "bytes": 8416,
+      "sha256": "fe22e90a2428e293c13bffcbcf526f5668b88815e2c3db157ac196002df149cd"
+    },
+    {
+      "path": "electron/local-executor-ipc.mjs",
+      "bytes": 961,
+      "sha256": "66d3b5d37fc8fd2740625c1187d4171c500b0547cfec6de10c2c28bfb2660c1d"
+    },
+    {
+      "path": "electron/local-executor.mjs",
+      "bytes": 12757,
+      "sha256": "d60e815d1a21fd3d660210e1881b2a4c817957e7bf8e5db15288d12832219df1"
+    },
+    {
+      "path": "electron/local-features.mjs",
+      "bytes": 5714,
+      "sha256": "4d2d141a3378f27feb0031f6826ffd7493a23ee4db7304227b388af8dd5b28bd"
+    },
+    {
+      "path": "electron/main.mjs",
+      "bytes": 16043,
+      "sha256": "a5c02c060a3b3093dc9d330c627898c5d548fe8ed3fdec8a41b760690f5bd248"
+    },
+    {
+      "path": "electron/mcp-discovery.mjs",
+      "bytes": 10988,
+      "sha256": "1041ed833bb0d891493541bd94b09ba92b8a5bfa4c865da8ee21bbf3ac3dcebe"
+    },
+    {
+      "path": "electron/media-permissions.mjs",
+      "bytes": 1202,
+      "sha256": "519927eea21c3f79f8c76d0435f3132985167a1cc307f910f0e8c9ef205a28a9"
+    },
+    {
+      "path": "electron/network-ipc.mjs",
+      "bytes": 991,
+      "sha256": "91c8579f5aff2bb0c0bbcf6c13a931c4506803a065fff6ac25b2fbc33a89bd25"
+    },
+    {
+      "path": "electron/notification-ipc.mjs",
+      "bytes": 2418,
+      "sha256": "6c52d6e68851e59049a8dff47fc4ecb7bb8be6fa36ee8647a057055d7c56e8c2"
+    },
+    {
+      "path": "electron/notifications.mjs",
+      "bytes": 6132,
+      "sha256": "68eca3679f5b9f429385d22d99119ef49e13edc19472acb43fab01556c6df7d1"
+    },
+    {
+      "path": "electron/preload.cjs",
+      "bytes": 8021,
+      "sha256": "25ed1171dd811c4592fcdc46926bc56e025e51665fabb6b2b727a3449b794ae0"
+    },
+    {
+      "path": "electron/preview-sanitize.mjs",
+      "bytes": 2664,
+      "sha256": "17535b8a5a11477c0d068805950b9db62e729149161373821085270f612a562b"
+    },
+    {
+      "path": "electron/preview-window.mjs",
+      "bytes": 6287,
+      "sha256": "0feb184dafa8df9b326e6bbec6f86b6ab2d30d9f22f8eef692157806c8617ef8"
+    },
+    {
+      "path": "electron/preview.mjs",
+      "bytes": 6812,
+      "sha256": "c0def6b715e2b9217466dcddd75c4b93f52af7ac85bee604d85dd5899ae03d5c"
+    },
+    {
+      "path": "electron/profile-vault.mjs",
+      "bytes": 7040,
+      "sha256": "a70fc5aa268aeec7f86b5a38bfd77ee4354069526c5b451faffeafa90059f6e7"
+    },
+    {
+      "path": "electron/provider-profiles.mjs",
+      "bytes": 10975,
+      "sha256": "338953a5242f87c06f1bebc68f169482793c6b21eb5103fcc34e95c6ee2f02aa"
+    },
+    {
+      "path": "electron/provider.mjs",
+      "bytes": 18075,
+      "sha256": "855c9ed052f581668c1ec4a52852184c46371f965dc652d84b7bf44ce8ffd577"
+    },
+    {
+      "path": "electron/reminders.mjs",
+      "bytes": 5011,
+      "sha256": "1cba388d3133468538d7c3a43715010ddc2565dfdfcac5355532cf7e6cb1319b"
+    },
+    {
+      "path": "electron/resource-policy.mjs",
+      "bytes": 1264,
+      "sha256": "55e865507857de1b10b4c023d5b589eaa0badf6dbe64b13fd22348cf69847bfd"
+    },
+    {
+      "path": "electron/SECURITY.md",
+      "bytes": 9820,
+      "sha256": "d3e77c438d10fc9a8b9700ef042b78fdaab345c066412e55bc0d93e214faae49"
+    },
+    {
+      "path": "electron/services.mjs",
+      "bytes": 10242,
+      "sha256": "916b8c8d98170cbc41115287418a4ae9588ce6b6d1453a6f0fe5928e2d459f86"
+    },
+    {
+      "path": "electron/skills.mjs",
+      "bytes": 6096,
+      "sha256": "d4138a4ff952e2dfca7d0dcaaefb347527f54d4317c21b18456311f10600a499"
+    },
+    {
+      "path": "electron/tasks.mjs",
+      "bytes": 9220,
+      "sha256": "8ffc88de2abe63a87dc97c6e0fcbe69ac223e2df35b659c25f2118037398019f"
+    },
+    {
+      "path": "electron/team.mjs",
+      "bytes": 7550,
+      "sha256": "c4f40b8cc45fd115f45fe0741d3029ea285996632f7fac7cf8a09cbe67fc7078"
+    },
+    {
+      "path": "electron/voice-controller.mjs",
+      "bytes": 5379,
+      "sha256": "db892203fa9d83624cc4769924a6ee05bcfc73d9b91bae0a809f90696d3885d2"
+    },
+    {
+      "path": "electron/voice.mjs",
+      "bytes": 6357,
+      "sha256": "f7e069ab79011f751f979a65e25a766cd0a8b94b04bd7948711240e43fed8a23"
+    },
+    {
+      "path": "electron/xai-provider.mjs",
+      "bytes": 2428,
+      "sha256": "d9bd009fe902f0cbf7a66068adfa5707784a33b73d489cfe95baaaa8e4315f8d"
+    },
+    {
+      "path": "index.html",
+      "bytes": 458,
+      "sha256": "992014a7fc039c67b1dba0f6acc2084b4c597592bdbd0e9689ba9ad7a425de80"
+    },
+    {
+      "path": "native/windows-job-runner/Contract.cs",
+      "bytes": 6108,
+      "sha256": "56c0cf85a6c2ecc51c7eda32de240b22fc90f19288cf268e7d6197bbaa5ded27"
+    },
+    {
+      "path": "native/windows-job-runner/contract.mjs",
+      "bytes": 3454,
+      "sha256": "05623ceeb0468829a5e7e0e19c36174dfd5304a51a272294698c560435e0243d"
+    },
+    {
+      "path": "native/windows-job-runner/Native.cs",
+      "bytes": 6513,
+      "sha256": "2a8bb55317bf43a08fbb26928f6cf819c5c38b4f0c6cd5110c3b4301522ce5fb"
+    },
+    {
+      "path": "native/windows-job-runner/Program.cs",
+      "bytes": 12709,
+      "sha256": "d7f3d48e99c99cdf579a013eaf9ca2572f5778ad4789855f92acd3a46f258701"
+    },
+    {
+      "path": "native/windows-job-runner/protocol.schema.json",
+      "bytes": 1064,
+      "sha256": "7b2cc07eef40fdf5fb2be0d31decc8d44e430de29419bf1782e7171cf52c59ae"
+    },
+    {
+      "path": "native/windows-job-runner/README.md",
+      "bytes": 1085,
+      "sha256": "7d4ebf1c9b94bfa8f806a7ea8e2a862dc60c665a670bfe45f9a9ff531cebd6f8"
+    },
+    {
+      "path": "native/windows-job-runner/Sebby.JobRunner.csproj",
+      "bytes": 582,
+      "sha256": "010e34bcbad32ef9f71dbfd1b62a6341936fb59ccf49bd9dd98910ca5784fad5"
+    },
+    {
+      "path": "package-lock.json",
+      "bytes": 205056,
+      "sha256": "b1278c5b1caf7bd298880ecbc2ef9c1e61eb711cb3c251e892b3366cc91162ba"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1789,
+      "sha256": "79442ac2bae71df748aae3435279d07090f608aee2ef6509ccc8764e06eb3ccf"
+    },
+    {
+      "path": "public/orbit.png",
+      "bytes": 975091,
+      "sha256": "601868ae51a77c1995f0efa173125ab5405ccb9926d9d91fc1ecfe00e6232b51"
+    },
+    {
+      "path": "public/pals/catalog-manifest.json",
+      "bytes": 4561,
+      "sha256": "ddf44b58ec886717b8e4d1eb4d94885261afb724b51b200a307e729dd61f342e"
+    },
+    {
+      "path": "public/pals/finch.glb",
+      "bytes": 681612,
+      "sha256": "52813ccbe4d934e040a3effed87919a4c9fdc6be22290ab9fbac4370e36d6550"
+    },
+    {
+      "path": "public/pals/finch.png",
+      "bytes": 605722,
+      "sha256": "c69905525d34bc2ce0c209abdfa85a22f56284da6a55f541d6ba6d6ad0acafb4"
+    },
+    {
+      "path": "public/pals/luma.glb",
+      "bytes": 583448,
+      "sha256": "5cb8018b79035f935ba6e8ed360241ba1dbc1a8c6f51eea5eef3740cd47614c7"
+    },
+    {
+      "path": "public/pals/luma.png",
+      "bytes": 583285,
+      "sha256": "de428dcae6e67436f4ae300a1df46e81082118377e761ef14095e81233d53880"
+    },
+    {
+      "path": "public/pals/moss.glb",
+      "bytes": 482812,
+      "sha256": "f9d6ca1f0e0fe23790df5b10de67f0eda5f0b19186d9a1126248601f3b4d187e"
+    },
+    {
+      "path": "public/pals/moss.png",
+      "bytes": 497714,
+      "sha256": "289241bf41904769a832dadceaad50b52336c42ee55621f15070122d8a6a1465"
+    },
+    {
+      "path": "public/pals/nook.glb",
+      "bytes": 548784,
+      "sha256": "590b7fda45dff712f101813457c43dcbd26b3c754d2298d7c9084a1c9a8173c3"
+    },
+    {
+      "path": "public/pals/nook.png",
+      "bytes": 532739,
+      "sha256": "eeaab4f80561d4885ac071952a05710927fdc269fba7ca5879cb897c36e74ee8"
+    },
+    {
+      "path": "public/pals/orbit.glb",
+      "bytes": 471940,
+      "sha256": "b03b49c6d9182d3546a662f5771cab19379b19689c42363cac103b27ff5c8ebe"
+    },
+    {
+      "path": "public/pals/orbit.png",
+      "bytes": 974840,
+      "sha256": "0191b0f586beb355dcd7ee7515e174925f07e26b26c1b345a390fec9af483e28"
+    },
+    {
+      "path": "public/pals/piper.glb",
+      "bytes": 281732,
+      "sha256": "8ab171a46b023905fa7d35a308c64d3ba7e4029818ce3443cdf5ae694f18f381"
+    },
+    {
+      "path": "public/pals/piper.png",
+      "bytes": 539432,
+      "sha256": "5548476c9f375635d1a701163a982ab55ee3ffbff0f9cf62194ae90709cb82da"
+    },
+    {
+      "path": "public/pals/scout.glb",
+      "bytes": 616740,
+      "sha256": "ba89b51d291219a61eb2e800075f71669caa28a782629549c5622fe083110af6"
+    },
+    {
+      "path": "public/pals/scout.png",
+      "bytes": 951516,
+      "sha256": "a113716ad9d2a410586dc53c8ba2c032b2c0f5acf95a18fd16446b152f03373e"
+    },
+    {
+      "path": "public/pals/tidal.glb",
+      "bytes": 581264,
+      "sha256": "0d9aac73edf0287a8e0a5afa1c64741b9485b0e0070c2be66199b4e3787fbb00"
+    },
+    {
+      "path": "public/pals/tidal.png",
+      "bytes": 523210,
+      "sha256": "a65df75f1d4a9d9052c8a24239b550c27f90b26ee6d9be63b5fcf1f7874ca3f7"
+    },
+    {
+      "path": "public/pals/wisp.glb",
+      "bytes": 457892,
+      "sha256": "dff3df75c58f15e18e6ee9ae4e65430c557729b7c3ac85172940a543c3f58729"
+    },
+    {
+      "path": "public/pals/wisp.png",
+      "bytes": 822478,
+      "sha256": "253b4cafb842c6ac0f38fa95a1a6102f1a97e5dceafe8e7d8c635e8c0cdde0f8"
+    },
+    {
+      "path": "scripts/release-readiness.mjs",
+      "bytes": 15482,
+      "sha256": "f9cde82af830cd1cb7355fa2d4a2f6936d00c26fbaf4b830164fca6420f2389c"
+    },
+    {
+      "path": "scripts/start-sebby-secure.ps1",
+      "bytes": 3248,
+      "sha256": "d1bb33120652e1b8b7ad2e614a14d6ecf919a3f822103adea50ca2b88693e1ab"
+    },
+    {
+      "path": "scripts/verify-windows.ps1",
+      "bytes": 4680,
+      "sha256": "0948b0473b93c13d132d4cea51b31060736073c178b852d1fd11598b89b128c9"
+    },
+    {
+      "path": "skills/app-plan.md",
+      "bytes": 685,
+      "sha256": "0f73fd82376921a8663a5b288dbdac68df146ed44caf12ed5b0884456622a884"
+    },
+    {
+      "path": "skills/code-review.md",
+      "bytes": 645,
+      "sha256": "a525c77462b5bf66158b3e1fc3ff156625348cb0fdf8969abc6a51cb9af81f20"
+    },
+    {
+      "path": "skills/project-brief.md",
+      "bytes": 445,
+      "sha256": "edc9ed5f35fe2575f2da1241b8eba58e2ad7b0216a09916da2733f5c7d7aa269"
+    },
+    {
+      "path": "src/AgentControls.tsx",
+      "bytes": 14246,
+      "sha256": "714f201efc64e1d09bdc841bd852b6bdabc35c5facf8dfb96694fcc2482549bb"
+    },
+    {
+      "path": "src/App.spec.tsx",
+      "bytes": 3752,
+      "sha256": "846664555ebff3c9b955d43724963e71524e7a7d1d79f830a63bd0b5c33d39b2"
+    },
+    {
+      "path": "src/App.tsx",
+      "bytes": 8711,
+      "sha256": "482ee221ed3bc8dd6a30a4643aa86e5bc6b25f8b717d762a7d693016df2693de"
+    },
+    {
+      "path": "src/Appearance.tsx",
+      "bytes": 18552,
+      "sha256": "549053efb2799ae14c3a26e7994f5e380e39121fd5576379c0a7444f83a5c491"
+    },
+    {
+      "path": "src/BackupPanel.tsx",
+      "bytes": 3056,
+      "sha256": "983d570a29cef8f6342239786d24a392091754758671fb5c3a05efc40aa502cb"
+    },
+    {
+      "path": "src/bridge.ts",
+      "bytes": 9291,
+      "sha256": "d6d6b3ac2e84adecd67a0b573cc2c195f0f89be65ffb0c4f796322e2165fa017"
+    },
+    {
+      "path": "src/ChangeReviewDialog.tsx",
+      "bytes": 2953,
+      "sha256": "1d5df44314b10e9b1d63490a7b3b3ef05c1a705b0447ef5aa9691d5ab365d192"
+    },
+    {
+      "path": "src/ChatPanel.tsx",
+      "bytes": 18205,
+      "sha256": "5da3bfe866387232da5ddf16c8844a0693ea7477995122b01334a4c930648934"
+    },
+    {
+      "path": "src/ConnectorBookmarks.tsx",
+      "bytes": 7443,
+      "sha256": "e096b51c57f1b5955ee65fb15dd62d422bb74c840aba0dcac19360cefdfb9ee3"
+    },
+    {
+      "path": "src/DevelopmentPanel.tsx",
+      "bytes": 9532,
+      "sha256": "fc944ecbaee9d3c836ec8b50f9f0bd721b77a2152ed74169ce681b8cbcd3a212"
+    },
+    {
+      "path": "src/GitHubPanel.tsx",
+      "bytes": 14266,
+      "sha256": "cb6c67c7ceca4531b5e36d3bc07d09e51cbd56d10e324a06cbaab5df93be1255"
+    },
+    {
+      "path": "src/LocalPanels.tsx",
+      "bytes": 18034,
+      "sha256": "2ffcb0d7b142a3d5c7f3741f7442bb581e9bac7052689d32ec6152b3ad29590b"
+    },
+    {
+      "path": "src/main.tsx",
+      "bytes": 342,
+      "sha256": "09932063bd9980fb895ad932e74445ae39211cec0e00adb0076e28af3408aa01"
+    },
+    {
+      "path": "src/NoticesPanel.tsx",
+      "bytes": 1351,
+      "sha256": "b7a8919d68f829db214980e7777870ba3b66a3c00256dbb360fa594ddb16df92"
+    },
+    {
+      "path": "src/NotificationControls.tsx",
+      "bytes": 2319,
+      "sha256": "e917b4da89e092bd4fd8928566660ba0b0bcf116dfe75474706b3fcd267a23f0"
+    },
+    {
+      "path": "src/Panels.tsx",
+      "bytes": 10878,
+      "sha256": "638885a663bfbb9a46052f0b1f513fbf986048d004a798ed21cbdae6bf523050"
+    },
+    {
+      "path": "src/PreviewPanel.tsx",
+      "bytes": 4381,
+      "sha256": "f8b2422aba4ecbac6007300820ae2b585bc6aff444c51ae7c2ae167ccef4729c"
+    },
+    {
+      "path": "src/ProviderSettings.tsx",
+      "bytes": 23428,
+      "sha256": "dbd9402aac38123fbd61901303e12a44d45c4f4507a95848d7c2f908650d2068"
+    },
+    {
+      "path": "src/skills.ts",
+      "bytes": 2180,
+      "sha256": "5db04af97a1e620bf3a8757ac20a585303125739a5cc7b87588e6e8dfc94efe7"
+    },
+    {
+      "path": "src/SpeechButton.tsx",
+      "bytes": 2764,
+      "sha256": "ab0c3737797d509b743a8960d486f8118d9dc07b1d76ed3f0006024d82e819c4"
+    },
+    {
+      "path": "src/styles.css",
+      "bytes": 16394,
+      "sha256": "29992fe20616fd952edfa2ecec7bb6d78eec51781547567dd6f2f1b19f7d4708"
+    },
+    {
+      "path": "src/TeamPanel.tsx",
+      "bytes": 8072,
+      "sha256": "b4e5bd51852dae119ccc3364170f2967e99ec2bc9067c02af1593be01755554b"
+    },
+    {
+      "path": "src/UtilityLauncher.tsx",
+      "bytes": 3075,
+      "sha256": "3e29790857136f4a36200effbd027bf3fa27fcab02e3107a31bdf7a99550d702"
+    },
+    {
+      "path": "src/vite-env.d.ts",
+      "bytes": 38,
+      "sha256": "65996936fbb042915f7b74a200fcdde7e410f32a669b1ab9597cfaa4b0faddb5"
+    },
+    {
+      "path": "src/VoiceControls.tsx",
+      "bytes": 8923,
+      "sha256": "b737d67ed47874f977dd1899f49b13a28b3d695a628f26dc959e2eea7718b537"
+    },
+    {
+      "path": "tsconfig.json",
+      "bytes": 295,
+      "sha256": "5070749622a939d28fec91b6825362a3f8d4b6d9cc19b83184e6bbd4870c8e93"
+    },
+    {
+      "path": "vite.config.ts",
+      "bytes": 404,
+      "sha256": "d808f8b757c83d6bbeadbf6a545ea0407f2f618a23acb68853bde8f3e0864af1"
+    }
+  ],
+  "packaging": {
+    "reviewedPatterns": [
+      "dist/**/*",
+      "electron/**/*",
+      "skills/**/*",
+      "package.json",
+      "docs/THIRD-PARTY-NOTICES.md"
+    ],
+    "declaredPatterns": [
+      "dist/**/*",
+      "electron/**/*",
+      "skills/**/*",
+      "package.json",
+      "docs/THIRD-PARTY-NOTICES.md"
+    ],
+    "autoIncludedProductionDependencies": true,
+    "candidateFiles": [
+      {
+        "path": "dist/assets/GLTFLoader-BULPbwLt.js",
+        "bytes": 45951,
+        "sha256": "c5a44646b88834afdb59e66a0ebb0bfdbadfab3746f327ec4921279de62e5207"
+      },
+      {
+        "path": "dist/assets/index-CCuASazf.js",
+        "bytes": 330211,
+        "sha256": "3919204f14c0040c13b5452e5c8755b95ed3c9b756bd9dff2e84040e94ba92b6"
+      },
+      {
+        "path": "dist/assets/index-DdhHbXKG.css",
+        "bytes": 12837,
+        "sha256": "7ff6ba58a02885646c1eb9753065d2fb80c8d79c1ec8ec9267921178c5f8e3c0"
+      },
+      {
+        "path": "dist/assets/RoomEnvironment-DsepHaa8.js",
+        "bytes": 2132,
+        "sha256": "5431b5ebee3e65e9ad0c3ba33d3dc3bb9c9d2a41fe97c6c584f8cd2cd6f1ba03"
+      },
+      {
+        "path": "dist/assets/three.module-CDJkRhUe.js",
+        "bytes": 736437,
+        "sha256": "c6fdd1cc24057930d6c66210c2c560ecbf0852a36a9142f9f3cc9a2c73019935"
+      },
+      {
+        "path": "dist/index.html",
+        "bytes": 559,
+        "sha256": "938e8c702db2b2bc8828094806f59f26ed47b57ec0305d8cd57326e24c21d0ad"
+      },
+      {
+        "path": "dist/orbit.png",
+        "bytes": 975091,
+        "sha256": "601868ae51a77c1995f0efa173125ab5405ccb9926d9d91fc1ecfe00e6232b51"
+      },
+      {
+        "path": "dist/pals/catalog-manifest.json",
+        "bytes": 4561,
+        "sha256": "ddf44b58ec886717b8e4d1eb4d94885261afb724b51b200a307e729dd61f342e"
+      },
+      {
+        "path": "dist/pals/finch.glb",
+        "bytes": 681612,
+        "sha256": "52813ccbe4d934e040a3effed87919a4c9fdc6be22290ab9fbac4370e36d6550"
+      },
+      {
+        "path": "dist/pals/finch.png",
+        "bytes": 605722,
+        "sha256": "c69905525d34bc2ce0c209abdfa85a22f56284da6a55f541d6ba6d6ad0acafb4"
+      },
+      {
+        "path": "dist/pals/luma.glb",
+        "bytes": 583448,
+        "sha256": "5cb8018b79035f935ba6e8ed360241ba1dbc1a8c6f51eea5eef3740cd47614c7"
+      },
+      {
+        "path": "dist/pals/luma.png",
+        "bytes": 583285,
+        "sha256": "de428dcae6e67436f4ae300a1df46e81082118377e761ef14095e81233d53880"
+      },
+      {
+        "path": "dist/pals/moss.glb",
+        "bytes": 482812,
+        "sha256": "f9d6ca1f0e0fe23790df5b10de67f0eda5f0b19186d9a1126248601f3b4d187e"
+      },
+      {
+        "path": "dist/pals/moss.png",
+        "bytes": 497714,
+        "sha256": "289241bf41904769a832dadceaad50b52336c42ee55621f15070122d8a6a1465"
+      },
+      {
+        "path": "dist/pals/nook.glb",
+        "bytes": 548784,
+        "sha256": "590b7fda45dff712f101813457c43dcbd26b3c754d2298d7c9084a1c9a8173c3"
+      },
+      {
+        "path": "dist/pals/nook.png",
+        "bytes": 532739,
+        "sha256": "eeaab4f80561d4885ac071952a05710927fdc269fba7ca5879cb897c36e74ee8"
+      },
+      {
+        "path": "dist/pals/orbit.glb",
+        "bytes": 471940,
+        "sha256": "b03b49c6d9182d3546a662f5771cab19379b19689c42363cac103b27ff5c8ebe"
+      },
+      {
+        "path": "dist/pals/orbit.png",
+        "bytes": 974840,
+        "sha256": "0191b0f586beb355dcd7ee7515e174925f07e26b26c1b345a390fec9af483e28"
+      },
+      {
+        "path": "dist/pals/piper.glb",
+        "bytes": 281732,
+        "sha256": "8ab171a46b023905fa7d35a308c64d3ba7e4029818ce3443cdf5ae694f18f381"
+      },
+      {
+        "path": "dist/pals/piper.png",
+        "bytes": 539432,
+        "sha256": "5548476c9f375635d1a701163a982ab55ee3ffbff0f9cf62194ae90709cb82da"
+      },
+      {
+        "path": "dist/pals/scout.glb",
+        "bytes": 616740,
+        "sha256": "ba89b51d291219a61eb2e800075f71669caa28a782629549c5622fe083110af6"
+      },
+      {
+        "path": "dist/pals/scout.png",
+        "bytes": 951516,
+        "sha256": "a113716ad9d2a410586dc53c8ba2c032b2c0f5acf95a18fd16446b152f03373e"
+      },
+      {
+        "path": "dist/pals/tidal.glb",
+        "bytes": 581264,
+        "sha256": "0d9aac73edf0287a8e0a5afa1c64741b9485b0e0070c2be66199b4e3787fbb00"
+      },
+      {
+        "path": "dist/pals/tidal.png",
+        "bytes": 523210,
+        "sha256": "a65df75f1d4a9d9052c8a24239b550c27f90b26ee6d9be63b5fcf1f7874ca3f7"
+      },
+      {
+        "path": "dist/pals/wisp.glb",
+        "bytes": 457892,
+        "sha256": "dff3df75c58f15e18e6ee9ae4e65430c557729b7c3ac85172940a543c3f58729"
+      },
+      {
+        "path": "dist/pals/wisp.png",
+        "bytes": 822478,
+        "sha256": "253b4cafb842c6ac0f38fa95a1a6102f1a97e5dceafe8e7d8c635e8c0cdde0f8"
+      },
+      {
+        "path": "docs/THIRD-PARTY-NOTICES.md",
+        "bytes": 12700,
+        "sha256": "4d4d9510645797c55fd0096c2e9e1af38e2c32480f40a333c414cfb6a19d23d9"
+      },
+      {
+        "path": "electron/agent-runtime.mjs",
+        "bytes": 26875,
+        "sha256": "4c306b655ca9392737d573a1492d2472eeb0ce682a03d443fc1997c37acd1d7b"
+      },
+      {
+        "path": "electron/ai-ipc.mjs",
+        "bytes": 11974,
+        "sha256": "785b2e2163a084a19578255943b2a0e255fd01ce9204744098a0f7d73a4e4ef6"
+      },
+      {
+        "path": "electron/anthropic-provider.mjs",
+        "bytes": 17021,
+        "sha256": "e0dccc492ed7424501c3bb3d68a7cc9ed9bc110c94af89752bc1c1b96b72ff46"
+      },
+      {
+        "path": "electron/appearance.mjs",
+        "bytes": 4346,
+        "sha256": "beaf4a4017346b6a73603b3a72f486b5f7fa5cc08ce1a5bce854475c261194b8"
+      },
+      {
+        "path": "electron/backup-ipc.mjs",
+        "bytes": 2550,
+        "sha256": "11eb42f9a9370982f440e41c50f7f4a0518aec80b2302d07e49d8081ce563209"
+      },
+      {
+        "path": "electron/backup.mjs",
+        "bytes": 13800,
+        "sha256": "ad1cfac9c8a09665d9ca702a4c00e3e7c2568808168683d6b5a9757b7ac29a0c"
+      },
+      {
+        "path": "electron/change-review.mjs",
+        "bytes": 2553,
+        "sha256": "04aa42310f0fdf19adf8a9aff37e68f87a9700f20a1739dd2e0ed4522677aa49"
+      },
+      {
+        "path": "electron/chat.mjs",
+        "bytes": 16875,
+        "sha256": "2337a90614d0a0c032641d86da76238aba24886017e9c5fd4be75169569b06b7"
+      },
+      {
+        "path": "electron/connectors.mjs",
+        "bytes": 8651,
+        "sha256": "799ef2cb21efa820943489eace915f22ef0e836d5cd7dae0acf7020acdcad18b"
+      },
+      {
+        "path": "electron/conversations.mjs",
+        "bytes": 7359,
+        "sha256": "69497862eaf3caadd58c5588d39760c3b005929c53a997e10b853873bc439402"
+      },
+      {
+        "path": "electron/credentials.mjs",
+        "bytes": 3937,
+        "sha256": "9380a4a4acae3be333d1c7332b385b345495df7b0d93429346537dde1cedb49c"
+      },
+      {
+        "path": "electron/development-ipc.mjs",
+        "bytes": 2885,
+        "sha256": "1075cf1bf493edf03d20be4518fdcb5ff21cc0cb6c58177273c4a45ea7959fc1"
+      },
+      {
+        "path": "electron/development.mjs",
+        "bytes": 16795,
+        "sha256": "c60ec265f9b1d6709fddce6330d18d13138a09f419b35d3758bbe50e4a8de242"
+      },
+      {
+        "path": "electron/github-ipc.mjs",
+        "bytes": 3620,
+        "sha256": "d82c66b61ba5220f84bd573f950b7730c470d17fca710f94ab0d5dcd29e1784e"
+      },
+      {
+        "path": "electron/github-reader.mjs",
+        "bytes": 14398,
+        "sha256": "ecfdaf603e0053232aa55fc3ef553f50c9205a871464a2edabdf249b7951c54a"
+      },
+      {
+        "path": "electron/github-storage.mjs",
+        "bytes": 8416,
+        "sha256": "fe22e90a2428e293c13bffcbcf526f5668b88815e2c3db157ac196002df149cd"
+      },
+      {
+        "path": "electron/local-executor-ipc.mjs",
+        "bytes": 961,
+        "sha256": "66d3b5d37fc8fd2740625c1187d4171c500b0547cfec6de10c2c28bfb2660c1d"
+      },
+      {
+        "path": "electron/local-executor.mjs",
+        "bytes": 12757,
+        "sha256": "d60e815d1a21fd3d660210e1881b2a4c817957e7bf8e5db15288d12832219df1"
+      },
+      {
+        "path": "electron/local-features.mjs",
+        "bytes": 5714,
+        "sha256": "4d2d141a3378f27feb0031f6826ffd7493a23ee4db7304227b388af8dd5b28bd"
+      },
+      {
+        "path": "electron/main.mjs",
+        "bytes": 16043,
+        "sha256": "a5c02c060a3b3093dc9d330c627898c5d548fe8ed3fdec8a41b760690f5bd248"
+      },
+      {
+        "path": "electron/mcp-discovery.mjs",
+        "bytes": 10988,
+        "sha256": "1041ed833bb0d891493541bd94b09ba92b8a5bfa4c865da8ee21bbf3ac3dcebe"
+      },
+      {
+        "path": "electron/media-permissions.mjs",
+        "bytes": 1202,
+        "sha256": "519927eea21c3f79f8c76d0435f3132985167a1cc307f910f0e8c9ef205a28a9"
+      },
+      {
+        "path": "electron/network-ipc.mjs",
+        "bytes": 991,
+        "sha256": "91c8579f5aff2bb0c0bbcf6c13a931c4506803a065fff6ac25b2fbc33a89bd25"
+      },
+      {
+        "path": "electron/notification-ipc.mjs",
+        "bytes": 2418,
+        "sha256": "6c52d6e68851e59049a8dff47fc4ecb7bb8be6fa36ee8647a057055d7c56e8c2"
+      },
+      {
+        "path": "electron/notifications.mjs",
+        "bytes": 6132,
+        "sha256": "68eca3679f5b9f429385d22d99119ef49e13edc19472acb43fab01556c6df7d1"
+      },
+      {
+        "path": "electron/preload.cjs",
+        "bytes": 8021,
+        "sha256": "25ed1171dd811c4592fcdc46926bc56e025e51665fabb6b2b727a3449b794ae0"
+      },
+      {
+        "path": "electron/preview-sanitize.mjs",
+        "bytes": 2664,
+        "sha256": "17535b8a5a11477c0d068805950b9db62e729149161373821085270f612a562b"
+      },
+      {
+        "path": "electron/preview-window.mjs",
+        "bytes": 6287,
+        "sha256": "0feb184dafa8df9b326e6bbec6f86b6ab2d30d9f22f8eef692157806c8617ef8"
+      },
+      {
+        "path": "electron/preview.mjs",
+        "bytes": 6812,
+        "sha256": "c0def6b715e2b9217466dcddd75c4b93f52af7ac85bee604d85dd5899ae03d5c"
+      },
+      {
+        "path": "electron/profile-vault.mjs",
+        "bytes": 7040,
+        "sha256": "a70fc5aa268aeec7f86b5a38bfd77ee4354069526c5b451faffeafa90059f6e7"
+      },
+      {
+        "path": "electron/provider-profiles.mjs",
+        "bytes": 10975,
+        "sha256": "338953a5242f87c06f1bebc68f169482793c6b21eb5103fcc34e95c6ee2f02aa"
+      },
+      {
+        "path": "electron/provider.mjs",
+        "bytes": 18075,
+        "sha256": "855c9ed052f581668c1ec4a52852184c46371f965dc652d84b7bf44ce8ffd577"
+      },
+      {
+        "path": "electron/reminders.mjs",
+        "bytes": 5011,
+        "sha256": "1cba388d3133468538d7c3a43715010ddc2565dfdfcac5355532cf7e6cb1319b"
+      },
+      {
+        "path": "electron/resource-policy.mjs",
+        "bytes": 1264,
+        "sha256": "55e865507857de1b10b4c023d5b589eaa0badf6dbe64b13fd22348cf69847bfd"
+      },
+      {
+        "path": "electron/SECURITY.md",
+        "bytes": 9820,
+        "sha256": "d3e77c438d10fc9a8b9700ef042b78fdaab345c066412e55bc0d93e214faae49"
+      },
+      {
+        "path": "electron/services.mjs",
+        "bytes": 10242,
+        "sha256": "916b8c8d98170cbc41115287418a4ae9588ce6b6d1453a6f0fe5928e2d459f86"
+      },
+      {
+        "path": "electron/skills.mjs",
+        "bytes": 6096,
+        "sha256": "d4138a4ff952e2dfca7d0dcaaefb347527f54d4317c21b18456311f10600a499"
+      },
+      {
+        "path": "electron/tasks.mjs",
+        "bytes": 9220,
+        "sha256": "8ffc88de2abe63a87dc97c6e0fcbe69ac223e2df35b659c25f2118037398019f"
+      },
+      {
+        "path": "electron/team.mjs",
+        "bytes": 7550,
+        "sha256": "c4f40b8cc45fd115f45fe0741d3029ea285996632f7fac7cf8a09cbe67fc7078"
+      },
+      {
+        "path": "electron/voice-controller.mjs",
+        "bytes": 5379,
+        "sha256": "db892203fa9d83624cc4769924a6ee05bcfc73d9b91bae0a809f90696d3885d2"
+      },
+      {
+        "path": "electron/voice.mjs",
+        "bytes": 6357,
+        "sha256": "f7e069ab79011f751f979a65e25a766cd0a8b94b04bd7948711240e43fed8a23"
+      },
+      {
+        "path": "electron/xai-provider.mjs",
+        "bytes": 2428,
+        "sha256": "d9bd009fe902f0cbf7a66068adfa5707784a33b73d489cfe95baaaa8e4315f8d"
+      },
+      {
+        "path": "package.json",
+        "bytes": 1789,
+        "sha256": "79442ac2bae71df748aae3435279d07090f608aee2ef6509ccc8764e06eb3ccf"
+      },
+      {
+        "path": "skills/app-plan.md",
+        "bytes": 685,
+        "sha256": "0f73fd82376921a8663a5b288dbdac68df146ed44caf12ed5b0884456622a884"
+      },
+      {
+        "path": "skills/code-review.md",
+        "bytes": 645,
+        "sha256": "a525c77462b5bf66158b3e1fc3ff156625348cb0fdf8969abc6a51cb9af81f20"
+      },
+      {
+        "path": "skills/project-brief.md",
+        "bytes": 445,
+        "sha256": "edc9ed5f35fe2575f2da1241b8eba58e2ad7b0216a09916da2733f5c7d7aa269"
+      }
+    ],
+    "findings": []
+  },
+  "productionDependencies": [
+    {
+      "name": "entities",
+      "version": "8.1.0",
+      "installedPath": "node_modules/entities",
+      "declaredLicense": "BSD-2-Clause",
+      "licenseFiles": [
+        {
+          "path": "node_modules/entities/LICENSE",
+          "bytes": 1260,
+          "sha256": "cb992345949ccd6e8394b2cd6c465f7b897c864f845937dbf64e8997f389e164"
+        }
+      ],
+      "packageMetadataSha256": "b6ff1175be0fa103f032d52e42af95d95c674e3cba08d93670cc8944697bcc42",
+      "lockVersionMatches": true
+    },
+    {
+      "name": "lucide-react",
+      "version": "0.468.0",
+      "installedPath": "node_modules/lucide-react",
+      "declaredLicense": "ISC",
+      "licenseFiles": [
+        {
+          "path": "node_modules/lucide-react/LICENSE",
+          "bytes": 880,
+          "sha256": "1e7290b35280a048667bbf0ebabac1c7fd52a75300e8b2946ac165715997f2bc"
+        }
+      ],
+      "packageMetadataSha256": "609e78dffe97aab720c105246eca516f0aaac1de60725e53c0f5abb908b08320",
+      "lockVersionMatches": true
+    },
+    {
+      "name": "parse5",
+      "version": "8.0.1",
+      "installedPath": "node_modules/parse5",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        {
+          "path": "node_modules/parse5/LICENSE",
+          "bytes": 1109,
+          "sha256": "8c535800331e1e4439835555b3f9edc7fe9dee2fab0d8bbbd5a982e8b8343d4d"
+        }
+      ],
+      "packageMetadataSha256": "159187fd5c0c0c17456282f4cf7beab91eb46dfc717928522938c947007282b7",
+      "lockVersionMatches": true
+    },
+    {
+      "name": "react",
+      "version": "19.3.1",
+      "installedPath": "node_modules/react",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        {
+          "path": "node_modules/react/LICENSE",
+          "bytes": 1088,
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ],
+      "packageMetadataSha256": "9cc9c3de5441a2eea7f41f52f3f2a15a4fc51f90c0b72741f0d7638643a85e67",
+      "lockVersionMatches": true
+    },
+    {
+      "name": "react-dom",
+      "version": "19.3.1",
+      "installedPath": "node_modules/react-dom",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        {
+          "path": "node_modules/react-dom/LICENSE",
+          "bytes": 1088,
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ],
+      "packageMetadataSha256": "89d54f11575c9b0f7819962d9d72a31970dfb4d103f07e8b1d1b37e6d1fc3258",
+      "lockVersionMatches": true
+    },
+    {
+      "name": "scheduler",
+      "version": "0.28.0",
+      "installedPath": "node_modules/scheduler",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        {
+          "path": "node_modules/scheduler/LICENSE",
+          "bytes": 1088,
+          "sha256": "da6d3703ed11cbe42bd212c725957c98da23cbff1998c05fa4b3d976d1a58e93"
+        }
+      ],
+      "packageMetadataSha256": "06290718f22bcd93f29eaa1ac8d2ec9a7592ba4fec12bf1230e7cdd9a871b324",
+      "lockVersionMatches": true
+    },
+    {
+      "name": "three",
+      "version": "0.186.1",
+      "installedPath": "node_modules/three",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        {
+          "path": "node_modules/three/LICENSE",
+          "bytes": 1081,
+          "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+        }
+      ],
+      "packageMetadataSha256": "f9c474a27c920b9435353a6235968f4453436bee0444fac7e5fd289c8fa463de",
+      "lockVersionMatches": true
+    }
+  ],
+  "electron": {
+    "wrapper": {
+      "name": "electron",
+      "version": "45.1.0",
+      "installedPath": "node_modules/electron",
+      "declaredLicense": "MIT",
+      "licenseFiles": [
+        {
+          "path": "node_modules/electron/LICENSE",
+          "bytes": 1096,
+          "sha256": "5154e165bd6c2cc0cfbcd8916498c7abab0497923bafcd5cb07673fe8480087d"
+        }
+      ],
+      "packageMetadataSha256": "49c0e16e5d2f870184f8cfa5fb3515c6862ac3f4213f07855b1d4227d760eeed",
+      "lockVersionMatches": true
+    },
+    "windowsBinaryPresent": false,
+    "runtimeLicensePresent": false,
+    "chromiumNoticesPresent": false
+  },
+  "curatedNoticesSha256": "4d4d9510645797c55fd0096c2e9e1af38e2c32480f40a333c414cfb6a19d23d9",
+  "checks": [
+    {
+      "id": "packaging-source-policy",
+      "status": "pass",
+      "details": "Reviewed explicit app patterns; production node_modules remain automatically included by electron-builder. No artifact exists to audit."
+    },
+    {
+      "id": "private-source-repository",
+      "status": "pass",
+      "details": "package.private protects accidental npm publication, not GitHub visibility or installer distribution."
+    },
+    {
+      "id": "built-renderer",
+      "status": "pass",
+      "details": "Presence/hash only; does not prove GUI or freshness."
+    },
+    {
+      "id": "windows-electron-runtime-present",
+      "status": "blocked",
+      "details": "No runtime is downloaded or executed by this script."
+    },
+    {
+      "id": "runtime-notices-present",
+      "status": "blocked",
+      "details": "Electron/Chromium/transitive runtime notices still need exact artifact review."
+    },
+    {
+      "id": "notices-packaging-declaration",
+      "status": "pass",
+      "details": "Exact notices file exists and is explicitly included in build.files; this source evidence does not prove presence in a built ASAR/installer or legal completeness."
+    },
+    {
+      "id": "curated-third-party-notices",
+      "status": "present-unreviewed",
+      "details": "Notice inventory is not legal clearance; ensure the final artifact actually carries required notices."
+    },
+    {
+      "id": "windows-native-validation",
+      "status": "not-verified",
+      "details": "No Windows installer/process/voice/vault/helper tests inferred from source."
+    },
+    {
+      "id": "signing-and-distribution",
+      "status": "not-authorized",
+      "details": "No signing key, installer, publication or app-store submission performed."
+    }
+  ],
+  "readyForPublicDistribution": false,
+  "limitations": [
+    "Deterministic code/config/dependency snapshot, not a built-artifact audit or secret-content scanner.",
+    "Hidden/sensitive named paths are not read; findings identify names only.",
+    "No network, subprocess, signing, credential, install or publication operation is performed."
+  ]
+}

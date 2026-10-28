@@ -1,6 +1,8 @@
-# Delivery status — 0.5 personal workbench
+# Delivery status — 0.6 personal workbench
 
 ## Implemented in source
+
+New in 0.6: native-approved, sanitized static HTML/CSS preview with scripts disabled, separate nonpersistent session and fail-closed browser guards; source release inventory, dependency notices and onboarding. Preview/browser enforcement still requires native validation. Interactive scripts remain unavailable because WebRTC isolation has not been proven.
 
 Local memory/personality/drafts, instruction skills, named specialists, durable tasks, reminders, bounded workspace operations, full-diff review with native confirmation and hash checks, backups/undo, fixed Git status, deterministic local utilities, read-only MCP metadata discovery, opt-in session notifications, and validated app-data backup/restore.
 

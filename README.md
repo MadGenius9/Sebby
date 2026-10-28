@@ -2,7 +2,7 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.5: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.6: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -94,3 +94,9 @@ Electron provides a practical Windows-capable shell and TypeScript ecosystem at 
 ## Windows execution remains gated
 
 `native/windows-job-runner/` contains an auditable .NET 10 Windows Job Object supervisor with explicit executable/hash/argument contract, process-lifetime containment, cancellation and output bounds. It is **not compiled, Windows-tested, integrated or enabled** in Sebby. It is not a security sandbox, and does not enable npm or shell commands. See [containment validation](docs/WINDOWS-CONTAINMENT.md).
+
+## Static preview and source release checks
+
+Workspace can open a native-approved static HTML/CSS subset in an isolated window. Scripts, external assets, network access and active controls are unavailable; this is not an interactive app runtime or proof of a successful build. [Preview policy](docs/PREVIEW.md) documents sanitization and native validation gaps.
+
+`npm run release:readiness` inventories source/lock/dependency licenses and packaging policy. It intentionally exits nonzero while native/runtime/signing/release gates remain unresolved. Settings can show the explicitly bundled dependency notices; those notices are not commercial clearance. See [onboarding](docs/ONBOARDING.md) and [distribution checklist](docs/DISTRIBUTION-CHECKLIST.md).

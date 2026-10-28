@@ -109,6 +109,10 @@ contextBridge.exposeInMainWorld(
       return () =>
         ipcRenderer.removeListener("sebby:provider-changed", listener);
     },
+    thirdPartyNotices: () => ipcRenderer.invoke("sebby:third-party-notices"),
+    previewStatus: () => ipcRenderer.invoke("sebby:preview-status"),
+    openPreview: (input) => ipcRenderer.invoke("sebby:open-preview", input),
+    closePreview: () => ipcRenderer.invoke("sebby:close-preview"),
     githubStatus: () => ipcRenderer.invoke("sebby:github-status"),
     saveGithubConfig: (input) =>
       ipcRenderer.invoke("sebby:save-github-config", input),

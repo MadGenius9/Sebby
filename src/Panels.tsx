@@ -1,3 +1,4 @@
+import { PreviewPanel } from "./PreviewPanel";
 import { GitHubPanel } from "./GitHubPanel";
 import { useEffect, useState } from "react";
 import { Folder, RefreshCw, Save, FileText, Lock, Check } from "lucide-react";
@@ -202,6 +203,7 @@ export function Workspace({
           </button>
           <p role="status">{message}</p>
           <DevelopmentPanel key={state.workspace.path} report={report} />
+          <PreviewPanel report={report} />
         </>
       )}
     </>

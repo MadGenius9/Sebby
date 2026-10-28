@@ -13,6 +13,7 @@ const EXTENSIONS = new Set([
   ".tsx",
   ".css",
   ".html",
+  ".htm",
   ".json",
   ".cs",
   ".py",
