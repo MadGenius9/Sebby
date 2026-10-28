@@ -7,6 +7,8 @@ export async function installGitHub({
   register,
   confirm,
   readerOptions = {},
+  isExternalBusy = () => false,
+  onConfigurationChanged = () => {},
 }) {
   const config = new GitHubConfig(directory);
   await config.load();
@@ -23,7 +25,7 @@ export async function installGitHub({
   });
   let closed = false,
     pending = null;
-  const busy = () => !!pending || reader.isBusy;
+  const busy = () => !!pending || reader.isBusy || isExternalBusy();
   const exclusive = (operation) => (input) => {
     if (closed) throw Error("GitHub connector is closing.");
     if (busy()) throw Error("Finish or cancel the active GitHub operation.");
@@ -43,12 +45,16 @@ export async function installGitHub({
     }
     return result;
   };
-  register("github-status", () => reader.status());
+  register("github-status", async () => ({
+    ...(await reader.status()),
+    busy: busy(),
+  }));
   register(
     "save-github-config",
     exclusive(async (input) => {
       const value = await config.save(input);
       reader.clearCache();
+      onConfigurationChanged();
       return value;
     }),
   );
@@ -67,13 +73,14 @@ export async function installGitHub({
         if (
           !(await confirm(
             "Store this GitHub token using OS encryption?",
-            "The token is used only for explicit read-only requests to api.github.com when token use is enabled. Prefer a fine-grained token limited to this repository and read-only Contents. It is excluded from backups and never displayed.",
+            "The token is used only for explicit GitHub requests when enabled. Reads are the default; publication additionally needs exact-repository authority and separately reviewed native approvals. Prefer a fine-grained token limited to the intended repository with only necessary permissions. It is excluded from backups and never displayed.",
           ))
         )
           return { saved: false };
         if (closed) throw Error("GitHub connector is closing.");
         const result = await vault.save(token, { confirmed: true });
         reader.clearCache();
+        onConfigurationChanged();
         return result;
       } finally {
         token = "";
@@ -93,6 +100,7 @@ export async function installGitHub({
       if (closed) throw Error("GitHub connector is closing.");
       const result = await vault.remove({ confirmed: true });
       reader.clearCache();
+      onConfigurationChanged();
       return result;
     }),
   );

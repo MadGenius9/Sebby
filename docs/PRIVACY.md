@@ -2,7 +2,7 @@
 
 ## Current local workbench
 
-No model provider was contacted during development. User-configured AI requests require native consent. Optional read-only GitHub requests can use an explicitly stored scoped token, with per-read consent. The renderer cannot make production network requests. The app does not send telemetry or crash reports. Browsing a folder, saving memory, editing a file, using a playbook, creating team/task records, and saving reminders happen locally.
+No model provider was contacted during development. User-configured AI requests require native consent. Optional read-only GitHub requests can use an explicitly stored scoped token, with per-read consent. Optional publication uploads only manually selected, reviewed text files to an exact granted repository, after native confirmation; uploads can expose source and trigger CI. Separate draft-PR consent includes its title/body. Publication authority and metadata-only history are excluded from backups; history does not contain source diffs or tokens. No source is automatically attached to AI. The renderer cannot make production network requests. The app does not send telemetry or crash reports. Browsing a folder, saving memory, editing a file, using a playbook, creating team/task records, and saving reminders happen locally.
 
 Plaintext local stores may contain prompts, source excerpts you paste, memory, file paths, team jobs and task logs. Edit originals are retained separately. Backups include allowlisted local app stores, not project files or credential vaults. Backups and manually copied text can still contain secrets you entered; schema exclusion is not secret detection.
 

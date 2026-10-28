@@ -25,6 +25,7 @@ import { installAI } from "./ai-ipc.mjs";
 import { VoiceController } from "./voice-controller.mjs";
 import { mediaPermissionPolicy } from "./media-permissions.mjs";
 import { installGitHub } from "./github-ipc.mjs";
+import { installGitHubPublishing } from "./github-publish-ipc.mjs";
 import { PreviewService } from "./preview.mjs";
 import { previewWindowAdapter } from "./preview-window.mjs";
 const directory = path.dirname(fileURLToPath(import.meta.url));
@@ -45,6 +46,7 @@ let window,
   aiServices,
   voiceController,
   github,
+  githubPublishing,
   preview,
   reminderTimer;
 let prompting = false,
@@ -208,7 +210,8 @@ if (hasLock)
           localExecutor?.isActive ||
           aiServices?.isBusy() ||
           developmentTools?.busy ||
-          preview?.isBusy
+          preview?.isBusy ||
+          githubPublishing?.isBusy()
         )
           throw Error(
             "Finish or cancel active work before changing workspace.",
@@ -224,7 +227,8 @@ if (hasLock)
           localExecutor?.isActive ||
           aiServices?.isBusy() ||
           developmentTools?.busy ||
-          preview?.isBusy
+          preview?.isBusy ||
+          githubPublishing?.isBusy()
         )
           throw Error(
             "Active work changed while choosing a folder. Finish it before changing workspace.",
@@ -359,6 +363,15 @@ if (hasLock)
         safeStorage,
         register,
         confirm,
+        isExternalBusy: () => githubPublishing?.isBusy() || false,
+        onConfigurationChanged: () => githubPublishing?.clearCache(),
+      });
+      githubPublishing = await installGitHubPublishing({
+        directory: dataDirectory,
+        workspace,
+        github,
+        register,
+        confirm,
       });
       preview = new PreviewService({
         workspace,
@@ -447,6 +460,7 @@ app.on("before-quit", (event) => {
     await Promise.allSettled([
       localExecutor?.shutdown(),
       voiceController?.shutdown(),
+      githubPublishing?.shutdown(),
       github?.shutdown(),
       preview?.shutdown(),
       aiServices?.shutdown(),

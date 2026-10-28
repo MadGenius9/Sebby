@@ -113,6 +113,21 @@ contextBridge.exposeInMainWorld(
     previewStatus: () => ipcRenderer.invoke("sebby:preview-status"),
     openPreview: (input) => ipcRenderer.invoke("sebby:open-preview", input),
     closePreview: () => ipcRenderer.invoke("sebby:close-preview"),
+    publisherStatus: () => ipcRenderer.invoke("sebby:publisher-status"),
+    grantGithubWrites: () => ipcRenderer.invoke("sebby:grant-github-writes"),
+    revokeGithubWrites: () => ipcRenderer.invoke("sebby:revoke-github-writes"),
+    prepareGithubPublication: (input) =>
+      ipcRenderer.invoke("sebby:prepare-github-publication", input),
+    publishGithubPublication: (input) =>
+      ipcRenderer.invoke("sebby:publish-github-publication", input),
+    discardGithubPublication: (input) =>
+      ipcRenderer.invoke("sebby:discard-github-publication", input),
+    cancelGithubPublication: () =>
+      ipcRenderer.invoke("sebby:cancel-github-publication"),
+    createGithubDraftPR: (input) =>
+      ipcRenderer.invoke("sebby:create-github-draft-pr", input),
+    checkGithubBuilds: (input) =>
+      ipcRenderer.invoke("sebby:check-github-builds", input),
     githubStatus: () => ipcRenderer.invoke("sebby:github-status"),
     saveGithubConfig: (input) =>
       ipcRenderer.invoke("sebby:save-github-config", input),

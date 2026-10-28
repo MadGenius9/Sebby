@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "project": {
     "name": "sebby-desktop",
-    "version": "0.6.0",
+    "version": "0.7.0",
     "private": true
   },
-  "packageJsonSha256": "79442ac2bae71df748aae3435279d07090f608aee2ef6509ccc8764e06eb3ccf",
-  "lockfileSha256": "b1278c5b1caf7bd298880ecbc2ef9c1e61eb711cb3c251e892b3366cc91162ba",
+  "packageJsonSha256": "7449660e8ab724989180219d5abdee2e300adadcb12038be9f42a7d8a57094ec",
+  "lockfileSha256": "121959abd1e93a256152e8b2296723d1f31079a48a3f8d6332e3221766a52c45",
   "source": [
     {
       "path": "build/icon.ico",
@@ -79,9 +79,34 @@
       "sha256": "c60ec265f9b1d6709fddce6330d18d13138a09f419b35d3758bbe50e4a8de242"
     },
     {
+      "path": "electron/github-authority.mjs",
+      "bytes": 5715,
+      "sha256": "5069a798ebee28b03bf185b6f50107ccb0c77b8176a53a2ca37ccbcfb219b836"
+    },
+    {
+      "path": "electron/github-history.mjs",
+      "bytes": 8423,
+      "sha256": "d19d3990e5d4fb3198726afcecdf776e983e622a45a9a96a0fb20f8a9b5233ad"
+    },
+    {
       "path": "electron/github-ipc.mjs",
-      "bytes": 3620,
-      "sha256": "d82c66b61ba5220f84bd573f950b7730c470d17fca710f94ab0d5dcd29e1784e"
+      "bytes": 3961,
+      "sha256": "566b399bad5394c9d0b786b287959f96ab008dc5b25ffe46ba2d2a5cb50d778a"
+    },
+    {
+      "path": "electron/github-publish-ipc.mjs",
+      "bytes": 5331,
+      "sha256": "08ca22af3428b12edca6c11560533eca05a5473488725de2a6f97bc33dd62042"
+    },
+    {
+      "path": "electron/github-publish-transport.mjs",
+      "bytes": 7644,
+      "sha256": "05fcef569b269561339db9f58ebcb64adf781824fc91c25d1e6199e08e412c52"
+    },
+    {
+      "path": "electron/github-publish.mjs",
+      "bytes": 22203,
+      "sha256": "3728d4f23bae9405fa67b5e9f3f0cd6b2d47daa60265c387a65aa70b4d5dac23"
     },
     {
       "path": "electron/github-reader.mjs",
@@ -110,8 +135,8 @@
     },
     {
       "path": "electron/main.mjs",
-      "bytes": 16043,
-      "sha256": "a5c02c060a3b3093dc9d330c627898c5d548fe8ed3fdec8a41b760690f5bd248"
+      "bytes": 16555,
+      "sha256": "39e2739d76d0176f366238c8958332ef181ef12d2143187693841364883b1c8f"
     },
     {
       "path": "electron/mcp-discovery.mjs",
@@ -140,8 +165,8 @@
     },
     {
       "path": "electron/preload.cjs",
-      "bytes": 8021,
-      "sha256": "25ed1171dd811c4592fcdc46926bc56e025e51665fabb6b2b727a3449b794ae0"
+      "bytes": 8875,
+      "sha256": "b7a3e00093354c47bd335efba97e845f8bb035d46138e7f133a6dc29af73da0d"
     },
     {
       "path": "electron/preview-sanitize.mjs",
@@ -266,12 +291,12 @@
     {
       "path": "package-lock.json",
       "bytes": 205056,
-      "sha256": "b1278c5b1caf7bd298880ecbc2ef9c1e61eb711cb3c251e892b3366cc91162ba"
+      "sha256": "121959abd1e93a256152e8b2296723d1f31079a48a3f8d6332e3221766a52c45"
     },
     {
       "path": "package.json",
       "bytes": 1789,
-      "sha256": "79442ac2bae71df748aae3435279d07090f608aee2ef6509ccc8764e06eb3ccf"
+      "sha256": "7449660e8ab724989180219d5abdee2e300adadcb12038be9f42a7d8a57094ec"
     },
     {
       "path": "public/orbit.png",
@@ -375,8 +400,8 @@
     },
     {
       "path": "scripts/release-readiness.mjs",
-      "bytes": 15482,
-      "sha256": "f9cde82af830cd1cb7355fa2d4a2f6936d00c26fbaf4b830164fca6420f2389c"
+      "bytes": 15521,
+      "sha256": "d7739da23846ba6549135c8d3165050ac77961ec704caf32dbe3fa9f41e708bd"
     },
     {
       "path": "scripts/start-sebby-secure.ps1",
@@ -416,7 +441,7 @@
     {
       "path": "src/App.tsx",
       "bytes": 8711,
-      "sha256": "482ee221ed3bc8dd6a30a4643aa86e5bc6b25f8b717d762a7d693016df2693de"
+      "sha256": "902c898d339b32d688bd5c4f31e1f7b97eb3439227df9b34d9934b446455e131"
     },
     {
       "path": "src/Appearance.tsx",
@@ -455,8 +480,13 @@
     },
     {
       "path": "src/GitHubPanel.tsx",
-      "bytes": 14266,
-      "sha256": "cb6c67c7ceca4531b5e36d3bc07d09e51cbd56d10e324a06cbaab5df93be1255"
+      "bytes": 14463,
+      "sha256": "772c2fc793bb8e0072b23bb498970fbbacb6e1f8ca6948e6a4b30b88a29b7f7e"
+    },
+    {
+      "path": "src/GitHubPublishPanel.tsx",
+      "bytes": 15090,
+      "sha256": "f3c8ff0fdbd65ca8354ed3e17ed4518a08896d8111c42c5865607d249a761b77"
     },
     {
       "path": "src/LocalPanels.tsx",
@@ -480,8 +510,8 @@
     },
     {
       "path": "src/Panels.tsx",
-      "bytes": 10878,
-      "sha256": "638885a663bfbb9a46052f0b1f513fbf986048d004a798ed21cbdae6bf523050"
+      "bytes": 11064,
+      "sha256": "9adaf0c239cec64292ef7cf06b86a1dda24c993174df175ed1759f53315cecc8"
     },
     {
       "path": "src/PreviewPanel.tsx",
@@ -562,9 +592,9 @@
         "sha256": "c5a44646b88834afdb59e66a0ebb0bfdbadfab3746f327ec4921279de62e5207"
       },
       {
-        "path": "dist/assets/index-CCuASazf.js",
-        "bytes": 330211,
-        "sha256": "3919204f14c0040c13b5452e5c8755b95ed3c9b756bd9dff2e84040e94ba92b6"
+        "path": "dist/assets/index-BqMQj0sF.js",
+        "bytes": 338762,
+        "sha256": "a25d2355440ca59f40a21c6c815e9105be2cf20f007e18ffb7bbb002af2b4ac8"
       },
       {
         "path": "dist/assets/index-DdhHbXKG.css",
@@ -584,7 +614,7 @@
       {
         "path": "dist/index.html",
         "bytes": 559,
-        "sha256": "938e8c702db2b2bc8828094806f59f26ed47b57ec0305d8cd57326e24c21d0ad"
+        "sha256": "8b30c017d825633f5fc022e69748c671af43ac68fa5cd6ceebf3c54c9eaa981f"
       },
       {
         "path": "dist/orbit.png",
@@ -757,9 +787,34 @@
         "sha256": "c60ec265f9b1d6709fddce6330d18d13138a09f419b35d3758bbe50e4a8de242"
       },
       {
+        "path": "electron/github-authority.mjs",
+        "bytes": 5715,
+        "sha256": "5069a798ebee28b03bf185b6f50107ccb0c77b8176a53a2ca37ccbcfb219b836"
+      },
+      {
+        "path": "electron/github-history.mjs",
+        "bytes": 8423,
+        "sha256": "d19d3990e5d4fb3198726afcecdf776e983e622a45a9a96a0fb20f8a9b5233ad"
+      },
+      {
         "path": "electron/github-ipc.mjs",
-        "bytes": 3620,
-        "sha256": "d82c66b61ba5220f84bd573f950b7730c470d17fca710f94ab0d5dcd29e1784e"
+        "bytes": 3961,
+        "sha256": "566b399bad5394c9d0b786b287959f96ab008dc5b25ffe46ba2d2a5cb50d778a"
+      },
+      {
+        "path": "electron/github-publish-ipc.mjs",
+        "bytes": 5331,
+        "sha256": "08ca22af3428b12edca6c11560533eca05a5473488725de2a6f97bc33dd62042"
+      },
+      {
+        "path": "electron/github-publish-transport.mjs",
+        "bytes": 7644,
+        "sha256": "05fcef569b269561339db9f58ebcb64adf781824fc91c25d1e6199e08e412c52"
+      },
+      {
+        "path": "electron/github-publish.mjs",
+        "bytes": 22203,
+        "sha256": "3728d4f23bae9405fa67b5e9f3f0cd6b2d47daa60265c387a65aa70b4d5dac23"
       },
       {
         "path": "electron/github-reader.mjs",
@@ -788,8 +843,8 @@
       },
       {
         "path": "electron/main.mjs",
-        "bytes": 16043,
-        "sha256": "a5c02c060a3b3093dc9d330c627898c5d548fe8ed3fdec8a41b760690f5bd248"
+        "bytes": 16555,
+        "sha256": "39e2739d76d0176f366238c8958332ef181ef12d2143187693841364883b1c8f"
       },
       {
         "path": "electron/mcp-discovery.mjs",
@@ -818,8 +873,8 @@
       },
       {
         "path": "electron/preload.cjs",
-        "bytes": 8021,
-        "sha256": "25ed1171dd811c4592fcdc46926bc56e025e51665fabb6b2b727a3449b794ae0"
+        "bytes": 8875,
+        "sha256": "b7a3e00093354c47bd335efba97e845f8bb035d46138e7f133a6dc29af73da0d"
       },
       {
         "path": "electron/preview-sanitize.mjs",
@@ -904,7 +959,7 @@
       {
         "path": "package.json",
         "bytes": 1789,
-        "sha256": "79442ac2bae71df748aae3435279d07090f608aee2ef6509ccc8764e06eb3ccf"
+        "sha256": "7449660e8ab724989180219d5abdee2e300adadcb12038be9f42a7d8a57094ec"
       },
       {
         "path": "skills/app-plan.md",

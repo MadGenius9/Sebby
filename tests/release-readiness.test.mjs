@@ -196,3 +196,40 @@ test("notices packaging gate requires both exact allowlist entry and actual file
     "blocked",
   );
 });
+
+test("GitHub configuration, authority and publication history are forbidden packaged stores", async (t) => {
+  const { root } = await fixture(t);
+  for (const name of [
+    "sebby-github.json",
+    "sebby-github-authority.json",
+    "sebby-github-history.json",
+  ])
+    await fs.writeFile(
+      path.join(root, "electron", name),
+      "DO-NOT-INVENTORY-PRIVATE-STORE",
+    );
+  const result = await collectReadiness(root);
+  for (const name of [
+    "sebby-github.json",
+    "sebby-github-authority.json",
+    "sebby-github-history.json",
+  ]) {
+    assert.ok(
+      result.packaging.findings.some(
+        (x) =>
+          x.path === `electron/${name}` &&
+          x.reason === "forbidden-package-path-not-read",
+      ),
+    );
+    assert.ok(
+      !result.packaging.candidateFiles.some(
+        (x) => x.path === `electron/${name}`,
+      ),
+    );
+  }
+  assert.equal(
+    result.checks.find((x) => x.id === "packaging-source-policy").status,
+    "blocked",
+  );
+  assert.ok(!JSON.stringify(result).includes("DO-NOT-INVENTORY-PRIVATE-STORE"));
+});

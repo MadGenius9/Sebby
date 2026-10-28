@@ -221,8 +221,10 @@ export function GitHubPanel({ report }: { report: (message: string) => void }) {
       <p className="muted">
         For private repositories, use a fine-grained token restricted to the
         intended repository with Contents: read and required Metadata: read.
-        This app does not verify or reduce the token’s permissions. No OAuth
-        client or secret is created.
+        Optional publication separately requires your explicit repository grant
+        and a token with Contents: write and Pull requests: write for draft PRs.
+        No scope is upgraded automatically. This app does not verify or reduce
+        the token’s permissions. No OAuth client or secret is created.
       </p>
       <p>
         {status.credential.configured

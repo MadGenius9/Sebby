@@ -1,13 +1,13 @@
-# Verification — 0.6 personal workbench
+# Verification — 0.7 personal workbench
 
 Checked 2026-10-28 in a Linux cloud execution workspace. No user Windows desktop attached.
 
 ## Passed
 
 - `npm run format:check`: all source/config/test files conform to Prettier.
-- `npm run build`: TypeScript plus Vite production bundle; 1,593 modules; core renderer ~330 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
-- `npm test`: **247/247 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
-- `npm run test:components`: **59/59 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
+- `npm run build`: TypeScript plus Vite production bundle; 1,594 modules; core renderer ~339 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
+- `npm test`: **283/283 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
+- `npm run test:components`: **65/65 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
 - `npm audit --json`: **zero reported vulnerabilities** across production and development dependencies at check time. This is not a complete supply-chain assessment.
 - Main/preload syntax checks: pass. Every Electron service is parsed/exercised through tests or syntax checks.
 - Original selected Orbit PNG and deterministic ICO conversion exist; no concept-board crop is used as the character.
@@ -47,3 +47,7 @@ Mocked GitHub token/config/IPC/read transport, tree/blob hashes, binary/oversize
 15 preview service/sanitizer/fake-Electron tests pass, including stale hash/root consent, static AST filtering and disabled JavaScript, no Node/preload or shared session, required file-chooser guard, blocked navigation/downloads, and stalled guard/load cancellation. Native enforcement is not proven by these mocks. Six release-readiness fixture tests pass; bundled notices are explicitly included in packaging configuration and readable as inert text in Settings.
 
 `node scripts/release-readiness.mjs --output docs/release-readiness-source-review.json --check` exits **1 as designed**: packaging source-policy/notices gates pass, but real Electron runtime/Chromium notices, native Windows validation and signed/public distribution gates remain blocked. An initial attempt to replace an existing generated manifest exited2 because output is create-only; the prior generated manifest was preserved in the scratch workspace and a fresh report created. No installer was built/downloaded/signed/published.
+
+## 0.7 additions
+
+Default-denied exact-repository publication authority, durable metadata history/restart uncertainty, immutable full diffs, bounded direct HTTPS request schemas, new-ref-only commits, separate draft PRs and recorded-commit check reads are mock-tested. Independent tests cover proposal tampering, revoked authority, native denial, consumed proposal replay, pending-operation locks and shutdown during consent. Six publication DOM tests exercise review and controls without real API requests. See [incremental review](SECURITY-REVIEW-0.7.md). All 283 Node and 65 DOM tests pass. No actual GitHub account, branch, PR, workflow, token storage or native dialog was exercised.

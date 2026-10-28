@@ -1,6 +1,6 @@
 # Sebby first-run guide — development checkpoint
 
-Sebby is a Windows-oriented personal workbench under development, not yet a verified/signed public Windows release. Follow `RELEASE.md` for an approved native test setup. Do not disable operating-system protections or install unknown software to bypass a warning. This guide describes implemented/source-reviewed controls and the 0.6 preview work being integrated; it does **not** assert that native Windows checks have passed.
+Sebby is a Windows-oriented personal workbench under development, not yet a verified/signed public Windows release. Follow `RELEASE.md` for an approved native test setup. Do not disable operating-system protections or install unknown software to bypass a warning. This guide describes implemented/source-reviewed controls and the integrated static preview and 0.7 publication controls; it does **not** assert that native Windows checks have passed.
 
 ## 1. Start local and keep control
 
@@ -41,7 +41,7 @@ Voice controls require an explicit record action and native microphone permissio
 
 Actual microphone access, local voice availability, audio encoding/upload and speech quality have not been verified on Windows here. If unavailable, use typed text; do not grant broader device permissions to force it to work. See `VOICE.md`.
 
-## 6. Manual HTML preview — 0.6 integration scope
+## 6. Manual static HTML preview
 
 The single-file preview service is being integrated for manually selected supported `.html`/`.htm` files. It is not a development server, general browser automation, build command or evidence that an app works. Open only via the explicit workspace preview action, inspect the file/hash/native warning, then review the isolated preview window.
 
@@ -52,3 +52,7 @@ The preview is static-only: project JavaScript is disabled, and HTML is parsed a
 Use the explicit backup/export controls. Backups may contain sensitive local text and paths but exclude API/GitHub credential vaults. Keep exports private. Review listed stores before restore, stop active work, and restart afterward. Restoring metadata does not restore credentials or authorize network requests. See `BACKUP.md`.
 
 If a dialog, provider response or task result is unclear, stop and review the scope rather than granting broader access. Publishing, paid services, native containment enablement and public release remain separate decisions.
+
+## Optional GitHub publication
+
+Read [publication instructions](GITHUB-PUBLISH.md) before granting write authority. Start with a repository you explicitly control and are willing to expose selected source to; no test repository is created automatically. Review token scopes, target repository, full file diffs and possible CI costs. A new branch is the only allowed commit destination; draft PR creation is separate. If a record says uncertain, inspect the repository manually before considering any new attempt. Cancel does not guarantee that an attempted remote write had no effect.

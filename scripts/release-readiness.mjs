@@ -37,7 +37,7 @@ const forbidden = (relative) =>
         ),
     ) ||
   /\.(?:credential|pem|pfx|p12|key|log|tmp)$/i.test(relative) ||
-  /(?:^|\/)(?:sebby-(?:state|tasks|skills|team|appearance|reminders|conversations|connectors|provider-profiles)|provider-vault|credentials)\.json$/i.test(
+  /(?:^|\/)(?:sebby-(?:state|tasks|skills|team|appearance|reminders|conversations|connectors|provider-profiles|github|github-authority|github-history)|provider-vault|credentials)\.json$/i.test(
     relative,
   );
 function safeRelative(value) {

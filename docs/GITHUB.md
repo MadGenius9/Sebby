@@ -1,6 +1,8 @@
 # Read-only GitHub connector
 
-Sebby can inspect an explicitly selected GitHub.com repository through a narrow main-process service. It does **not** clone, execute repository code, write files, push commits, mutate issues, create OAuth clients, or automatically attach repository text to AI. Development verification used fake credentials, DNS, HTTPS transports, and OS encryption only. **No actual GitHub account connection or remote repository request was made.**
+This document describes the read-only adapter. A separate default-denied [publication workflow](GITHUB-PUBLISH.md) and [exact-repository authority](GITHUB-AUTHORITY.md) now exist; these are not granted by configuring this reader.
+
+The reader can inspect an explicitly selected GitHub.com repository through a narrow main-process service. It does **not** clone, execute repository code, write files, push commits, mutate issues, create OAuth clients, or automatically attach repository text to AI. Development verification used fake credentials, DNS, HTTPS transports, and OS encryption only. **No actual GitHub account connection or remote repository request was made.**
 
 ## Official API contract
 
@@ -20,9 +22,9 @@ No server-returned URL, redirect, pagination URL, or content download URL is fol
 
 - `status()` exposes configuration/OS-storage availability, never token contents or validity.
 - `save(token,{confirmed:true})` and `remove({confirmed:true})` require main's own flag after a native confirmation, not a renderer boolean.
-- `getToken()` is internal to the trusted reader. Never expose it over IPC.
+- `getToken()` is internal to trusted main-process GitHub services. Never expose it over IPC.
 - No token is read from environment variables. A stored token is sent only if the saved repository configuration explicitly enables it, and each read is independently approved.
-- Use a fine-grained token restricted to the intended repository with read-only Contents and required Metadata permission. The app cannot inspect or reduce a token's granted privileges. A broader token still has broader authority outside this app, despite this adapter using only GET.
+- Use a fine-grained token restricted to the intended repository with read-only Contents and required Metadata permission. The app cannot inspect or reduce a token's granted privileges. A broader token still has broader authority outside this app, despite this reader using only GET. For optional publication, the user must separately choose appropriate Contents: write and Pull requests: write permissions; Sebby never upgrades scopes automatically.
 - Removing the local token does not revoke it on GitHub. Organization authorization, token expiry and permission failures require the user's attention; no OAuth or automatic access escalation occurs.
 - Current storage uses pinned Electron 45 safeStorage, denies unavailable encryption and Linux `basic_text`, and has no plaintext fallback. Files/directories reject symlinks, reads and blobs are bounded, and writes use exclusive temporary files plus rename. This does not claim an adversarial local-filesystem race guarantee or protection against all same-user processes.
 

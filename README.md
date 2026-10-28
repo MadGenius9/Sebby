@@ -2,7 +2,7 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.6: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.7: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -29,7 +29,7 @@ npm start
 | Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
 | Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; provider reasoning requires approved runs |
 | Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals require provider setup and native approval; bounded tools and separate coordinator review, then user acceptance |
-| Connections | GitHub metadata/tree/verified text-blob reads, encrypted token setup; MCP metadata discovery | Explicit consent per read; no GitHub writes/clone/publish, no MCP tools/call; live authentication untested |
+| Connections | GitHub metadata/tree/verified text-blob reads, encrypted token setup; MCP metadata discovery | Explicit consent per read; separately approved new-branch commits and draft PRs, no force/merge/clone or MCP tools/call; live authentication untested |
 | Companion | Persisted personality, nine original 3D pals, material palettes, explicit local response reading and optional voice-to-draft transcription | Local speech needs a device-local English voice; microphone/audio API use requires separate consents and remains native/live untested |
 | Reminders | Durable dates, due state, snooze/dismiss; opt-in silent desktop notifications until quit | Native display unverified; no notifications before consent and nothing runs when closed |
 | Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
@@ -42,9 +42,9 @@ In **Settings**, select OpenAI GPT, Anthropic Claude, or xAI Grok; enter an expl
 
 In **Settings → Appearance**, select Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss or Piper and change body/accent/glow colors. Actual GLB material rendering requires WebGL; otherwise an explicitly unchanged original PNG is shown. Orbit remains the default; changing the pal does not change Sebby’s identity or permissions.
 
-## Read-only GitHub and voice drafts
+## GitHub and voice drafts
 
-**Connections** can read one explicitly configured GitHub repository: metadata, a bounded tree, and selected text blobs verified against their Git object hash. Public reads need no token; private access uses a locally encrypted, user-provided scoped token. Every read needs native consent. No clone, remote writes or publishing controls exist. See [GitHub](docs/GITHUB.md).
+**Connections** can read one explicitly configured GitHub repository: metadata, a bounded tree, and selected text blobs verified against their Git object hash. Public reads need no token; private access uses a locally encrypted, user-provided scoped token. Every read needs native consent. The separate publication panel can prepare full diffs for up to ten selected local text files, then create a new `sebby/*` branch and commit after an exact-repository grant and native confirmation. Draft PRs require another review; commit check runs are read-only. No existing branch update, force push, merge or deletion. Uploads may expose source and trigger repository CI costs. Partial failures are recorded as uncertain and never automatically retried. See [GitHub](docs/GITHUB.md) and [publication boundaries](docs/GITHUB-PUBLISH.md).
 
 Chat includes optional **voice drafts**: choose an OpenAI transcription model, approve local microphone use, record/stop, then separately approve paid upload. Review the transcript before sending. Audio stays in memory; no always-listening mode. Actual assistant responses can also be read aloud using an available device-local English voice, with an explicit button. See [voice boundaries](docs/VOICE.md).
 

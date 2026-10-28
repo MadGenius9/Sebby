@@ -1,3 +1,4 @@
+import { GitHubPublishPanel } from "./GitHubPublishPanel";
 import { PreviewPanel } from "./PreviewPanel";
 import { GitHubPanel } from "./GitHubPanel";
 import { useEffect, useState } from "react";
@@ -224,7 +225,7 @@ export function Connections({ report }: { report: (s: string) => void }) {
         ],
         [
           "GitHub",
-          "Read repository metadata, a bounded tree or a selected text blob below. No remote write, clone or publishing controls are enabled.",
+          "Read repository metadata, a bounded tree or a selected text blob below. Publication below is separate: exact-repository authority, full diff review, new branches and draft PRs only. No clone, force push or merge.",
         ],
         [
           "Local tools",
@@ -251,6 +252,7 @@ export function Connections({ report }: { report: (s: string) => void }) {
         </p>
       </div>
       <GitHubPanel report={report} />
+      <GitHubPublishPanel report={report} />
       <ConnectorBookmarks report={report} />
     </>
   );

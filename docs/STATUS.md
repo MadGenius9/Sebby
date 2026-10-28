@@ -1,6 +1,8 @@
-# Delivery status — 0.6 personal workbench
+# Delivery status — 0.7 personal workbench
 
 ## Implemented in source
+
+New in 0.7: default-denied, exact-repository GitHub publication authority; immutable full-diff proposals; new `sebby/*` branch commits, separately approved draft PRs and explicit read-only commit checks. No existing branch update, force, merge or deletion. Metadata-only journals retain uncertain partial failures without automatic retry. All GitHub network tests are mocked; no live app publication occurred.
 
 New in 0.6: native-approved, sanitized static HTML/CSS preview with scripts disabled, separate nonpersistent session and fail-closed browser guards; source release inventory, dependency notices and onboarding. Preview/browser enforcement still requires native validation. Interactive scripts remain unavailable because WebRTC isolation has not been proven.
 
@@ -17,7 +19,7 @@ Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss and Piper are original editab
 - Live provider/model/account validation after secure user setup; current key-reuse decision is resolved, not a code gate.
 - Native Windows encrypted storage, UI, dialogs, notifications, GLB rendering and PowerShell verification.
 - Windows Job Object process containment before package scripts, development preview processes and fuller app-build workflows.
-- Live GitHub authentication verification; writes/publishing and MCP tool execution remain absent. MCP metadata discovery is only a JSON read-only subset, mock-tested.
+- Live GitHub authentication and publication verification; MCP tool execution remains absent. MCP metadata discovery is only a JSON read-only subset, mock-tested.
 - Native microphone/OS voice and audio-provider validation; realtime conversational voice, companion expressions, desktop/browser automation and optional cloud continuation.
 - Signed installer, trusted updates, commercial licensing/distribution review, accessibility and native end-to-end testing.
 
