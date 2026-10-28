@@ -1,54 +1,79 @@
 # Sebby
 
-A separate, local-first Windows desktop work companion. Sebby is the name; Orbit is the chosen ice-blue companion design.
+Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**0.1 foundation — not a working AI coding agent yet.** No model requests, account connections, command execution, or simulated AI responses. The chat surface saves a draft, not a conversation with a model.
+**Version 0.2: a real local workbench, not yet a connected AI coding agent.** Model execution, live connectors, and autonomous sub-agents are not available. Sebby never fabricates replies or claims unfinished tasks ran.
 
-## Run locally
+## Start
 
-Prerequisites: Node.js 24 LTS and npm. On Windows, use PowerShell in this folder:
+Prerequisites: Node.js 24 LTS and npm. In PowerShell, from this project:
 
 ```powershell
 npm ci
 npm test
+npm run test:components
 npm start
 ```
 
-`npm start` typechecks/builds the renderer and starts Electron. `npm run dev` opens a browser-only preview at http://127.0.0.1:5173. That preview persists settings in browser local storage and cannot access workspace folders. Do not confuse browser-preview persistence with desktop persistence.
+`npm start` typechecks/builds the renderer and launches Electron. No credentials are required for local features. `npm run dev` is a **browser preview**, not desktop access; memory/personality/draft use separate browser local storage and desktop-only features disclose that limitation. For desktop hot reload, run `npm run dev` and then `npx electron . --dev` in another terminal.
 
-For renderer hot reload, run `npm run dev` in one terminal and `npx electron . --dev` in another. No secrets are needed. Do not add credentials to source, chat drafts, or memory.
+## What works in source
 
-## Implemented
+| Area | Implemented | Honest boundary |
+|---|---|---|
+| Chat | Editable persistent draft; named local saved drafts | No AI request, response, streaming, or model usage |
+| Memory | Personal and folder-scoped editable memory | Plaintext; never store keys/passwords |
+| Workspace | Native folder selection; bounded text browsing; confirmed note creation | No unrestricted filesystem access |
+| File changes | Hash-checked whole-file previews, native approval, original backups, session undo | Not an adversarial filesystem sandbox; ACL/xattr preservation and Windows behavior unverified |
+| Commands | Fixed Git status after native trusted-executable selection and per-run approval | No shell; no arbitrary commands; npm execution unavailable in UI and disabled on Windows pending process-tree containment |
+| Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
+| Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; AI executor/coordination not connected |
+| Tasks | Durable queue/logs, cancel/retry, restart interruption | No simulated work; running/completed state cannot be set by renderer |
+| Connections | Validated persistent GitHub/MCP bookmarks | Configured—not connected; no authentication, network, or tool grants |
+| Companion | Persisted personality preferences, Orbit artwork, optional local voice preview | Authored preview, not model behavior; device-local English voice required; no microphone |
+| Reminders | Durable in-app dates, due state, snooze/dismiss | No OS notification or background execution when closed |
+| Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
 
-- React/TypeScript desktop UI with the standalone Orbit render, responsive layouts, keyboard focus, and reduced-motion support.
-- Persistent editable personal and per-workspace memory; persisted personality preferences.
-- Three readable/copyable bundled playbooks: app planning, code review, project brief. Selecting a playbook puts real instructions into the local draft; it does **not** run an agent.
-- Explicit native folder selection, bounded allowlisted UTF-8 file browsing, create-only .md/.txt notes with native confirmation. No overwrite/delete/terminal API.
-- Honest disconnected AI/external service screens. No credential collection.
-- Isolated, sandboxed renderer with a narrow validated IPC bridge; network denied in production.
+These paths have service/component test coverage, not Windows-native release certification. Read [verification](docs/VERIFICATION.md) before treating this as a finished product.
 
-The folder selection is intentionally not restored on restart. Reselect a folder to restore its memory. Desktop settings live in Electron's userData/Sebby location (`%APPDATA%/Sebby/sebby-state.json` on Windows). Memory is plain text, not a credential vault. The draft is in Electron renderer local storage and currently shared across workspaces. Browser preview has separate local data.
+## Meet Sebby’s team
 
-## Windows packaging
+In **Team**, choose a specialty and describe the job. Sebby assigns a distinct name—Mira for a planner, Finn for a coder, Sage for a reviewer, Nova for a researcher, with more names available. You can rename or retire them. Create a matching-role task under **Tasks**, then assign it. The UI shows real queue state and plainly reports that the AI executor is not connected.
+
+Future connected specialists inherit permission limits. Sebby must review their evidence before reporting completion; a role or name never grants access.
+
+## Local data and control
+
+Desktop data lives in Electron's `userData` location, normally `%APPDATA%/Sebby/` on Windows. Versioned JSON files hold settings, conversations, skills, tasks, team, reminders, and connector bookmarks. Draft text also uses renderer local storage. Memory, logs, edit backups and exports are **not encrypted**. No credential store is implemented.
+
+Folder selection is not restored automatically. Reselect the same folder to restore its memory. Named drafts, task records and team are app-wide; task workspace references are metadata, not access grants. The composer draft is also app-wide. Existing file edits require a preview and native confirmation. Undo is session-only; original content persists under `edit-backups` for manual recovery. Restoring app data restarts Sebby and does not undo project-file edits.
+
+The app takes a single-instance lock. A restore stops new IPC work; incomplete restores roll back before stores load. Exports are plaintext and should be kept private. Export uses create-only writing: choose a new filename rather than replacing an existing backup.
+
+## Verify and package on Windows
 
 ```powershell
-npm run package:win
+.\scripts\verify-windows.ps1
+# Or skip dependency install / installer packaging:
+.\scripts\verify-windows.ps1 -SkipInstall -SkipPackage
 ```
 
-Electron-builder is configured for an NSIS installer under `release/`. **Windows installer generation, native Windows behavior, signing, SmartScreen reputation, and installation have not been verified in this Linux cloud workspace.** No executable is included in this checkpoint. Do not disable platform protections. Signing and release validation are separate milestones.
+The script runs install, Node tests, DOM component tests, build, and optional unsigned NSIS packaging with publishing disabled. It does not launch, sign, upload, install the generated app, bypass security, or connect accounts. See [release checklist](docs/RELEASE.md).
+
+`npm run package:win` writes to `release/`. **No Windows installer or native test result is supplied.** Windows packaging/install, PowerShell execution, native dialogs, signing, update trust, and OS accessibility remain unverified in this Linux cloud workspace. Do not bypass SmartScreen or other protections.
+
+Additional tests: `npm run test:ui` uses Playwright and requires a locally available supported Chromium browser (`npx playwright install chromium` is an optional explicit browser download). Browser E2E tests have not run successfully in this environment. `npm run format:check` checks formatting.
 
 ## Architecture
 
-- `src/`: code-native React screens and narrowly typed bridge; no Node.js access.
-- `electron/main.mjs`: window lifecycle, request policy, trusted-frame IPC, native approval dialogs.
-- `electron/preload.cjs`: explicit safe bridge methods only.
-- `electron/services.mjs`: settings and bounded workspace services, independently testable.
-- `src/skills.ts`: current bundled instruction registry; extensible runtime comes later.
-- `public/orbit.png`: selected original Orbit asset, not a screenshot crop.
-- `tests/`: Node security/service regression tests.
+- `src/`: React/TypeScript UI; no Node.js privileges. Explicit feature bridges and honest browser fallbacks.
+- `electron/main.mjs`, `preload.cjs`: sandboxed/context-isolated window, trusted-frame checks, narrow IPC, native dialogs, no production renderer network.
+- `electron/services.mjs`: bounded workspace and memory services.
+- `electron/development*.mjs`: reviewed file operations and fixed command runner/IPC.
+- `electron/{tasks,team,skills,conversations,reminders,connectors}.mjs`: separately testable local stores.
+- `electron/backup*.mjs`: schema-validated backup/recovery and native path selection.
+- `skills/*.md`: authoritative desktop bundled instruction documents; `src/skills.ts` is the offline preview/suggestion mirror.
+- `public/orbit.png`, `build/icon.ico`: original chosen Orbit render and deterministic icon-format conversion.
+- `tests/`, `component-tests/`, `e2e/`: services, DOM with real local handlers, and pending browser E2E.
 
-Electron was selected for Windows support, TypeScript ergonomics, and a browser-quality UI. Its tradeoff is a larger runtime and the need to keep Chromium/Electron patched. This is a foundation, not a hardened execution sandbox. See [security boundaries](electron/SECURITY.md), [roadmap](ROADMAP.md), and [verification](docs/VERIFICATION.md).
-
-## Development boundaries
-
-Treat projects, model output, and connector content as untrusted. Never expose shell execution through renderer IPC. Future commands must use explicit policies, working-directory restrictions, human approvals, bounded output/time, and audit records. Credentials must stay in a validated OS secure store, never renderer state. The roadmap is not authorization to connect accounts, incur charges, deploy, or grant broad filesystem access.
+Electron provides a practical Windows-capable shell and TypeScript ecosystem at the cost of a larger runtime and ongoing Chromium/Electron updates. This is a maintainable local foundation—not a sandbox for hostile code. See [security](electron/SECURITY.md), [development limits](docs/DEVELOPMENT.md), [roadmap](ROADMAP.md), and [current delivery status](docs/STATUS.md).
