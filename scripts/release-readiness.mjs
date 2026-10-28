@@ -32,12 +32,12 @@ const forbidden = (relative) =>
     .some(
       (part) =>
         part.startsWith(".") ||
-        /^(?:sebby-.*(?:vault|state|tasks|conversations|reminders|profiles)|node_modules|tests?|fixtures?|tmp|temp|coverage)$/i.test(
+        /^(?:sebby-.*(?:vault|state|tasks|conversations|reminders|profiles|history|staging|quarantine)|node_modules|tests?|fixtures?|tmp|temp|coverage)$/i.test(
           part,
         ),
     ) ||
   /\.(?:credential|pem|pfx|p12|key|log|tmp)$/i.test(relative) ||
-  /(?:^|\/)(?:sebby-(?:state|tasks|skills|team|appearance|reminders|conversations|connectors|provider-profiles|github|github-authority|github-history)|provider-vault|credentials)\.json$/i.test(
+  /(?:^|\/)(?:sebby-(?:state|tasks|skills|team|appearance|reminders|conversations|connectors|provider-profiles|github|github-authority|github-history|orchestration|isolation)|provider-vault|credentials)\.json$/i.test(
     relative,
   );
 function safeRelative(value) {

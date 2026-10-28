@@ -203,6 +203,8 @@ test("GitHub configuration, authority and publication history are forbidden pack
     "sebby-github.json",
     "sebby-github-authority.json",
     "sebby-github-history.json",
+    "sebby-orchestration.json",
+    "sebby-isolation.json",
   ])
     await fs.writeFile(
       path.join(root, "electron", name),
@@ -213,6 +215,8 @@ test("GitHub configuration, authority and publication history are forbidden pack
     "sebby-github.json",
     "sebby-github-authority.json",
     "sebby-github-history.json",
+    "sebby-orchestration.json",
+    "sebby-isolation.json",
   ]) {
     assert.ok(
       result.packaging.findings.some(

@@ -113,6 +113,48 @@ contextBridge.exposeInMainWorld(
     previewStatus: () => ipcRenderer.invoke("sebby:preview-status"),
     openPreview: (input) => ipcRenderer.invoke("sebby:open-preview", input),
     closePreview: () => ipcRenderer.invoke("sebby:close-preview"),
+    reviewedMcpStatus: (input) =>
+      ipcRenderer.invoke("sebby:reviewed-mcp-status", input),
+    saveMcpToken: (input) => ipcRenderer.invoke("sebby:save-mcp-token", input),
+    removeMcpToken: (input) =>
+      ipcRenderer.invoke("sebby:remove-mcp-token", input),
+    discoverReviewedMcp: (input) =>
+      ipcRenderer.invoke("sebby:discover-reviewed-mcp", input),
+    grantMcpTool: (input) => ipcRenderer.invoke("sebby:grant-mcp-tool", input),
+    revokeMcpTool: (input) =>
+      ipcRenderer.invoke("sebby:revoke-mcp-tool", input),
+    prepareMcpTool: (input) =>
+      ipcRenderer.invoke("sebby:prepare-mcp-tool", input),
+    invokeMcpTool: (input) =>
+      ipcRenderer.invoke("sebby:invoke-mcp-tool", input),
+    discardMcpTool: (input) =>
+      ipcRenderer.invoke("sebby:discard-mcp-tool", input),
+    cancelMcpTool: (input) =>
+      ipcRenderer.invoke("sebby:cancel-mcp-tool", input),
+    orchestrationStatus: (input) =>
+      ipcRenderer.invoke("sebby:orchestration-status", input),
+    createOrchestration: (input) =>
+      ipcRenderer.invoke("sebby:create-orchestration", input),
+    startOrchestrationStep: (input) =>
+      ipcRenderer.invoke("sebby:start-orchestration-step", input),
+    acceptOrchestrationStep: (input) =>
+      ipcRenderer.invoke("sebby:accept-orchestration-step", input),
+    finalizeOrchestration: (input) =>
+      ipcRenderer.invoke("sebby:finalize-orchestration", input),
+    acceptOrchestrationFinal: (input) =>
+      ipcRenderer.invoke("sebby:accept-orchestration-final", input),
+    cancelOrchestration: (input) =>
+      ipcRenderer.invoke("sebby:cancel-orchestration", input),
+    isolationStatus: (input) =>
+      ipcRenderer.invoke("sebby:isolation-status", input),
+    saveIsolationConfig: (input) =>
+      ipcRenderer.invoke("sebby:save-isolation-config", input),
+    prepareIsolationSnapshot: (input) =>
+      ipcRenderer.invoke("sebby:prepare-isolation-snapshot", input),
+    verifyIsolationSnapshot: (input) =>
+      ipcRenderer.invoke("sebby:verify-isolation-snapshot", input),
+    discardIsolationSnapshot: (input) =>
+      ipcRenderer.invoke("sebby:discard-isolation-snapshot", input),
     publisherStatus: () => ipcRenderer.invoke("sebby:publisher-status"),
     grantGithubWrites: () => ipcRenderer.invoke("sebby:grant-github-writes"),
     revokeGithubWrites: () => ipcRenderer.invoke("sebby:revoke-github-writes"),

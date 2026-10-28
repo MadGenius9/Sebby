@@ -1,6 +1,8 @@
-# Delivery status — 0.8 personal workbench
+# Delivery status — 0.9 personal workbench
 
 ## Implemented in source
+
+New in 0.9: sequential four-specialist plans with locked scopes/profile, conservative reserved budgets, per-child reviews and one separately approved final critique; manual authenticated MCP tool calls with endpoint-bound vault, exact session grants/full input review and durable uncertain outcomes; real bounded local isolation snapshots plus mock-only hardened execution/artefact policy. No production container/VM runner exists; no remote calls occurred during tests.
 
 New in 0.8: explicit opt-in, offline Windows containment fixture harness source; native acceptance and phase-gap checklists; real-IPC publication DOM tests. The harness has only source-policy tests here—PowerShell/.NET/Windows execution is NOT RUN and the helper remains disabled. See [phase gaps](PHASE-GAPS.md).
 
@@ -20,8 +22,8 @@ Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss and Piper are original editab
 
 - Live provider/model/account validation after secure user setup; current key-reuse decision is resolved, not a code gate.
 - Native Windows encrypted storage, UI, dialogs, notifications, GLB rendering and PowerShell verification.
-- Windows Job Object process containment before package scripts, development preview processes and fuller app-build workflows.
-- Live GitHub authentication and publication verification; MCP tool execution remains absent. MCP metadata discovery is only a JSON read-only subset, mock-tested.
+- Validated execution isolation, image/toolchain provisioning and build/test runner integration before package scripts or interactive preview. Job Objects alone are not a filesystem/network sandbox; the native helper rejects Node/npm/shells.
+- Live GitHub and MCP authentication/tool interoperability verification. MCP supports a bounded JSON-only manual bearer subset, not full OAuth or autonomous agent tools.
 - Native microphone/OS voice and audio-provider validation; realtime conversational voice, companion expressions, desktop/browser automation and optional cloud continuation.
 - Signed installer, trusted updates, commercial licensing/distribution review, accessibility and native end-to-end testing.
 

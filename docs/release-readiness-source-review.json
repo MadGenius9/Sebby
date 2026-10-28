@@ -2,11 +2,11 @@
   "schemaVersion": 1,
   "project": {
     "name": "sebby-desktop",
-    "version": "0.8.0",
+    "version": "0.9.0",
     "private": true
   },
-  "packageJsonSha256": "6c9e009a20dd29dbb68ec5f70b12ac597fee80a8ab710915570b6100b005583c",
-  "lockfileSha256": "cfe7d4596ed9654195f08760c9fa623567d5d1bc571d035843363694280e58dc",
+  "packageJsonSha256": "a7d578e3778cf1beadf5ff04abf40f38fd2c199dbdddfc98abddeeddbe7ca4d6",
+  "lockfileSha256": "eab1104f374dd9f04b7aa70be1cde2249ed46a31f87fb0915c54f636e7d6f3bf",
   "source": [
     {
       "path": "build/icon.ico",
@@ -20,8 +20,8 @@
     },
     {
       "path": "electron/ai-ipc.mjs",
-      "bytes": 11974,
-      "sha256": "785b2e2163a084a19578255943b2a0e255fd01ce9204744098a0f7d73a4e4ef6"
+      "bytes": 16360,
+      "sha256": "f1f0cfd66831ba3363eeb0f69edad9d8469c9bd544e4f321b345db437ffc355d"
     },
     {
       "path": "electron/anthropic-provider.mjs",
@@ -119,6 +119,26 @@
       "sha256": "fe22e90a2428e293c13bffcbcf526f5668b88815e2c3db157ac196002df149cd"
     },
     {
+      "path": "electron/isolation-config.mjs",
+      "bytes": 5264,
+      "sha256": "3f35fc31ec70ea8d2ade03668e29e473f3e48035490d4aae68d237438619c9b0"
+    },
+    {
+      "path": "electron/isolation-ipc.mjs",
+      "bytes": 3953,
+      "sha256": "09cf97e7398c010c45db803d5a0baa47168a82603295c3de080717cec1deb8df"
+    },
+    {
+      "path": "electron/isolation-runner.mjs",
+      "bytes": 12817,
+      "sha256": "c4805b0fee9eb561de3db7ba54016664a0b99471c7c8597a1f1849b37b2f206d"
+    },
+    {
+      "path": "electron/isolation-snapshot.mjs",
+      "bytes": 9268,
+      "sha256": "64101fd07d294dc490899389fc2898839f58b39aabb5485d565b181c85f14e1f"
+    },
+    {
       "path": "electron/local-executor-ipc.mjs",
       "bytes": 961,
       "sha256": "66d3b5d37fc8fd2740625c1187d4171c500b0547cfec6de10c2c28bfb2660c1d"
@@ -130,18 +150,43 @@
     },
     {
       "path": "electron/local-features.mjs",
-      "bytes": 5714,
-      "sha256": "4d2d141a3378f27feb0031f6826ffd7493a23ee4db7304227b388af8dd5b28bd"
+      "bytes": 5833,
+      "sha256": "1090c8c29980c1d4ce6c995869cc409e3a11e3ffc397e1947fec395039572f4f"
     },
     {
       "path": "electron/main.mjs",
-      "bytes": 16555,
-      "sha256": "39e2739d76d0176f366238c8958332ef181ef12d2143187693841364883b1c8f"
+      "bytes": 18362,
+      "sha256": "f82dc7dc89ef7d7ce1570b0ac32fa46c67f86adf498cc25c6ade8bdc7cb88bde"
     },
     {
       "path": "electron/mcp-discovery.mjs",
       "bytes": 10988,
       "sha256": "1041ed833bb0d891493541bd94b09ba92b8a5bfa4c865da8ee21bbf3ac3dcebe"
+    },
+    {
+      "path": "electron/mcp-reviewed-ipc.mjs",
+      "bytes": 4074,
+      "sha256": "b95a9bc9c60b5ea9519827499e5453130ddd3df5b3b9a9f419855d47733f8fce"
+    },
+    {
+      "path": "electron/mcp-reviewed-schema.mjs",
+      "bytes": 8491,
+      "sha256": "d80e4fbf03aa62ec24f6ffd14c04c78a9fb789e49883c34afd90ade89976332f"
+    },
+    {
+      "path": "electron/mcp-reviewed-storage.mjs",
+      "bytes": 1781,
+      "sha256": "20e267dbcf36e915af1c20ca060b5ca897699e0ec44faf6239449fa26bc0009d"
+    },
+    {
+      "path": "electron/mcp-reviewed.mjs",
+      "bytes": 18839,
+      "sha256": "a1d4d565f6bbb247991262a7d0d08a26370264d98e54134ec1ba1e78a89af939"
+    },
+    {
+      "path": "electron/mcp-vault.mjs",
+      "bytes": 5963,
+      "sha256": "8fae549ee0a2f9bc316a0111ca53c2e9524fd06c37167637b6d426fc9bf2385c"
     },
     {
       "path": "electron/media-permissions.mjs",
@@ -150,8 +195,8 @@
     },
     {
       "path": "electron/network-ipc.mjs",
-      "bytes": 991,
-      "sha256": "91c8579f5aff2bb0c0bbcf6c13a931c4506803a065fff6ac25b2fbc33a89bd25"
+      "bytes": 1129,
+      "sha256": "1ca85f8c1f1587919e9addc2d4635cf3cb321d82e0545e12234ae073aac95f62"
     },
     {
       "path": "electron/notification-ipc.mjs",
@@ -164,9 +209,19 @@
       "sha256": "68eca3679f5b9f429385d22d99119ef49e13edc19472acb43fab01556c6df7d1"
     },
     {
+      "path": "electron/orchestration-ipc.mjs",
+      "bytes": 2454,
+      "sha256": "1594b03af96e97fa49eaf99a80d890b6a91aa2557dd1e6f3ef719b19d0629597"
+    },
+    {
+      "path": "electron/orchestration.mjs",
+      "bytes": 35040,
+      "sha256": "50b1b8a97a9f226cb470dfc4fc657e1e0406e5ffa18db5787118c3bc32d05c0c"
+    },
+    {
       "path": "electron/preload.cjs",
-      "bytes": 8875,
-      "sha256": "b7a3e00093354c47bd335efba97e845f8bb035d46138e7f133a6dc29af73da0d"
+      "bytes": 11008,
+      "sha256": "93fbeb4b2ae63ed16e7e1b4a3667b3b49e04e75ec6b9779edcb7bb794e0415f3"
     },
     {
       "path": "electron/preview-sanitize.mjs",
@@ -291,12 +346,12 @@
     {
       "path": "package-lock.json",
       "bytes": 205056,
-      "sha256": "cfe7d4596ed9654195f08760c9fa623567d5d1bc571d035843363694280e58dc"
+      "sha256": "eab1104f374dd9f04b7aa70be1cde2249ed46a31f87fb0915c54f636e7d6f3bf"
     },
     {
       "path": "package.json",
       "bytes": 1789,
-      "sha256": "6c9e009a20dd29dbb68ec5f70b12ac597fee80a8ab710915570b6100b005583c"
+      "sha256": "a7d578e3778cf1beadf5ff04abf40f38fd2c199dbdddfc98abddeeddbe7ca4d6"
     },
     {
       "path": "public/orbit.png",
@@ -400,8 +455,8 @@
     },
     {
       "path": "scripts/release-readiness.mjs",
-      "bytes": 15521,
-      "sha256": "d7739da23846ba6549135c8d3165050ac77961ec704caf32dbe3fa9f41e708bd"
+      "bytes": 15572,
+      "sha256": "0f8be876039b0f2fb689831a1128584ca4144d7153ef888a2255fa54ebe8ac03"
     },
     {
       "path": "scripts/start-sebby-secure.ps1",
@@ -446,7 +501,7 @@
     {
       "path": "src/App.tsx",
       "bytes": 8711,
-      "sha256": "e046cba6d0f9a794a57878418a2529ca8b6651f35e19c617f10d387dcd0620cf"
+      "sha256": "07606ac4d223e15e365308e46df0bc7c8c5075263f810b62e24885c18a045980"
     },
     {
       "path": "src/Appearance.tsx",
@@ -494,9 +549,14 @@
       "sha256": "f3c8ff0fdbd65ca8354ed3e17ed4518a08896d8111c42c5865607d249a761b77"
     },
     {
+      "path": "src/IsolationPanel.tsx",
+      "bytes": 7220,
+      "sha256": "d56501d5eafc5971d0c37ca0ebc9b83c8520a9a8d0db0d26951c75fb53474b6a"
+    },
+    {
       "path": "src/LocalPanels.tsx",
-      "bytes": 18034,
-      "sha256": "2ffcb0d7b142a3d5c7f3741f7442bb581e9bac7052689d32ec6152b3ad29590b"
+      "bytes": 19048,
+      "sha256": "b1b04e54d369583c23643c7519d778b379c2ef56bc378658990f059d5c006f32"
     },
     {
       "path": "src/main.tsx",
@@ -514,9 +574,14 @@
       "sha256": "e917b4da89e092bd4fd8928566660ba0b0bcf116dfe75474706b3fcd267a23f0"
     },
     {
+      "path": "src/OrchestrationPanel.tsx",
+      "bytes": 19319,
+      "sha256": "359fe73ed879f591645dfa3d5e0d3387270315d2e3d68dae3dae87ff510cad9c"
+    },
+    {
       "path": "src/Panels.tsx",
-      "bytes": 11064,
-      "sha256": "9adaf0c239cec64292ef7cf06b86a1dda24c993174df175ed1759f53315cecc8"
+      "bytes": 11258,
+      "sha256": "9d079e22c5e00124cca782516569b4729e7a799575e0fa0b8042c5aaa7cac559"
     },
     {
       "path": "src/PreviewPanel.tsx",
@@ -527,6 +592,11 @@
       "path": "src/ProviderSettings.tsx",
       "bytes": 23428,
       "sha256": "dbd9402aac38123fbd61901303e12a44d45c4f4507a95848d7c2f908650d2068"
+    },
+    {
+      "path": "src/ReviewedMcpPanel.tsx",
+      "bytes": 16299,
+      "sha256": "af8c74cc6843d97cd0560547fa9cebccaafc244f568b754db29cf5d8c4da30e8"
     },
     {
       "path": "src/skills.ts",
@@ -597,9 +667,9 @@
         "sha256": "c5a44646b88834afdb59e66a0ebb0bfdbadfab3746f327ec4921279de62e5207"
       },
       {
-        "path": "dist/assets/index-BCe1qEFB.js",
-        "bytes": 338762,
-        "sha256": "bc5276b33c20661c847b9b3ee86c09ebd7d101c218da93d876d787ce26c20d23"
+        "path": "dist/assets/index-D0uaNAH9.js",
+        "bytes": 360282,
+        "sha256": "997d4e4bab7a8c3c58cca100067eeef81c36eb83b0f8dd04aecc315f4ce875a3"
       },
       {
         "path": "dist/assets/index-DdhHbXKG.css",
@@ -619,7 +689,7 @@
       {
         "path": "dist/index.html",
         "bytes": 559,
-        "sha256": "cbfdd516bdd77069142629585feed2bedbef7f371dedf874823d629fd73b87a9"
+        "sha256": "9340d463bc68e7f1b3433945e4bacd667794983ae3b379666bf6ec2cbd7d4acb"
       },
       {
         "path": "dist/orbit.png",
@@ -733,8 +803,8 @@
       },
       {
         "path": "electron/ai-ipc.mjs",
-        "bytes": 11974,
-        "sha256": "785b2e2163a084a19578255943b2a0e255fd01ce9204744098a0f7d73a4e4ef6"
+        "bytes": 16360,
+        "sha256": "f1f0cfd66831ba3363eeb0f69edad9d8469c9bd544e4f321b345db437ffc355d"
       },
       {
         "path": "electron/anthropic-provider.mjs",
@@ -832,6 +902,26 @@
         "sha256": "fe22e90a2428e293c13bffcbcf526f5668b88815e2c3db157ac196002df149cd"
       },
       {
+        "path": "electron/isolation-config.mjs",
+        "bytes": 5264,
+        "sha256": "3f35fc31ec70ea8d2ade03668e29e473f3e48035490d4aae68d237438619c9b0"
+      },
+      {
+        "path": "electron/isolation-ipc.mjs",
+        "bytes": 3953,
+        "sha256": "09cf97e7398c010c45db803d5a0baa47168a82603295c3de080717cec1deb8df"
+      },
+      {
+        "path": "electron/isolation-runner.mjs",
+        "bytes": 12817,
+        "sha256": "c4805b0fee9eb561de3db7ba54016664a0b99471c7c8597a1f1849b37b2f206d"
+      },
+      {
+        "path": "electron/isolation-snapshot.mjs",
+        "bytes": 9268,
+        "sha256": "64101fd07d294dc490899389fc2898839f58b39aabb5485d565b181c85f14e1f"
+      },
+      {
         "path": "electron/local-executor-ipc.mjs",
         "bytes": 961,
         "sha256": "66d3b5d37fc8fd2740625c1187d4171c500b0547cfec6de10c2c28bfb2660c1d"
@@ -843,18 +933,43 @@
       },
       {
         "path": "electron/local-features.mjs",
-        "bytes": 5714,
-        "sha256": "4d2d141a3378f27feb0031f6826ffd7493a23ee4db7304227b388af8dd5b28bd"
+        "bytes": 5833,
+        "sha256": "1090c8c29980c1d4ce6c995869cc409e3a11e3ffc397e1947fec395039572f4f"
       },
       {
         "path": "electron/main.mjs",
-        "bytes": 16555,
-        "sha256": "39e2739d76d0176f366238c8958332ef181ef12d2143187693841364883b1c8f"
+        "bytes": 18362,
+        "sha256": "f82dc7dc89ef7d7ce1570b0ac32fa46c67f86adf498cc25c6ade8bdc7cb88bde"
       },
       {
         "path": "electron/mcp-discovery.mjs",
         "bytes": 10988,
         "sha256": "1041ed833bb0d891493541bd94b09ba92b8a5bfa4c865da8ee21bbf3ac3dcebe"
+      },
+      {
+        "path": "electron/mcp-reviewed-ipc.mjs",
+        "bytes": 4074,
+        "sha256": "b95a9bc9c60b5ea9519827499e5453130ddd3df5b3b9a9f419855d47733f8fce"
+      },
+      {
+        "path": "electron/mcp-reviewed-schema.mjs",
+        "bytes": 8491,
+        "sha256": "d80e4fbf03aa62ec24f6ffd14c04c78a9fb789e49883c34afd90ade89976332f"
+      },
+      {
+        "path": "electron/mcp-reviewed-storage.mjs",
+        "bytes": 1781,
+        "sha256": "20e267dbcf36e915af1c20ca060b5ca897699e0ec44faf6239449fa26bc0009d"
+      },
+      {
+        "path": "electron/mcp-reviewed.mjs",
+        "bytes": 18839,
+        "sha256": "a1d4d565f6bbb247991262a7d0d08a26370264d98e54134ec1ba1e78a89af939"
+      },
+      {
+        "path": "electron/mcp-vault.mjs",
+        "bytes": 5963,
+        "sha256": "8fae549ee0a2f9bc316a0111ca53c2e9524fd06c37167637b6d426fc9bf2385c"
       },
       {
         "path": "electron/media-permissions.mjs",
@@ -863,8 +978,8 @@
       },
       {
         "path": "electron/network-ipc.mjs",
-        "bytes": 991,
-        "sha256": "91c8579f5aff2bb0c0bbcf6c13a931c4506803a065fff6ac25b2fbc33a89bd25"
+        "bytes": 1129,
+        "sha256": "1ca85f8c1f1587919e9addc2d4635cf3cb321d82e0545e12234ae073aac95f62"
       },
       {
         "path": "electron/notification-ipc.mjs",
@@ -877,9 +992,19 @@
         "sha256": "68eca3679f5b9f429385d22d99119ef49e13edc19472acb43fab01556c6df7d1"
       },
       {
+        "path": "electron/orchestration-ipc.mjs",
+        "bytes": 2454,
+        "sha256": "1594b03af96e97fa49eaf99a80d890b6a91aa2557dd1e6f3ef719b19d0629597"
+      },
+      {
+        "path": "electron/orchestration.mjs",
+        "bytes": 35040,
+        "sha256": "50b1b8a97a9f226cb470dfc4fc657e1e0406e5ffa18db5787118c3bc32d05c0c"
+      },
+      {
         "path": "electron/preload.cjs",
-        "bytes": 8875,
-        "sha256": "b7a3e00093354c47bd335efba97e845f8bb035d46138e7f133a6dc29af73da0d"
+        "bytes": 11008,
+        "sha256": "93fbeb4b2ae63ed16e7e1b4a3667b3b49e04e75ec6b9779edcb7bb794e0415f3"
       },
       {
         "path": "electron/preview-sanitize.mjs",
@@ -964,7 +1089,7 @@
       {
         "path": "package.json",
         "bytes": 1789,
-        "sha256": "6c9e009a20dd29dbb68ec5f70b12ac597fee80a8ab710915570b6100b005583c"
+        "sha256": "a7d578e3778cf1beadf5ff04abf40f38fd2c199dbdddfc98abddeeddbe7ca4d6"
       },
       {
         "path": "skills/app-plan.md",

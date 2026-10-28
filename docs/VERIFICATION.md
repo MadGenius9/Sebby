@@ -1,13 +1,13 @@
-# Verification — 0.8 personal workbench
+# Verification — 0.9 personal workbench
 
 Checked 2026-10-28 in a Linux cloud execution workspace. No user Windows desktop attached.
 
 ## Passed
 
 - `npm run format:check`: all source/config/test files conform to Prettier.
-- `npm run build`: TypeScript plus Vite production bundle; 1,594 modules; core renderer ~339 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
-- `npm test`: **288/288 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
-- `npm run test:components`: **67/67 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
+- `npm run build`: TypeScript plus Vite production bundle; 1,597 modules; core renderer ~360 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
+- `npm test`: **357/357 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
+- `npm run test:components`: **80/80 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
 - `npm audit --json`: **zero reported vulnerabilities** across production and development dependencies at check time. This is not a complete supply-chain assessment.
 - Main/preload syntax checks: pass. Every Electron service is parsed/exercised through tests or syntax checks.
 - Original selected Orbit PNG and deterministic ICO conversion exist; no concept-board crop is used as the character.
@@ -55,3 +55,13 @@ Default-denied exact-repository publication authority, durable metadata history/
 ## 0.8 additions
 
 The manual Windows harness defines seven benign native cases with fixed owned source, empty offline package feeds, minimal child environments, disabled ambient build imports, bounded waits and precise fixture cleanup. Five static harness-policy tests pass; they do not parse/execute PowerShell, compile C#, establish Windows containment or enable the helper. No PowerShell/.NET/Windows runtime is available and no tooling was downloaded. Two added DOM integration tests use actual publication handlers/stores with injected transport to verify denied publication and new-branch/draft-PR flow. Native acceptance and remaining implementation gates are recorded separately.
+
+## 0.9 additions
+
+Sequential multi-specialist orchestration is exercised through real TaskStore/TeamStore/AgentRuntime and injected provider responses, including identity/scope/budget gates, accepted evidence handoffs, final tool-free critique and separate final acceptance. IPC regressions cover pre-active status cancellation and late native consent without provider dispatch.
+
+Reviewed MCP tests cover endpoint/credential binding, strict schema/input parsing, immutable proposal grants, no secret echo, pinned public DNS, unsupported responses, consumed calls and durable uncertain outcomes. Transport and OS encryption are synthetic. No endpoint was contacted.
+
+Isolation preparation tests perform actual local bounded file copies/hash verification/quarantine with fixed disposable fixtures. Container lifecycle argv/ownership/resource controls run only through a test-double adapter; production run is unavailable, and no Docker/WSL/VM process/image was used. Native file permissions, UID mappings, engine trust and audited image recipes remain blocking gates. UI tests cover honest unavailable state and local snapshot controls.
+
+See [incremental independent review](SECURITY-REVIEW-0.9.md). Backup/import and packaging tests exclude orchestration authority/evidence, MCP vault/history and isolation configuration/staging; these exclusions do not constitute a full secret-content scanner.

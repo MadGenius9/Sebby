@@ -282,3 +282,33 @@ test("GitHub backup includes strict metadata only and excludes its separate encr
     /version/,
   );
 });
+
+test("orchestration authority/evidence, MCP vault/history and isolation staging never enter backups", async (t) => {
+  const { directory, backup } = await fixture(t);
+  const secret = "SYNTHETIC_PRIVATE_EXCLUDED_SENTINEL";
+  for (const relative of [
+    "sebby-orchestration.json",
+    "sebby-isolation.json",
+    "sebby-mcp-vault/credentials.bin",
+    "sebby-mcp-history/history.json",
+    "sebby-isolation-staging/session/source.txt",
+  ]) {
+    const target = path.join(directory, relative);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, secret);
+  }
+  const payload = await backup.exportJSON();
+  assert.equal(payload.includes(secret), false);
+  for (const name of [
+    "sebby-orchestration.json",
+    "sebby-isolation.json",
+    "sebby-mcp-history/history.json",
+  ]) {
+    const input = JSON.parse(payload);
+    input.stores[name] = {};
+    await assert.rejects(
+      () => backup.previewImport(JSON.stringify(input)),
+      /unknown/,
+    );
+  }
+});

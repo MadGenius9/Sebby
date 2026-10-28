@@ -1,3 +1,5 @@
+import { createHash, randomUUID } from "node:crypto";
+import { installOrchestration } from "./orchestration-ipc.mjs";
 import {
   ProviderProfiles,
   RuntimeProfileCredentials,
@@ -53,6 +55,10 @@ export async function installAI({
   const profiles = new ProviderProfiles(directory);
   await profiles.load();
   const vault = new ProfileVault(directory, { safeStorage });
+  const identitySession = randomUUID();
+  let settingsRevision = 0;
+  let orchestration;
+  let childGuard = null;
   let chat,
     agents,
     testRun = null,
@@ -60,7 +66,14 @@ export async function installAI({
     settingsPromise = null,
     closed = false;
   const internallyBusy = () =>
-    !!(closed || chat?.isActive || agents?.isActive || testRun || settingsBusy);
+    !!(
+      closed ||
+      chat?.isActive ||
+      agents?.isActive ||
+      testRun ||
+      settingsBusy ||
+      orchestration?.service.isBusy
+    );
   const busy = () => internallyBusy() || isExternalBusy();
   const assertIdle = () => {
     if (busy())
@@ -75,7 +88,10 @@ export async function installAI({
       settingsPromise = Promise.resolve()
         .then(() => {
           if (closed) throw Error("AI services are closing.");
-          return fn(input);
+          return Promise.resolve(fn(input)).then((result) => {
+            settingsRevision++;
+            return result;
+          });
         })
         .finally(() => {
           settingsBusy = false;
@@ -95,8 +111,15 @@ export async function installAI({
       credentials: new RuntimeProfileCredentials(id, { profiles, vault, env }),
     });
   };
+  const checkChild = () => {
+    if (!childGuard) return;
+    childGuard.signal.throwIfAborted();
+    if (JSON.stringify(planIdentity()) !== JSON.stringify(childGuard.identity))
+      throw Error("Locked specialist identity changed.");
+  };
   const router = {
     status: async () => {
+      checkChild();
       const profile = profiles.selected();
       if (!profile)
         return {
@@ -105,14 +128,31 @@ export async function installAI({
           model: "",
           connection: "not-verified",
         };
+      const providerStatus = await providerFor(profile.id).status();
+      checkChild();
       return {
-        ...(await providerFor(profile.id).status()),
+        ...providerStatus,
         profileId: profile.id,
         model: profile.model,
         capabilities: capabilities[profile.provider],
       };
     },
-    send: (options) => providerFor(selected().id).send(options),
+    send: async (options) => {
+      checkChild();
+      const result = await providerFor(
+        childGuard?.identity.profileId ?? selected().id,
+      ).send({
+        ...options,
+        signal: childGuard
+          ? AbortSignal.any([
+              childGuard.signal,
+              ...(options.signal ? [options.signal] : []),
+            ])
+          : options.signal,
+      });
+      checkChild();
+      return result;
+    },
   };
   const contextConsent = async (request) =>
     confirm(
@@ -136,11 +176,106 @@ export async function installAI({
     store,
     skills: features.skills,
     development,
-    approve: (request) =>
-      confirm(
+    approve: async (request) => {
+      checkChild();
+      const approved = await confirm(
         "Approve specialist work and API usage?",
         `${names[selected().provider]} · ${selected().name}\n${JSON.stringify(request, null, 2)}\n\nTool and file permissions do not extend beyond this request. Each file change still requires full diff review and native confirmation. Your API account may be charged.`,
+      );
+      checkChild();
+      return approved;
+    },
+  });
+  const planIdentity = () => {
+    if (closed || !workspace.root)
+      throw Error("Choose a workspace before coordinating specialists.");
+    const profile = selected();
+    return {
+      workspaceRoot: workspace.root,
+      profileId: profile.id,
+      profileRevision: createHash("sha256")
+        .update(JSON.stringify({ profile, identitySession, settingsRevision }))
+        .digest("hex"),
+      provider: profile.provider,
+      model: profile.model,
+    };
+  };
+  orchestration = await installOrchestration({
+    directory,
+    tasks: features.tasks,
+    runtime: {
+      get isActive() {
+        return agents.isActive;
+      },
+      start: async (input, guard) => {
+        if (childGuard || !guard?.signal || !guard?.identity)
+          throw Error("A bound specialist guard is required.");
+        childGuard = guard;
+        try {
+          checkChild();
+          const result = await agents.start(input);
+          if (!result.started) childGuard = null;
+          return result;
+        } catch (error) {
+          childGuard = null;
+          throw error;
+        }
+      },
+      wait: async (runId) => {
+        try {
+          return await agents.wait(runId);
+        } finally {
+          childGuard = null;
+        }
+      },
+      cancel: (taskId) => agents.cancel(taskId),
+      review: (taskId, options) => agents.review(taskId, options),
+    },
+    getIdentity: planIdentity,
+    validatePlan: (input) => {
+      const cap = Math.min(selected().options.maxOutputTokens, 3000);
+      if (
+        !Array.isArray(input?.steps) ||
+        input.steps.some((step) => step?.limits?.maxOutputTokens > cap) ||
+        input?.finalLimits?.maxOutputTokens > cap
+      )
+        throw Error(
+          "Plan output budgets must not exceed the selected profile limit.",
+        );
+    },
+    aggregateProvider: async ({
+      identity,
+      input,
+      instructions,
+      maxOutputTokens,
+      signal,
+    }) => {
+      if (JSON.stringify(planIdentity()) !== JSON.stringify(identity))
+        throw Error("Locked provider identity changed.");
+      const result = await providerFor(identity.profileId).send({
+        model: identity.model,
+        input,
+        instructions,
+        maxOutputTokens,
+        tools: [],
+        signal,
+      });
+      if (JSON.stringify(planIdentity()) !== JSON.stringify(identity))
+        throw Error("Locked provider identity changed.");
+      return result;
+    },
+    register,
+    confirm,
+    isExternalBusy: () =>
+      !!(
+        closed ||
+        chat?.isActive ||
+        agents?.isActive ||
+        testRun ||
+        settingsBusy ||
+        isExternalBusy()
       ),
+    onEvent: (event) => onEvent("orchestration", event),
   });
   register("provider-status", () => router.status());
   register("list-provider-profiles", async () => {
@@ -289,7 +424,15 @@ export async function installAI({
   });
   register("chat-status", (runId) => chat.status(runId));
   register("cancel-chat", (runId) => chat.cancel(runId));
+  const ownedPlanTask = (id) =>
+    orchestration.service
+      .list()
+      .some((plan) => plan.children.some((child) => child.taskId === id));
   register("start-agent", (input) => {
+    if (ownedPlanTask(input?.taskId))
+      throw Error(
+        "Use the coordinated plan controls for this specialist task.",
+      );
     if (busy()) throw Error("Finish active AI work first.");
     exact(input, ["taskId", "memberId", "contextOptions", "limits"]);
     const profile = selected();
@@ -304,20 +447,23 @@ export async function installAI({
   });
   register("agent-status", () => ({ active: agents.isActive }));
   register("cancel-agent", (taskId) => agents.cancel(taskId));
-  register("review-agent", (taskId) =>
-    agents.review(taskId, {
+  register("review-agent", (taskId) => {
+    if (ownedPlanTask(taskId))
+      throw Error("Review this specialist through its coordinated plan.");
+    return agents.review(taskId, {
       approveReview: (request) =>
         confirm(
           "Accept this specialist result and coordinator review?",
           `${JSON.stringify(request, null, 2)}\n\nOnly accept after reviewing the complete evidence in Sebby. A model review is not proof that code was run or correct.`,
         ),
-    }),
-  );
+    });
+  });
   return {
     profiles,
     vault,
     chat,
     agents,
+    orchestration: orchestration.service,
     provider: router,
     isBusy: busy,
     // Main-process-only handle; never register or serialize this object over IPC.
@@ -343,6 +489,7 @@ export async function installAI({
         pending?.promise,
         settingsPromise,
         chat.shutdown(),
+        orchestration.shutdown(),
         agents.shutdown(),
       ]);
     },

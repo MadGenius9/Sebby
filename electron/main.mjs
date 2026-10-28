@@ -26,6 +26,8 @@ import { VoiceController } from "./voice-controller.mjs";
 import { mediaPermissionPolicy } from "./media-permissions.mjs";
 import { installGitHub } from "./github-ipc.mjs";
 import { installGitHubPublishing } from "./github-publish-ipc.mjs";
+import { installReviewedMcp } from "./mcp-reviewed-ipc.mjs";
+import { installIsolation } from "./isolation-ipc.mjs";
 import { PreviewService } from "./preview.mjs";
 import { previewWindowAdapter } from "./preview-window.mjs";
 const directory = path.dirname(fileURLToPath(import.meta.url));
@@ -42,6 +44,8 @@ let window,
   developmentTools,
   localExecutor,
   discovery,
+  reviewedMcp,
+  isolation,
   notificationController,
   aiServices,
   voiceController,
@@ -66,6 +70,26 @@ function trusted(event) {
 const register = (name, action) =>
   ipcMain.handle(`sebby:${name}`, async (event, ...args) => {
     trusted(event);
+    if (
+      aiServices?.orchestration?.isBusy &&
+      [
+        "create-note",
+        "preview-edit",
+        "apply-edit",
+        "undo-edit",
+        "plan-command",
+        "start-command",
+        "configure-git",
+        "start-local-utility",
+        "retry-task",
+        "remove-task",
+        "assign-team-task",
+        "retire-team-member",
+      ].includes(name)
+    )
+      throw Error(
+        "Finish or cancel the active coordinated plan before competing edits, commands or task changes.",
+      );
     if (maintenance)
       throw Error(
         "Sebby is closing or restoring local data. Restart before continuing.",
@@ -211,6 +235,7 @@ if (hasLock)
           aiServices?.isBusy() ||
           developmentTools?.busy ||
           preview?.isBusy ||
+          isolation?.isBusy() ||
           githubPublishing?.isBusy()
         )
           throw Error(
@@ -228,6 +253,7 @@ if (hasLock)
           aiServices?.isBusy() ||
           developmentTools?.busy ||
           preview?.isBusy ||
+          isolation?.isBusy() ||
           githubPublishing?.isBusy()
         )
           throw Error(
@@ -261,7 +287,11 @@ if (hasLock)
         register,
         workspace,
         confirm,
-        onConnectorRemoved: (id) => discovery?.disconnect(id),
+        beforeConnectorRemoval: (id) => reviewedMcp?.beforeRemoveConnector(id),
+        onConnectorRemoved: (id) => {
+          discovery?.disconnect(id);
+          reviewedMcp?.clearConnector(id);
+        },
         beforeRemoveConversation: () => {
           if (aiServices?.chat.isActive)
             throw Error("Finish or cancel chat before deleting conversations.");
@@ -299,6 +329,15 @@ if (hasLock)
         connectors: localFeatures.connectors,
         register,
         confirm,
+        isExternalBusy: () => reviewedMcp?.isBusy() || false,
+      });
+      reviewedMcp = await installReviewedMcp({
+        directory: dataDirectory,
+        safeStorage,
+        connectors: localFeatures.connectors,
+        register,
+        confirm,
+        isExternalBusy: () => discovery?.isBusy() || false,
       });
       notificationController = installNotifications({
         reminders: localFeatures.reminders,
@@ -322,7 +361,12 @@ if (hasLock)
         store,
         features: localFeatures,
         development: developmentTools,
-        isExternalBusy: () => voiceController?.isBusy() || false,
+        isExternalBusy: () =>
+          voiceController?.isBusy() ||
+          developmentTools?.busy ||
+          localExecutor?.isActive ||
+          isolation?.isBusy() ||
+          false,
         confirm,
         onEvent: (kind, event) => {
           if (window && !window.isDestroyed())
@@ -400,6 +444,18 @@ if (hasLock)
         await preview.close();
         return previewStatus();
       });
+      isolation = await installIsolation({
+        directory: dataDirectory,
+        workspace,
+        register,
+        confirm,
+        isExternalBusy: () =>
+          aiServices?.isBusy() ||
+          developmentTools?.busy ||
+          localExecutor?.isActive ||
+          preview?.isBusy ||
+          false,
+      });
       const guardedDialogs = {
         showSaveDialog: (...args) => guardedDialog("showSaveDialog", ...args),
         showOpenDialog: (...args) => guardedDialog("showOpenDialog", ...args),
@@ -419,6 +475,9 @@ if (hasLock)
             notificationController.status().busy ||
             aiServices.isBusy() ||
             github.isBusy() ||
+            isolation.isBusy() ||
+            reviewedMcp.isBusy() ||
+            discovery.isBusy() ||
             preview.isBusy
           )
             return false;
@@ -460,6 +519,8 @@ app.on("before-quit", (event) => {
     await Promise.allSettled([
       localExecutor?.shutdown(),
       voiceController?.shutdown(),
+      isolation?.shutdown(),
+      reviewedMcp?.shutdown(),
       githubPublishing?.shutdown(),
       github?.shutdown(),
       preview?.shutdown(),

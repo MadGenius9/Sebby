@@ -12,6 +12,7 @@ export async function installLocalFeatures({
   workspace,
   confirm,
   onConnectorRemoved = () => {},
+  beforeConnectorRemoval = () => {},
   cancelActiveTask = async () => null,
   beforeRemoveConversation = () => {},
 }) {
@@ -61,10 +62,12 @@ export async function installLocalFeatures({
   register("list-connectors", () => connectors.list());
   register("add-connector", (input) => connectors.add(input));
   register("remove-connector", async (id) => {
+    await beforeConnectorRemoval(id);
     const item = connectors.get(id);
     if (!(await confirm("Remove connector bookmark?", item.name)))
       return { removed: false };
-    onConnectorRemoved(id);
+    await beforeConnectorRemoval(id);
+    await onConnectorRemoved(id);
     return connectors.remove(id, { confirmed: true });
   });
   register("list-tasks", () => tasks.list());

@@ -1,3 +1,4 @@
+import { OrchestrationPanel } from "./OrchestrationPanel";
 import { AgentTaskControls } from "./AgentControls";
 import { NotificationControls } from "./NotificationControls";
 import { UtilityLauncher } from "./UtilityLauncher";
@@ -32,6 +33,7 @@ function DesktopOnly() {
   );
 }
 export function TasksPanel({ report }: Props) {
+  const [ownedTasks, setOwnedTasks] = useState<Set<string>>(new Set());
   const [items, setItems] = useState<Task[]>([]),
     [title, setTitle] = useState(""),
     [prompt, setPrompt] = useState(""),
@@ -40,6 +42,25 @@ export function TasksPanel({ report }: Props) {
     if (local)
       try {
         setItems(await local.listTasks());
+        const planApi = (
+          window as unknown as {
+            sebby?: {
+              orchestrationStatus?: () => Promise<{
+                plans: { children: { taskId: string }[] }[];
+              }>;
+            };
+          }
+        ).sebby;
+        if (planApi?.orchestrationStatus) {
+          const status = await planApi.orchestrationStatus();
+          setOwnedTasks(
+            new Set(
+              status.plans.flatMap((plan) =>
+                plan.children.map((child) => child.taskId),
+              ),
+            ),
+          );
+        }
       } catch (e) {
         report((e as Error).message);
       }
@@ -53,6 +74,7 @@ export function TasksPanel({ report }: Props) {
   return (
     <>
       <h2>Keep the next step in sight.</h2>
+      <OrchestrationPanel report={report} />
       <p className="muted">
         AI goals run only after provider setup and your explicit approval. The
         separate local utilities below perform real, bounded metadata work and
@@ -144,8 +166,16 @@ export function TasksPanel({ report }: Props) {
               </button>
             ) : null}
           </div>
-          <AgentTaskControls task={item} report={report} refresh={load} />
-          {(!item.kind || item.kind === "ai") &&
+          {ownedTasks.has(item.id) ? (
+            <p className="muted">
+              Managed by a coordinated plan. Review or continue it in the plan
+              controls above.
+            </p>
+          ) : (
+            <AgentTaskControls task={item} report={report} refresh={load} />
+          )}
+          {!ownedTasks.has(item.id) &&
+            (!item.kind || item.kind === "ai") &&
             ["failed", "interrupted"].includes(item.status) && (
               <button
                 className="text-button"

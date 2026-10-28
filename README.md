@@ -2,7 +2,7 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.8: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.9: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -28,8 +28,8 @@ npm start
 | Commands | Fixed Git status after native trusted-executable selection and per-run approval | No shell; no arbitrary commands; npm execution unavailable in UI and disabled on Windows pending process-tree containment |
 | Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
 | Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; provider reasoning requires approved runs |
-| Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals require provider setup and native approval; bounded tools and separate coordinator review, then user acceptance |
-| Connections | GitHub metadata/tree/verified text-blob reads, encrypted token setup; MCP metadata discovery | Explicit consent per read; separately approved new-branch commits and draft PRs, no force/merge/clone or MCP tools/call; live authentication untested |
+| Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals require provider setup and native approval; bounded tools and separate coordinator review, then user acceptance; up to four sequential specialists plus one explicit final critique |
+| Connections | GitHub metadata/tree/verified text-blob reads, encrypted token setup; MCP metadata discovery | Explicit consent per read; separately approved new-branch commits and draft PRs, no force/merge/clone; separately reviewed authenticated MCP calls; live authentication untested |
 | Companion | Persisted personality, nine original 3D pals, material palettes, explicit local response reading and optional voice-to-draft transcription | Local speech needs a device-local English voice; microphone/audio API use requires separate consents and remains native/live untested |
 | Reminders | Durable dates, due state, snooze/dismiss; opt-in silent desktop notifications until quit | Native display unverified; no notifications before consent and nothing runs when closed |
 | Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
@@ -100,3 +100,11 @@ Electron provides a practical Windows-capable shell and TypeScript ecosystem at 
 Workspace can open a native-approved static HTML/CSS subset in an isolated window. Scripts, external assets, network access and active controls are unavailable; this is not an interactive app runtime or proof of a successful build. [Preview policy](docs/PREVIEW.md) documents sanitization and native validation gaps.
 
 `npm run release:readiness` inventories source/lock/dependency licenses and packaging policy. It intentionally exits nonzero while native/runtime/signing/release gates remain unresolved. Settings can show the explicitly bundled dependency notices; those notices are not commercial clearance. See [onboarding](docs/ONBOARDING.md) and [distribution checklist](docs/DISTRIBUTION-CHECKLIST.md).
+
+## Coordinated plans, remote tools and build preparation
+
+Tasks can coordinate up to four sequential named specialists under one locked workspace/profile, with explicit scope ceilings and reserved budgets. Each child is reviewed before handing accepted evidence to the next; a separately consented final model critique and user acceptance finish the plan. No automatic retries or restart replay. See [orchestration](docs/ORCHESTRATION.md).
+
+The separate **Reviewed MCP tools** panel supports manually provisioned bearer tokens, not full OAuth. Review the exact endpoint, tool schema and complete JSON input. Server claims of safety/read-only behavior are untrusted; remote effects can be irreversible or charged. Post-dispatch failures are uncertain, not rolled back. Outputs are inert text, not model instructions. See [MCP boundaries](docs/MCP-REVIEWED.md).
+
+**Isolated build preparation** copies and verifies selected bounded local source files after native consent. Engine configuration, fixed command policy and artifact quarantine have source/mock coverage only. Production execution remains unavailable: no Docker/VM process, image pull, npm install or build is launched. Native engine trust, audited dependency-specific images and mount/permission validation remain required. See [execution path](docs/ISOLATED-EXECUTION.md) and [phase gaps](docs/PHASE-GAPS.md).

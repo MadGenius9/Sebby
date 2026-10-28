@@ -1,3 +1,5 @@
+import { IsolationPanel } from "./IsolationPanel";
+import { ReviewedMcpPanel } from "./ReviewedMcpPanel";
 import { GitHubPublishPanel } from "./GitHubPublishPanel";
 import { PreviewPanel } from "./PreviewPanel";
 import { GitHubPanel } from "./GitHubPanel";
@@ -205,6 +207,7 @@ export function Workspace({
           <p role="status">{message}</p>
           <DevelopmentPanel key={state.workspace.path} report={report} />
           <PreviewPanel report={report} />
+          <IsolationPanel report={report} />
         </>
       )}
     </>
@@ -254,6 +257,7 @@ export function Connections({ report }: { report: (s: string) => void }) {
       <GitHubPanel report={report} />
       <GitHubPublishPanel report={report} />
       <ConnectorBookmarks report={report} />
+      <ReviewedMcpPanel report={report} />
     </>
   );
 }
