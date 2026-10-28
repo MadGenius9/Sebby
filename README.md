@@ -2,7 +2,7 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.4: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.5: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. Optional MCP metadata discovery is read-only and separately consented. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -29,8 +29,8 @@ npm start
 | Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
 | Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; provider reasoning requires approved runs |
 | Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals require provider setup and native approval; bounded tools and separate coordinator review, then user acceptance |
-| Connections | GitHub/MCP bookmarks; explicit read-only MCP tool-name discovery with DNS/TLS/size/time safeguards | No authentication or tool execution; JSON-only 2026-07-28 subset, no real endpoint tested |
-| Companion | Persisted personality, Nine original 3D pals, material palettes, optional local voice preview | Authored preview, not model behavior; device-local English voice required; no microphone |
+| Connections | GitHub metadata/tree/verified text-blob reads, encrypted token setup; MCP metadata discovery | Explicit consent per read; no GitHub writes/clone/publish, no MCP tools/call; live authentication untested |
+| Companion | Persisted personality, nine original 3D pals, material palettes, explicit local response reading and optional voice-to-draft transcription | Local speech needs a device-local English voice; microphone/audio API use requires separate consents and remains native/live untested |
 | Reminders | Durable dates, due state, snooze/dismiss; opt-in silent desktop notifications until quit | Native display unverified; no notifications before consent and nothing runs when closed |
 | Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
 
@@ -41,6 +41,12 @@ These paths have service/component test coverage, not Windows-native release cer
 In **Settings**, select OpenAI GPT, Anthropic Claude, or xAI Grok; enter an explicit model ID and output budget. Use an enabled provider-specific environment key or store a key through the masked field and native confirmation. Never paste keys in chat, project memory, source, or GitHub. The password field is transient renderer memory, not React state or local storage. Secure storage is not available in browser preview. Key availability does not prove account/model access. An optional native-approved connection test may incur API charges. Consumer chat subscriptions do not include API billing. See [existing-key setup](docs/EXISTING-KEY.md), [providers](docs/PROVIDERS.md), and [privacy](docs/PRIVACY.md).
 
 In **Settings → Appearance**, select Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss or Piper and change body/accent/glow colors. Actual GLB material rendering requires WebGL; otherwise an explicitly unchanged original PNG is shown. Orbit remains the default; changing the pal does not change Sebby’s identity or permissions.
+
+## Read-only GitHub and voice drafts
+
+**Connections** can read one explicitly configured GitHub repository: metadata, a bounded tree, and selected text blobs verified against their Git object hash. Public reads need no token; private access uses a locally encrypted, user-provided scoped token. Every read needs native consent. No clone, remote writes or publishing controls exist. See [GitHub](docs/GITHUB.md).
+
+Chat includes optional **voice drafts**: choose an OpenAI transcription model, approve local microphone use, record/stop, then separately approve paid upload. Review the transcript before sending. Audio stays in memory; no always-listening mode. Actual assistant responses can also be read aloud using an available device-local English voice, with an explicit button. See [voice boundaries](docs/VOICE.md).
 
 ## Meet Sebby’s team
 
@@ -84,3 +90,7 @@ Additional tests: `npm run test:ui` uses Playwright and requires a locally avail
 - `tests/`, `component-tests/`, `e2e/`: services, DOM with real local handlers, and pending browser E2E.
 
 Electron provides a practical Windows-capable shell and TypeScript ecosystem at the cost of a larger runtime and ongoing Chromium/Electron updates. This is a maintainable local foundation—not a sandbox for hostile code. See [security](electron/SECURITY.md), [development limits](docs/DEVELOPMENT.md), [roadmap](ROADMAP.md), and [current delivery status](docs/STATUS.md).
+
+## Windows execution remains gated
+
+`native/windows-job-runner/` contains an auditable .NET 10 Windows Job Object supervisor with explicit executable/hash/argument contract, process-lifetime containment, cancellation and output bounds. It is **not compiled, Windows-tested, integrated or enabled** in Sebby. It is not a security sandbox, and does not enable npm or shell commands. See [containment validation](docs/WINDOWS-CONTAINMENT.md).

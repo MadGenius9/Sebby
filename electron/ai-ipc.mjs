@@ -42,6 +42,7 @@ export async function installAI({
   development,
   confirm,
   onEvent = () => {},
+  isExternalBusy = () => false,
   env = process.env,
   adapters = {
     openai: ResponsesProvider,
@@ -58,8 +59,9 @@ export async function installAI({
     settingsBusy = false,
     settingsPromise = null,
     closed = false;
-  const busy = () =>
+  const internallyBusy = () =>
     !!(closed || chat?.isActive || agents?.isActive || testRun || settingsBusy);
+  const busy = () => internallyBusy() || isExternalBusy();
   const assertIdle = () => {
     if (busy())
       throw Error(
@@ -318,6 +320,21 @@ export async function installAI({
     agents,
     provider: router,
     isBusy: busy,
+    // Main-process-only handle; never register or serialize this object over IPC.
+    voiceContext: () => {
+      if (internallyBusy())
+        throw Error("Finish active AI work before voice capture.");
+      const profile = selected();
+      return {
+        profileId: profile.id,
+        provider: profile.provider,
+        credentials: new RuntimeProfileCredentials(profile.id, {
+          profiles,
+          vault,
+          env,
+        }),
+      };
+    },
     shutdown: async () => {
       closed = true;
       const pending = testRun;

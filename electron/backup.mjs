@@ -10,6 +10,7 @@ import { ConversationStore } from "./conversations.mjs";
 import { ConnectorStore } from "./connectors.mjs";
 import { TeamStore } from "./team.mjs";
 import { AppearanceStore } from "./appearance.mjs";
+import { GitHubConfig, validateGitHubConfig } from "./github-storage.mjs";
 import { validateProfilesDocument } from "./provider-profiles.mjs";
 
 const FORMAT = "sebby-local-backup",
@@ -24,6 +25,7 @@ const FILES = Object.freeze([
   "sebby-team.json",
   "sebby-appearance.json",
   "sebby-provider-profiles.json",
+  "sebby-github.json",
 ]);
 export const BACKUP_FILES = FILES;
 const JOURNAL = ".sebby-restore.json";
@@ -41,6 +43,12 @@ function each(value, fn) {
   value.forEach(fn);
 }
 function strict(name, data) {
+  if (name === "sebby-github.json") {
+    exact(data, ["version", "configuration"]);
+    if (data.version !== 1)
+      throw Error("Unsupported GitHub configuration version.");
+    validateGitHubConfig(data.configuration);
+  }
   if (name === "sebby-provider-profiles.json") validateProfilesDocument(data);
   if (name === "sebby-appearance.json") {
     exact(data, ["version", "appearance"]);
@@ -187,6 +195,7 @@ async function validateStores(stores) {
       "sebby-connectors.json": ConnectorStore,
       "sebby-team.json": TeamStore,
       "sebby-appearance.json": AppearanceStore,
+      "sebby-github.json": GitHubConfig,
     };
     const normalized = {};
     for (const name of Object.keys(stores)) {

@@ -45,7 +45,7 @@ export function installBackup({
       approve: (summary) =>
         confirm(
           "Replace local data and restart Sebby?",
-          `Replace these local stores:\n${summary.map((x) => x.name).join("\n")}\n\nThis does not restore project files or keys. Provider profiles may restore model choices and provider-specific environment-key opt-ins; no paid request is authorized by restoration. Existing local stores are retained in a recovery folder. Sebby will restart after success.`,
+          `Replace these local stores:\n${summary.map((x) => x.name).join("\n")}\n\nThis does not restore project files or keys. Provider profiles may restore model choices and provider-specific environment-key opt-ins; no paid request is authorized by restoration. GitHub repository configuration and token-use preference may also restore, but no token is copied and no network request is authorized. Existing local stores are retained in a recovery folder. Sebby will restart after success.`,
         ),
       quiesce,
     });

@@ -109,6 +109,24 @@ contextBridge.exposeInMainWorld(
       return () =>
         ipcRenderer.removeListener("sebby:provider-changed", listener);
     },
+    githubStatus: () => ipcRenderer.invoke("sebby:github-status"),
+    saveGithubConfig: (input) =>
+      ipcRenderer.invoke("sebby:save-github-config", input),
+    saveGithubToken: (input) =>
+      ipcRenderer.invoke("sebby:save-github-token", input),
+    removeGithubToken: () => ipcRenderer.invoke("sebby:remove-github-token"),
+    readGithubMetadata: () => ipcRenderer.invoke("sebby:read-github-metadata"),
+    readGithubTree: () => ipcRenderer.invoke("sebby:read-github-tree"),
+    readGithubFile: (input) =>
+      ipcRenderer.invoke("sebby:read-github-file", input),
+    cancelGithubRead: () => ipcRenderer.invoke("sebby:cancel-github-read"),
+    voiceStatus: () => ipcRenderer.invoke("sebby:voice-status"),
+    beginVoiceCapture: (input) =>
+      ipcRenderer.invoke("sebby:begin-voice-capture", input),
+    endVoiceCapture: (id) => ipcRenderer.invoke("sebby:end-voice-capture", id),
+    transcribeVoice: (input) =>
+      ipcRenderer.invoke("sebby:transcribe-voice", input),
+    cancelVoice: (id) => ipcRenderer.invoke("sebby:cancel-voice", id),
     getState: () => ipcRenderer.invoke("sebby:get-state"),
     saveMemory: (text) => ipcRenderer.invoke("sebby:save-memory", text),
     savePersonality: (value) =>

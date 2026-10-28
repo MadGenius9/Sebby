@@ -1,6 +1,6 @@
 {
   "name": "sebby-desktop",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "description": "Sebby personal workbench with approved AI and customizable pals",
   "type": "module",

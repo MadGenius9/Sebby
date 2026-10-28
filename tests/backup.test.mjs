@@ -239,3 +239,46 @@ test("provider profile metadata exports but credentials and vault stay excluded"
   data.stores["sebby-provider-profiles.json"].profiles[0].apiKey = "forbidden";
   await assert.rejects(backup.previewImport(JSON.stringify(data)));
 });
+
+test("GitHub backup includes strict metadata only and excludes its separate encrypted vault", async (t) => {
+  const { directory, backup } = await fixture(t);
+  const { GitHubConfig } = await import("../electron/github-storage.mjs");
+  const config = new GitHubConfig(directory);
+  await config.load();
+  await config.save({
+    owner: "example",
+    repo: "demo",
+    ref: "HEAD",
+    useToken: true,
+  });
+  await fs.mkdir(path.join(directory, "sebby-github-vault"));
+  await fs.writeFile(
+    path.join(directory, "sebby-github-vault", "token.credential"),
+    "SYNTHETIC_ENCRYPTED_SENTINEL",
+  );
+  const payload = await backup.exportJSON();
+  assert.equal(
+    JSON.parse(payload).stores["sebby-github.json"].configuration.repo,
+    "demo",
+  );
+  assert.equal(payload.includes("SYNTHETIC_ENCRYPTED_SENTINEL"), false);
+  const changed = JSON.parse(payload);
+  changed.stores["sebby-github.json"].configuration.token = "forbidden";
+  await assert.rejects(
+    backup.previewImport(JSON.stringify(changed)),
+    /Unsupported|unknown/,
+  );
+  changed.stores["sebby-github.json"] = {
+    version: 2,
+    configuration: {
+      owner: "example",
+      repo: "demo",
+      ref: "HEAD",
+      useToken: false,
+    },
+  };
+  await assert.rejects(
+    backup.previewImport(JSON.stringify(changed)),
+    /version/,
+  );
+});

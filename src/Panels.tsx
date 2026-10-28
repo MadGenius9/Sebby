@@ -1,10 +1,17 @@
+import { GitHubPanel } from "./GitHubPanel";
 import { useEffect, useState } from "react";
 import { Folder, RefreshCw, Save, FileText, Lock, Check } from "lucide-react";
 import { BackupPanel } from "./BackupPanel";
 import { ConnectorBookmarks } from "./ConnectorBookmarks";
 import { DevelopmentPanel } from "./DevelopmentPanel";
 import { VoicePreview } from "./LocalPanels";
-import { bridge, type State, type FileEntry, type Personality } from "./bridge";
+import {
+  bridge,
+  desktop,
+  type State,
+  type FileEntry,
+  type Personality,
+} from "./bridge";
 type Props = {
   state: State;
   update: (s: State) => void;
@@ -205,17 +212,17 @@ export function Connections({ report }: { report: (s: string) => void }) {
     <>
       <h2>Connections, on your terms.</h2>
       <p className="muted">
-        Nothing is connected. This foundation does not send data to a provider
-        or sign into external services.
+        Configuration is not a live connection. External requests are optional,
+        explicit and separately approved; nothing connects automatically.
       </p>
       {[
         [
           "AI provider",
-          "Model access is the next integration milestone. No credentials are collected in this build.",
+          "Choose your provider, model and secure key source in Settings. Each paid chat or bounded specialist run needs approval.",
         ],
         [
           "GitHub",
-          "Repository read and write access will require a scoped connection and explicit publishing approval.",
+          "Read repository metadata, a bounded tree or a selected text blob below. No remote write, clone or publishing controls are enabled.",
         ],
         [
           "Local tools",
@@ -228,7 +235,9 @@ export function Connections({ report }: { report: (s: string) => void }) {
             <h3>{name}</h3>
             <p>{description}</p>
           </div>
-          <span className="status">Not connected</span>
+          <span className="status">
+            {desktop ? "Explicit actions only" : "Not connected"}
+          </span>
         </article>
       ))}
       <div className="callout">
@@ -239,6 +248,7 @@ export function Connections({ report }: { report: (s: string) => void }) {
           API keys into chat or project memory.
         </p>
       </div>
+      <GitHubPanel report={report} />
       <ConnectorBookmarks report={report} />
     </>
   );
@@ -250,8 +260,9 @@ export function PersonalityPanel({ state, update, report }: Props) {
     <>
       <h2>Same Sebby. Your kind of company.</h2>
       <p className="muted">
-        Set the tone for future AI conversations. Preferences save now; model
-        behavior will apply when AI integration is added.
+        Set the tone for text chat. Saved preferences shape the chat
+        instructions; specialist task roles and safety boundaries remain
+        unchanged.
       </p>
       <div className="personality-preview">
         <img src="./orbit.png" alt="Sebby" />

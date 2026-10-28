@@ -1,6 +1,6 @@
 # Desktop privilege boundary — AI integration checkpoint
 
-The renderer is an unprivileged interface. Preload exposes named intent-specific methods, not Node, Electron, a generic IPC sender, raw filesystem paths, a shell, credential readback, or arbitrary command execution. Main validates the exact sender window and main frame URL. Context isolation and Chromium sandboxing are enabled; Node integration, webviews, navigation, new windows, downloads and browser permission grants are denied. Production renderer requests cannot access the network or files outside canonical built-renderer assets.
+The renderer is an unprivileged interface. Preload exposes named intent-specific methods, not Node, Electron, a generic IPC sender, raw filesystem paths, a shell, credential readback, or arbitrary command execution. Main validates the exact sender window and main frame URL. Context isolation and Chromium sandboxing are enabled; Node integration, webviews, navigation, new windows, downloads and browser permission grants are denied except the native-consented single-use audio-only main-frame capture gate. Production renderer requests cannot access the network or files outside canonical built-renderer assets.
 
 ## Explicit authority
 
@@ -21,7 +21,7 @@ The renderer is an unprivileged interface. Preload exposes named intent-specific
 
 Stores are versioned, bounded, validated, serialized and atomically replaced under userData. Personal and canonical-folder-hashed memory are separate. Other local collections are app-wide. Ordinary data, logs and edit originals are plaintext; the separate provider credential vault is OS-encrypted and excluded from exports. Do not store keys or passwords in chat, memory, skills or bookmarks.
 
-Backup schema allowlists nine local stores (including nonsecret provider profiles and appearance) and rejects unknown fields/files, credential vaults and executable authority. Import validates in a staging directory; restore requires native confirmation and quiesced writers, retains recovery copies, uses rollback/journal recovery, then restarts. Single-instance lock prevents ordinary concurrent app writers. Restore maintenance rejects new IPC work. Exports validate each store but are not a cross-store atomic snapshot. Power-loss atomicity is not guaranteed.
+Backup schema allowlists ten local stores (including nonsecret provider profiles, GitHub configuration and appearance) and rejects unknown fields/files, credential vaults and executable authority. Import validates in a staging directory; restore requires native confirmation and quiesced writers, retains recovery copies, uses rollback/journal recovery, then restarts. Single-instance lock prevents ordinary concurrent app writers. Restore maintenance rejects new IPC work. Exports validate each store but are not a cross-store atomic snapshot. Power-loss atomicity is not guaranteed.
 
 ## Limits
 
@@ -30,3 +30,9 @@ This is **not** a hardened sandbox against an adversarial local process modifyin
 Main-process service/IPC tests and DOM component tests do not prove Electron runtime security, Windows file semantics, native dialogs, notification/voice behavior or installer trust. Actual Electron/Windows, live-provider and GPU verification remain unperformed in the current environment. No telemetry, crash uploading, signing or auto-updater is enabled. Optional silent notifications require session-only native consent, disclose lock-screen title visibility, and are marked delivered only after a native show event; all tests used fake native objects. Shutdown aborts producers and gives local store queues up to three seconds to drain; interrupted task recovery remains the fallback, not a guarantee against power loss.
 
 Development is only `--dev` on an unpackaged app at fixed `http://127.0.0.1:5173/`; do not use an untrusted server on that port. Dev CSS permits inline styles solely for Vite; production CSP does not. Keep Electron and dependencies patched and repeat native release checks before distribution.
+
+## 0.5 network/audio exceptions
+
+Read-only GitHub uses fixed api.github.com GET requests with public DNS pinning, verified TLS, no redirects/proxies, explicit native consent and bounded JSON. Text blobs are matched to retained tree SHA references and verified against Git object hashes. A separate encrypted token vault is never backed up; token entry is transient and has no readback. No remote mutation/clone/publishing endpoints exist.
+
+Microphone access needs native capture consent, a matching top-level window/URL and one-shot audio-only permission request. Checks default-deny, camera/screen and subsequent grants deny. Recording stops via renderer track cleanup/timer; this is not a privileged media-duration guarantee. Main enforces actual byte bounds and declared duration bounds, not audio decoding. A separate native consent precedes fixed OpenAI transcription upload. Audio is transient; transcript becomes ordinary local draft only after review. Real OS capture/teardown and API use remain unverified. See SECURITY-REVIEW-0.5.md and VOICE.md under docs.

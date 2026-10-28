@@ -1,3 +1,5 @@
+import { SpeechButton } from "./SpeechButton";
+import { VoiceControls } from "./VoiceControls";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
@@ -426,6 +428,7 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
             </small>
           </h3>
           <pre className="file-preview">{message.text}</pre>
+          {message.role === "assistant" && <SpeechButton text={message.text} />}
         </article>
       ))}
       {partial && (
@@ -488,6 +491,10 @@ export function ChatPanel({ draft, setDraft, useSkill, report }: Props) {
           </fieldset>
         </details>
       )}
+      <VoiceControls
+        report={report}
+        onTranscript={(text) => setDraft(draft ? `${draft}\n${text}` : text)}
+      />
       <div className="composer">
         <label className="sr-only" htmlFor="draft">
           Your local chat draft

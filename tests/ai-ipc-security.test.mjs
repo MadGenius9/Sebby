@@ -9,7 +9,15 @@ const deferred = () => {
   const promise = new Promise((r) => (resolve = r));
   return { promise, resolve };
 };
-async function fixture(t, { statusGate, consentGate, consent = true } = {}) {
+async function fixture(
+  t,
+  {
+    statusGate,
+    consentGate,
+    consent = true,
+    isExternalBusy = () => false,
+  } = {},
+) {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-ai-ipc-"));
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const handlers = new Map(),
@@ -42,6 +50,7 @@ async function fixture(t, { statusGate, consentGate, consent = true } = {}) {
   }
   const ai = await installAI({
     directory,
+    isExternalBusy,
     safeStorage: { isEncryptionAvailable: () => false },
     register: (name, fn) => handlers.set(name, fn),
     workspace: { root: null },
@@ -149,4 +158,28 @@ test("pending conversation deletion prevents a new chat before any service work"
   );
   assert.equal(f.ai.chat.isActive, false);
   assert.equal(f.sends.length, 0);
+});
+
+test("voice reservation blocks profile changes and paid chat/test while keeping main-only credential context internal", async (t) => {
+  let voiceBusy = true;
+  const f = await fixture(t, { isExternalBusy: () => voiceBusy });
+  assert.equal(f.ai.isBusy(), true);
+  assert.throws(() => f.handlers.get("start-chat")({}), /active AI/);
+  assert.throws(
+    () => f.handlers.get("test-provider-profile")(f.id),
+    /active AI/,
+  );
+  assert.throws(
+    () => f.handlers.get("select-provider-profile")(f.id),
+    /active AI/,
+  );
+  const context = f.ai.voiceContext();
+  assert.equal(context.profileId, f.id);
+  assert.equal(context.provider, "openai");
+  assert.equal(typeof context.credentials.getKey, "function");
+  assert.equal(f.handlers.has("voice-context"), false);
+  voiceBusy = false;
+  assert.equal(f.ai.isBusy(), false);
+  await f.ai.shutdown();
+  assert.throws(() => f.ai.voiceContext(), /active AI/);
 });

@@ -22,6 +22,9 @@ import { installNotifications } from "./notification-ipc.mjs";
 import { ChangeReviewGate } from "./change-review.mjs";
 import { AppearanceStore } from "./appearance.mjs";
 import { installAI } from "./ai-ipc.mjs";
+import { VoiceController } from "./voice-controller.mjs";
+import { mediaPermissionPolicy } from "./media-permissions.mjs";
+import { installGitHub } from "./github-ipc.mjs";
 const directory = path.dirname(fileURLToPath(import.meta.url));
 const dev = !app.isPackaged && process.argv.includes("--dev");
 const appURL = dev
@@ -38,6 +41,8 @@ let window,
   discovery,
   notificationController,
   aiServices,
+  voiceController,
+  github,
   reminderTimer;
 let prompting = false,
   maintenance = false,
@@ -133,6 +138,12 @@ async function createWindow() {
     "will-attach-webview",
   ])
     window.webContents.on(name, (event) => event.preventDefault());
+  window.webContents.on("render-process-gone", () => {
+    void voiceController?.shutdown();
+  });
+  window.webContents.on("destroyed", () => {
+    void voiceController?.shutdown();
+  });
   await window.loadURL(appURL);
 }
 app.setName("Sebby");
@@ -149,10 +160,14 @@ if (hasLock)
   app
     .whenReady()
     .then(async () => {
-      session.defaultSession.setPermissionRequestHandler(
-        (_contents, _permission, callback) => callback(false),
-      );
-      session.defaultSession.setPermissionCheckHandler(() => false);
+      const mediaPolicy = mediaPermissionPolicy({
+        getWindow: () => window,
+        getVoice: () => voiceController,
+        appURL,
+        isClosing: () => maintenance,
+      });
+      session.defaultSession.setPermissionRequestHandler(mediaPolicy.request);
+      session.defaultSession.setPermissionCheckHandler(mediaPolicy.check);
       session.defaultSession.on("will-download", (event) =>
         event.preventDefault(),
       );
@@ -289,6 +304,7 @@ if (hasLock)
         store,
         features: localFeatures,
         development: developmentTools,
+        isExternalBusy: () => voiceController?.isBusy() || false,
         confirm,
         onEvent: (kind, event) => {
           if (window && !window.isDestroyed())
@@ -297,6 +313,38 @@ if (hasLock)
               event,
             );
         },
+      });
+      voiceController = new VoiceController({
+        getContext: () => aiServices.voiceContext(),
+        approveCapture: (request) =>
+          confirm(
+            "Allow this microphone recording?",
+            `${request.disclosure}\n\nOpenAI audio model: ${request.model}\nProvider profile: ${request.profileId}\nNo microphone access is granted before confirmation. No audio is saved to disk by Sebby.`,
+          ),
+        approveUpload: (request) =>
+          confirm(
+            "Send this recording to OpenAI for paid transcription?",
+            `${JSON.stringify(request, null, 2)}\n\nAudio leaves this device only after confirmation. OpenAI API charges and retention policies apply. The transcript is not automatically sent to chat.`,
+          ),
+      });
+      register("voice-status", () => voiceController.status());
+      register("begin-voice-capture", (input) =>
+        voiceController.begin(input, window.webContents.id),
+      );
+      register("end-voice-capture", (id) =>
+        voiceController.end(id, window.webContents.id),
+      );
+      register("transcribe-voice", (input) =>
+        voiceController.transcribe(input, window.webContents.id),
+      );
+      register("cancel-voice", (id) =>
+        voiceController.cancel(id, window.webContents.id),
+      );
+      github = await installGitHub({
+        directory: dataDirectory,
+        safeStorage,
+        register,
+        confirm,
       });
       const guardedDialogs = {
         showSaveDialog: (...args) => guardedDialog("showSaveDialog", ...args),
@@ -315,7 +363,8 @@ if (hasLock)
             developmentTools.busy ||
             localExecutor.isActive ||
             notificationController.status().busy ||
-            aiServices.isBusy()
+            aiServices.isBusy() ||
+            github.isBusy()
           )
             return false;
           maintenance = true;
@@ -354,6 +403,8 @@ app.on("before-quit", (event) => {
   const drain = (async () => {
     await Promise.allSettled([
       localExecutor?.shutdown(),
+      voiceController?.shutdown(),
+      github?.shutdown(),
       aiServices?.shutdown(),
     ]);
     await Promise.allSettled(

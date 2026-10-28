@@ -15,6 +15,7 @@ Only these filenames are accepted in a version-1 `sebby-local-backup` JSON envel
 - `sebby-team.json` — named specialist identities and task references
 - `sebby-appearance.json` — bounded companion/palette/motion settings
 - `sebby-provider-profiles.json` — non-secret provider/model/profile metadata only
+- `sebby-github.json` — repository/ref/token-use preference, never the token
 
 Provider credential vaults, API tokens, OS key storage, browser local storage, project files, installed tools, and bundled assets are **not exported**. Free-form memory/prompts can nevertheless contain secrets a person pasted there; this is a plaintext backup, not secret scanning or encrypted storage. Native export confirmation should explicitly warn about that.
 

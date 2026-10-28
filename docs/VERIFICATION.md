@@ -1,13 +1,13 @@
-# Verification — 0.4 personal workbench
+# Verification — 0.5 personal workbench
 
 Checked 2026-10-28 in a Linux cloud execution workspace. No user Windows desktop attached.
 
 ## Passed
 
 - `npm run format:check`: all source/config/test files conform to Prettier.
-- `npm run build`: TypeScript plus Vite production bundle; 1,588 modules; core renderer ~312 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
-- `npm test`: **187/187 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
-- `npm run test:components`: **40/40 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
+- `npm run build`: TypeScript plus Vite production bundle; 1,591 modules; core renderer ~327 kB and a separately lazy-loaded Three.js chunk ~736 kB. Vite warns that the latter exceeds 500 kB; not a build failure.
+- `npm test`: **226/226 Node tests pass** (service, security, IPC-intent and static release-script policy tests).
+- `npm run test:components`: **51/51 DOM component tests pass**, including five desktop-component flows through real local IPC handlers/stores rather than a canned UI simulator.
 - `npm audit --json`: **zero reported vulnerabilities** across production and development dependencies at check time. This is not a complete supply-chain assessment.
 - Main/preload syntax checks: pass. Every Electron service is parsed/exercised through tests or syntax checks.
 - Original selected Orbit PNG and deterministic ICO conversion exist; no concept-board crop is used as the character.
@@ -37,3 +37,7 @@ Reference-guided implementation points: navy three-column shell; ice-blue text/i
 ## Additional AI/security coverage
 
 Fixed provider HTTPS endpoints and isolated auth headers; no redirects/retries; credential/error sanitization; supported response/tool/reasoning parsing; context bounds and native denial; accurate dispatch versus local drafts; cancellation/shutdown while preparing; specialist/coordinator request provenance and budget ceilings; user review; exact diff acknowledgement plus native mutation gate; provider/profile-bound encrypted envelopes, wrong-provider backup restoration, no insecure keyring fallback; concurrent profile/test locks; conversation-deletion races; restricted preload event wrappers and bundled GLB resource bounds. Only artificial credentials/fake encryption were used.
+
+## 0.5 additions
+
+Mocked GitHub token/config/IPC/read transport, tree/blob hashes, binary/oversize rejection, cancellation and no automatic reads; fake microphone/MediaRecorder cleanup, transient buffer disposal, stale-callback races, exact permission policy and fixed audio upload; local-only speech output controls. Windows Job Object helper: 6 pure JavaScript contract/static source tests pass, but C# source was **not compiled** (.NET SDK absent), no binary produced, no Windows process-containment claim. The helper is unintegrated and disabled.
