@@ -137,6 +137,10 @@ test("no files materialized or executor called for invalid payload/cache", async
   assert.deepEqual(await fs.readdir(data.workRoot), []);
 });
 test("benign injected executor receives fixed scrubbed command and returns bounded regular artifacts", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("Linux image recipe uses POSIX symlinks; requires Linux validation");
+    return;
+  }
   const data = await setup(t);
   const result = await runRecipe({
     ...data,
@@ -173,6 +177,10 @@ test("benign injected executor receives fixed scrubbed command and returns bound
   assert.deepEqual(await fs.readdir(data.workRoot), []);
 });
 test("artifact links and extra protocol fields rejected; project cleanup still occurs", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("Linux image recipe uses POSIX symlinks; requires Linux validation");
+    return;
+  }
   const data = await setup(t);
   await assert.rejects(
     runRecipe({
@@ -198,6 +206,10 @@ test("artifact links and extra protocol fields rejected; project cleanup still o
   );
 });
 test("cancelled/nonzero fake execution exports no artifacts and cache remains unchanged", async (t) => {
+  if (process.platform === "win32") {
+    t.skip("Linux image recipe uses POSIX symlinks; requires Linux validation");
+    return;
+  }
   const data = await setup(t),
     controller = new AbortController();
   controller.abort();

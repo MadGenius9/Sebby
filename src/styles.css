@@ -11,6 +11,9 @@
 * {
   box-sizing: border-box;
 }
+[hidden] {
+  display: none !important;
+}
 body {
   margin: 0;
 }
@@ -948,6 +951,11 @@ input[type="datetime-local"] {
   background: #111e2b;
   border: 1px solid var(--line);
   border-radius: 8px;
+}
+
+section[aria-label="Provider settings"] fieldset {
+  display: block;
+  min-width: 0;
 }
 .file-preview table {
   width: 100%;

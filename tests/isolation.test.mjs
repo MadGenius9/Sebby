@@ -1,4 +1,4 @@
-import test from "node:test";
+import test from "./platform-test.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -23,7 +23,10 @@ async function setup(t) {
     JSON.stringify({ lockfileVersion: 3, packages: {} }),
   );
   await fs.writeFile(path.join(workspace, "index.html"), "<h1>fixture</h1>");
-  const cli = path.join(root, "docker");
+  const cli = path.join(
+    root,
+    process.platform === "win32" ? "docker.exe" : "docker",
+  );
   await fs.writeFile(cli, "not executable: fixture only");
   const config = new IsolationConfig(path.join(root, "data"), {
     approve: async () => true,

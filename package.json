@@ -6,6 +6,8 @@
   "type": "module",
   "main": "electron/main.mjs",
   "scripts": {
+    "postinstall": "node node_modules/electron/install.js",
+    "launch:local": "node scripts/launch-local.mjs",
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit && vite build",
     "start": "npm run build && electron .",

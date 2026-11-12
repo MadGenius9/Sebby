@@ -10,6 +10,14 @@ New: Ollama local profiles alongside existing cloud profiles; Studio with editab
 
 ## Start
 
+On the Windows PC validated on November 12, 2026, double-click
+`Launch-Sebby.cmd`, or run `npm run launch:local` from this folder. This starts
+the installed local Ollama server if necessary, builds Sebby, and opens the
+desktop app. The saved **Local RTX 3080 / qwen3:8b** profile stays selected;
+the launcher never selects a cloud provider. See the
+[Windows live results](docs/WINDOWS-LIVE-RESULTS.md) for fixes, actual model/UI
+evidence, exports, and remaining validation limits.
+
 First Windows launch? Use the [short first-run guide](docs/WINDOWS-FIRST-RUN.md): check existing prerequisites, explicitly choose dependency installation, then test local features without any API key.
 
 Prerequisites: Node.js 24 LTS and npm. In PowerShell, from this project:

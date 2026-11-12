@@ -191,6 +191,9 @@ export class OllamaProvider {
         model,
         messages,
         stream: true,
+        // This adapter exposes final text, not a reasoning stream. Thinking
+        // models otherwise spend the small connection-test budget invisibly.
+        think: false,
         options: { num_predict: maxOutputTokens },
         ...(definitions.length ? { tools: definitions } : {}),
       };

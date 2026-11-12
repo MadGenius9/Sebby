@@ -1,5 +1,13 @@
 # Delivery status — 0.11 hybrid creative workbench
 
+Windows follow-up, November 12, 2026: local Qwen3 inference on an RTX 3080,
+native Electron chat/cancellation, AI Studio generation, rendering, undo/redo,
+JSON reimport and JSON/GLB/PNG exports were exercised on the user's PC.
+The [Windows live results](WINDOWS-LIVE-RESULTS.md) separate this evidence
+from automated coverage and list the remaining skipped/native release gates.
+Earlier checkpoint limitations below describe the original cloud development
+environment, not this subsequent PC validation.
+
 ## Implemented in source
 
 New in 0.11: keyless Ollama local profiles with installed-model checks, streaming/cancellation and local tool-call translation; editable 3D Studio with reviewed AI scene proposals, primitive objects/materials, undo/redo, floor-plan tracing, local autosave and JSON/GLB/PNG exports; searchable notes and report imports; 16 reply-language choices and matching installed local voices. `npm run gauntlet` provides repeatable tests, typecheck/build and formatting evidence. See [JARVIS-UPGRADE.md](JARVIS-UPGRADE.md) for the full requested scope and exact unimplemented capabilities. No live Ollama inference, cloud call, microphone playback or Windows-native run was performed for this checkpoint.

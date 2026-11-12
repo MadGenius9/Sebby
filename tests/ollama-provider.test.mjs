@@ -60,6 +60,7 @@ test("local model streams actual text and returns measured usage without credent
     ["/api/tags", "/api/chat"],
   );
   assert.equal(JSON.stringify(f.calls).includes("Authorization"), false);
+  assert.equal(f.calls[1].body.think, false);
 });
 test("rejects remote aliases and uninstalled models without inference or fallback", async () => {
   for (const models of [

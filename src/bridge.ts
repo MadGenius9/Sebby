@@ -74,19 +74,26 @@ let activeOperations = 0;
 export function isBusy() {
   return activeOperations > 0;
 }
-export const bridge = new Proxy(implementation, {
-  get(target, key) {
-    const method = target[key as keyof Bridge];
-    return async (...args: unknown[]) => {
-      activeOperations++;
-      try {
-        return await (method as (...a: unknown[]) => Promise<unknown>)(...args);
-      } finally {
-        activeOperations--;
-      }
-    };
+// contextBridge freezes its API. Proxy wrappers must target a mutable copy to
+// satisfy JavaScript's invariants for non-configurable function properties.
+export const bridge = new Proxy(
+  { ...implementation },
+  {
+    get(target, key) {
+      const method = target[key as keyof Bridge];
+      return async (...args: unknown[]) => {
+        activeOperations++;
+        try {
+          return await (method as (...a: unknown[]) => Promise<unknown>)(
+            ...args,
+          );
+        } finally {
+          activeOperations--;
+        }
+      };
+    },
   },
-}) as Bridge;
+) as Bridge;
 
 export type Task = {
   kind?: string;
