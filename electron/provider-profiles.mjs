@@ -2,7 +2,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { constants } from "node:fs";
-export const PROVIDERS = Object.freeze(["openai", "anthropic", "xai"]);
+export const PROVIDERS = Object.freeze([
+  "openai",
+  "anthropic",
+  "xai",
+  "ollama",
+]);
 export const PROVIDER_ENV = Object.freeze({
   openai: "OPENAI_API_KEY",
   anthropic: "ANTHROPIC_API_KEY",
@@ -36,10 +41,14 @@ function name(value) {
     throw Error("Choose a short, non-secret profile name.");
   return value.trim();
 }
-function model(value) {
+function model(value, local = false) {
+  const pattern = local
+    ? /^[A-Za-z0-9][A-Za-z0-9._:/-]{0,99}$/
+    : /^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/;
   if (
     typeof value !== "string" ||
-    (value !== "" && !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,99}$/.test(value)) ||
+    (value !== "" && !pattern.test(value)) ||
+    (local && /cloud/i.test(value)) ||
     secretLike(value)
   )
     throw Error("Use a model identifier, not a key or endpoint URL.");
@@ -75,8 +84,8 @@ export function validateProfile(value) {
     id: value.id,
     name: name(value.name),
     provider: value.provider,
-    model: model(value.model),
-    useEnvironment: value.useEnvironment,
+    model: model(value.model, value.provider === "ollama"),
+    useEnvironment: value.provider === "ollama" ? false : value.useEnvironment,
     options: options(value.options),
   };
 }
@@ -291,8 +300,14 @@ export class RuntimeProfileCredentials {
     Object.assign(this, { profileId, profiles, vault, env });
   }
   async status() {
-    const profile = this.profiles.get(this.profileId),
-      stored = await this.vault.status(profile.id);
+    const profile = this.profiles.get(this.profileId);
+    if (profile.provider === "ollama")
+      return {
+        configured: true,
+        source: "local-runtime",
+        secureStorageAvailable: false,
+      };
+    const stored = await this.vault.status(profile.id);
     if (stored.hasStoredCredential)
       return {
         configured: stored.configured,
@@ -314,8 +329,10 @@ export class RuntimeProfileCredentials {
     };
   }
   async getKey() {
-    const profile = this.profiles.get(this.profileId),
-      stored = await this.vault.status(profile.id);
+    const profile = this.profiles.get(this.profileId);
+    if (profile.provider === "ollama")
+      throw Error("Local profiles have no API key.");
+    const stored = await this.vault.status(profile.id);
     if (stored.hasStoredCredential)
       return this.vault.getKey(profile.id, { provider: profile.provider });
     const value = profile.useEnvironment

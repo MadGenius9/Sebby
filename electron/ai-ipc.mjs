@@ -1,3 +1,4 @@
+import { OllamaProvider, OLLAMA_CAPABILITIES } from "./ollama-provider.mjs";
 import { createHash, randomUUID } from "node:crypto";
 import { installOrchestration } from "./orchestration-ipc.mjs";
 import {
@@ -14,6 +15,7 @@ import { XaiProvider, XAI_CAPABILITIES } from "./xai-provider.mjs";
 import { ChatService } from "./chat.mjs";
 import { AgentRuntime } from "./agent-runtime.mjs";
 const capabilities = {
+  ollama: OLLAMA_CAPABILITIES,
   openai: {
     chat: true,
     tools: true,
@@ -24,7 +26,12 @@ const capabilities = {
   anthropic: ANTHROPIC_CAPABILITIES,
   xai: XAI_CAPABILITIES,
 };
-const names = { openai: "OpenAI", anthropic: "Anthropic", xai: "xAI" };
+const names = {
+  ollama: "Ollama (this PC)",
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  xai: "xAI",
+};
 const exact = (input, keys) => {
   if (
     !input ||
@@ -47,6 +54,7 @@ export async function installAI({
   isExternalBusy = () => false,
   env = process.env,
   adapters = {
+    ollama: OllamaProvider,
     openai: ResponsesProvider,
     anthropic: AnthropicProvider,
     xai: XaiProvider,
@@ -156,8 +164,10 @@ export async function installAI({
   };
   const contextConsent = async (request) =>
     confirm(
-      "Approve this paid AI request?",
-      `${names[selected().provider]} · ${selected().name}\nModel: ${request.model}\nPrompt: ${request.promptCharacters} characters\nMemory: ${request.memoryIncluded ? request.memoryCharacters + " characters" : "not included"}\nHistory: ${request.historyCount} messages (${request.olderMessagesExcluded} older messages omitted)\nFiles: ${JSON.stringify(request.files)}\nSkills: ${JSON.stringify(request.skills)}\nOutgoing payload: ${request.totalPayloadBytes} bytes\nRough text estimate: ${request.estimatedTextTokens} tokens (not a price)\nMaximum output: ${request.maxOutputTokens} tokens\n\n${request.notice}\nYour chat subscription does not cover API usage.`,
+      selected().provider === "ollama"
+        ? "Run this local AI request?"
+        : "Approve this paid AI request?",
+      `${names[selected().provider]} · ${selected().name}\nModel: ${request.model}\nPrompt: ${request.promptCharacters} characters\nMemory: ${request.memoryIncluded ? request.memoryCharacters + " characters" : "not included"}\nHistory: ${request.historyCount} messages (${request.olderMessagesExcluded} older messages omitted)\nFiles: ${JSON.stringify(request.files)}\nSkills: ${JSON.stringify(request.skills)}\nOutgoing payload: ${request.totalPayloadBytes} bytes\nRough text estimate: ${request.estimatedTextTokens} tokens (not a price)\nMaximum output: ${request.maxOutputTokens} tokens\n\n${selected().provider === "ollama" ? "Sent only to Ollama at 127.0.0.1:11434. Uses this PC’s hardware; no cloud fallback." : request.notice + "\nYour chat subscription does not cover API usage."}`,
     );
   chat = new ChatService({
     provider: router,
@@ -278,6 +288,10 @@ export async function installAI({
     onEvent: (event) => onEvent("orchestration", event),
   });
   register("provider-status", () => router.status());
+  register("list-local-models", async () => {
+    assertIdle();
+    return new adapters.ollama().listModels();
+  });
   register("list-provider-profiles", async () => {
     const result = profiles.list();
     const statuses = {};
@@ -308,6 +322,8 @@ export async function installAI({
   mutateRegister("save-provider-key", async (input) => {
     exact(input, ["profileId", "key"]);
     const profile = profiles.get(input.profileId);
+    if (profile.provider === "ollama")
+      throw Error("Local profiles do not use API keys.");
     let key = input.key;
     input.key = "";
     try {
@@ -380,8 +396,10 @@ export async function installAI({
         controller.signal.throwIfAborted();
         if (
           !(await confirm(
-            "Make a small paid API connection test?",
-            `${names[profile.provider]} · ${profile.name}\nModel: ${profile.model}\n\nSend only: “Reply with OK.”\nMaximum output: 16 tokens. This may incur API charges and does not use your workspace, memory, history, or tools. No automatic retry.`,
+            profile.provider === "ollama"
+              ? "Test the local Ollama model?"
+              : "Make a small paid API connection test?",
+            `${names[profile.provider]} · ${profile.name}\nModel: ${profile.model}\n\nSend only: “Reply with OK.”\nMaximum output: 16 tokens. ${profile.provider === "ollama" ? "Uses local hardware, with no cloud fallback." : "This may incur API charges."} No workspace, memory, history, or tools. No automatic retry.`,
           ))
         )
           return { status: "denied" };

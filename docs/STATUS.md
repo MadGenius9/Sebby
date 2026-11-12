@@ -1,6 +1,8 @@
-# Delivery status — 0.10 personal workbench
+# Delivery status — 0.11 hybrid creative workbench
 
 ## Implemented in source
+
+New in 0.11: keyless Ollama local profiles with installed-model checks, streaming/cancellation and local tool-call translation; editable 3D Studio with reviewed AI scene proposals, primitive objects/materials, undo/redo, floor-plan tracing, local autosave and JSON/GLB/PNG exports; searchable notes and report imports; 16 reply-language choices and matching installed local voices. `npm run gauntlet` provides repeatable tests, typecheck/build and formatting evidence. See [JARVIS-UPGRADE.md](JARVIS-UPGRADE.md) for the full requested scope and exact unimplemented capabilities. No live Ollama inference, cloud call, microphone playback or Windows-native run was performed for this checkpoint.
 
 New in 0.10: meaningful turn-based voice-session coordination with explicit stop controls and late-event guards; a bounded stdin image-wrapper source contract avoiding host snapshot mounts, with exact dependency-lock checks and mock-only execution tests; a concise Windows first-run guide. No image/engine/native audio/live API ran. Realtime conversation, production build execution and native validation remain unavailable.
 
@@ -34,3 +36,4 @@ No seven-phase completion claim is made. The safe app-developer milestone still 
 ## Environment limits
 
 Cloud browser cannot reach the workspace loopback server. Local Chromium socket access is restricted; an escalation failed during sandbox construction. Cloud file navigation is blocked. No bypass was attempted. Electron binary, Windows, PowerShell and signing credentials are unavailable. DOM and service tests do not replace native release verification.
+

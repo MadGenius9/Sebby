@@ -2,7 +2,11 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.10: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.11: hybrid AI, editable 3D Studio, and a searchable knowledge bank.**
+
+New: Ollama local profiles alongside existing cloud profiles; Studio with editable geometry, AI scene proposals, floor-plan tracing, undo/redo, JSON/GLB/PNG export; 16 reply-language choices and language-matched local voices; searchable notes/report imports. Run `npm run gauntlet` for source checks. See [the video-to-Sebby delivery map](docs/JARVIS-UPGRADE.md) for setup, evidence and remaining work. This is a source upgrade, not a Windows-tested installer or complete parity with the video demonstrations.
+
+**Existing provider/workbench foundation:** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
 
@@ -114,3 +118,4 @@ The separate **Reviewed MCP tools** panel supports manually provisioned bearer t
 Voice now has explicit **turn-based session controls** showing observed microphone, transcription, chat and local-reading state. “Stop voice activity” does not cancel unrelated work; the separate “Stop voice and current chat” also cancels the owned chat request. Nothing records, uploads, sends or reads automatically. This is not realtime voice conversation.
 
 A reviewed **image-wrapper source contract** now transfers bounded snapshot content through stdin rather than mounting private host files. It validates the exact dependency-lock identity before a fixed web build/test recipe, with preprovisioned dependencies only. No image has been built, pulled or run; production execution remains disabled and container/daemon trust still needs native validation. The wrapper is not a sandbox or proof against hostile project code.
+

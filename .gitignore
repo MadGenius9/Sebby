@@ -6,3 +6,6 @@ release/
 
 playwright-report/
 test-results/
+
+
+.gauntlet/

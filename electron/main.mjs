@@ -1,3 +1,4 @@
+import { installStudioExport } from "./studio-export.mjs";
 import {
   app,
   BrowserWindow,
@@ -214,6 +215,18 @@ if (hasLock)
       store = new Store(dataDirectory);
       await store.load();
       register("get-state", () => currentState());
+      installStudioExport({
+        register,
+        isClosing: () => maintenance,
+        choosePath: async (format) => {
+          const result = await guardedDialog("showSaveDialog", window, {
+            title: "Export Studio scene to a new file",
+            defaultPath: `sebby-scene.${format}`,
+            filters: [{ name: format.toUpperCase(), extensions: [format] }],
+          });
+          return result.canceled ? null : result.filePath;
+        },
+      });
       register("third-party-notices", async () => {
         const file = path.join(directory, "../docs/THIRD-PARTY-NOTICES.md");
         const stat = await fs.lstat(file);

@@ -1,7 +1,13 @@
 import { useVoiceSession } from "./VoiceSession";
 import { useEffect, useRef, useState } from "react";
 /** Explicit device-local speech only. Never silently substitute a remote voice. */
-export function SpeechButton({ text }: { text: string }) {
+export function SpeechButton({
+  text,
+  language = "en",
+}: {
+  text: string;
+  language?: string;
+}) {
   const session = useVoiceSession();
   const micBusy = ["starting", "recording", "stopping"].includes(
     session.capture,
@@ -47,11 +53,13 @@ export function SpeechButton({ text }: { text: string }) {
           const voice = window.speechSynthesis
             .getVoices()
             .find(
-              (v) => v.localService && v.lang.toLowerCase().startsWith("en"),
+              (v) =>
+                v.localService &&
+                v.lang.toLowerCase().split("-")[0] === language,
             );
           if (!voice) {
             setNote(
-              "No device-local English voice is available. Remote voices are not used.",
+              `No device-local ${language === "en" ? "English" : language} voice is available. Remote voices are not used.`,
             );
             return;
           }

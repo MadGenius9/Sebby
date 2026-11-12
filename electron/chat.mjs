@@ -47,7 +47,7 @@ function validate(input) {
   text(input.text, MAX_PROMPT, "chat message");
   if (
     typeof input.model !== "string" ||
-    !/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,99}$/.test(input.model)
+    !/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,99}$/.test(input.model)
   )
     throw Error("Choose a model explicitly.");
   if (typeof input.includeMemory !== "boolean")
@@ -288,20 +288,29 @@ export class ChatService {
         return this.status(run.id);
       }
       const providerName =
-        { openai: "OpenAI", anthropic: "Anthropic", xai: "xAI" }[
-          configured.provider
-        ] || "the selected API provider";
+        {
+          openai: "OpenAI",
+          anthropic: "Anthropic",
+          xai: "xAI",
+          ollama: "Ollama on this PC",
+        }[configured.provider] || "the selected API provider";
       const { payload, scopes } = await this.context(run);
       this.setStatus(run, "awaiting-approval");
       const accepted = await this.approve({
-        kind: "paid-chat-request",
+        kind:
+          configured.provider === "ollama"
+            ? "local-chat-request"
+            : "paid-chat-request",
         providerName,
         runId: run.id,
         conversationId: run.state.conversationId,
         model: run.input.model,
         ...copy(scopes),
         maxOutputTokens: run.input.maxOutputTokens,
-        notice: `This sends the listed context to ${providerName} and may incur API charges. The token estimate is rough text-only guidance, not a price or a billing guarantee. No tools or commands will run. No automatic retries.`,
+        notice:
+          configured.provider === "ollama"
+            ? "This sends the listed context to local Ollama on this PC. No cloud fallback or API key is used."
+            : `This sends the listed context to ${providerName} and may incur API charges. The token estimate is rough text-only guidance, not a price or a billing guarantee. No tools or commands will run. No automatic retries.`,
       });
       run.controller.signal.throwIfAborted();
       if (accepted !== true) {

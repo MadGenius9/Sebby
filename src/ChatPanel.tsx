@@ -1,3 +1,4 @@
+import { LANGUAGES, replyLanguage } from "./languages";
 import {
   VoiceSessionProvider,
   VoiceSessionStatus,
@@ -89,6 +90,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
     "function"
       ? (window.sebby as unknown as ChatApi)
       : null;
+  const [language, setLanguage] = useState(replyLanguage);
   const [configured, setConfigured] = useState(false),
     [profileLabel, setProfileLabel] = useState(""),
     [items, setItems] = useState<Conversation[]>([]),
@@ -236,7 +238,10 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
     try {
       const next = await api.startChat({
         ...(conversation ? { conversationId: conversation.id } : {}),
-        text: draft,
+        text:
+          language === "en"
+            ? draft
+            : `${draft}\n\nPlease reply in ${LANGUAGES.find(([code]) => code === language)?.[1] || "English"}. I may speak or type in another language. Keep code and identifiers unchanged.`,
         includeMemory: memory,
         filePaths: selectedFiles,
         skillIds: selectedSkills,
@@ -468,7 +473,9 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
             </small>
           </h3>
           <pre className="file-preview">{message.text}</pre>
-          {message.role === "assistant" && <SpeechButton text={message.text} />}
+          {message.role === "assistant" && (
+            <SpeechButton text={message.text} language={language} />
+          )}
         </article>
       ))}
       {partial && (
@@ -531,6 +538,32 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
           </fieldset>
         </details>
       )}
+      <label className="field-label">
+        Reply language
+        <select
+          aria-label="Reply language"
+          value={language}
+          disabled={busy}
+          onChange={(e) => {
+            setLanguage(e.target.value);
+            try {
+              localStorage.setItem("sebby.reply-language", e.target.value);
+            } catch {
+              report("Language preference could not be saved.");
+            }
+          }}
+        >
+          {LANGUAGES.map(([code, label]) => (
+            <option key={code} value={code}>
+              {label}
+            </option>
+          ))}
+        </select>
+      </label>
+      <p className="muted">
+        You can speak or type in a different language. Local reading needs an
+        installed voice for the selected reply language.
+      </p>
       <VoiceSessionStatus />
       <VoiceControls
         report={report}

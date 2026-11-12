@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld(
   "sebby",
   Object.freeze({
+    listLocalModels: () => ipcRenderer.invoke("sebby:list-local-models"),
+    exportStudio: (input) => ipcRenderer.invoke("sebby:export-studio", input),
     listTasks: (input) => ipcRenderer.invoke("sebby:list-tasks", input),
     createTask: (input) => ipcRenderer.invoke("sebby:create-task", input),
     cancelTask: (input) => ipcRenderer.invoke("sebby:cancel-task", input),
