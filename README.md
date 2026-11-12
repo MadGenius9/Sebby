@@ -78,6 +78,14 @@ The app takes a single-instance lock. A restore stops new IPC work; incomplete r
 
 ## Verify and package on Windows
 
+GitHub Actions runs `npm ci` and the full `npm run gauntlet` on Windows and
+Linux with Node.js 24, including draft pull requests. It also runs on pushes
+to `main` and the upgrade branch. Each job uploads its gauntlet stage report
+for seven days, including on failure. These service/component/build checks
+do not install Ollama, download models, call AI providers, launch the desktop
+app, or certify native UI behavior. Platform-dependent skips remain visible
+in job logs; both matrix jobs run even if one fails.
+
 ```powershell
 .\scripts\verify-windows.ps1
 # Or skip dependency install / installer packaging:
