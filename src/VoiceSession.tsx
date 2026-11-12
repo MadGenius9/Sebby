@@ -44,7 +44,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     [chat, updateChat] = useState("idle"),
     [draftReady, setDraftReady] = useState(false),
     [stopped, setStopped] = useState(false);
-  const stopCapture = useRef<() => void>(noop),
+  const stopCapture = useRef(new Set<() => void>()),
     stopChat = useRef<() => void | Promise<void>>(noop);
   const setCapture = useCallback((v: string) => {
     updateCapture(v);
@@ -59,9 +59,9 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     if (v !== "idle") setStopped(false);
   }, []);
   const registerCapture = useCallback((fn: () => void) => {
-    stopCapture.current = fn;
+    stopCapture.current.add(fn);
     return () => {
-      if (stopCapture.current === fn) stopCapture.current = noop;
+      stopCapture.current.delete(fn);
     };
   }, []);
   const registerChat = useCallback((fn: () => void | Promise<void>) => {
@@ -73,7 +73,13 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
   const stop = useCallback((includeChat: boolean) => {
     void stopNeuralSpeech();
     try {
-      stopCapture.current();
+      for (const stop of stopCapture.current) {
+        try {
+          stop();
+        } catch {
+          /* Continue releasing every registered capture. */
+        }
+      }
     } catch {
       /* Other activities must still stop. */
     }
@@ -140,12 +146,13 @@ export function VoiceSessionStatus() {
         {s.chat}. Local speech: {s.speech}.
       </p>
       <p>
-        Push-to-talk, not continuous listening. By default you review a
-        transcription draft before sending and choose read-aloud explicitly.
-        Optional conversation mode transcribes locally after Stop, prepares a
-        native-reviewed chat request, and reads its completed reply with the
-        selected neural voice. It never starts the next recording. Cancelling
-        cannot undo provider charges or dispatched processing.
+        By default you use push-to-talk and review a transcription draft before
+        sending and choose read-aloud explicitly. Optional conversation mode
+        transcribes locally after Stop, prepares a native-reviewed chat request,
+        and reads its completed reply with the selected neural voice. The
+        separate opt-in hands-free mode keeps the microphone active for local
+        wake-phrase recognition and follow-up turns until disabled or expired.
+        Cancelling cannot undo provider charges or dispatched processing.
       </p>
       <button onClick={() => s.stop(false)}>Stop voice activity</button>
       <button disabled={s.chat === "idle"} onClick={() => s.stop(true)}>

@@ -14,8 +14,11 @@ Natural voice follow-up: Chat now offers **Voice and speech settings** with
 local Kokoro neural voices (Heart selected on this PC), separate Whisper input
 language, and optional push-to-talk conversation mode. **Start recording**,
 speak, then pause or Stop; review the local chat request and Sebby reads its
-completed reply. Draft mode remains available. Saying “Hello Sebby” alone is
-not a wake word. See [acceptance results and limits](docs/NATURAL-VOICE-ACCEPTANCE.md)
+completed reply. Draft mode remains available. The separate, off-by-default
+**Hands-free · Hello Sebby** mode enables local wake-phrase listening and
+follow-up turns after one session authorization. It requires headphones and
+uses English speech-segment recognition; see [hands-free setup and limits](docs/HANDS-FREE.md).
+See [acceptance results and limits](docs/NATURAL-VOICE-ACCEPTANCE.md)
 and [speech setup, measured latency, and licenses](native/local-voice/README.md).
 
 Knowledge now supports saved-source labels and line-cited excerpts. Workspace

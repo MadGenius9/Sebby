@@ -29,10 +29,12 @@ export function VoiceControls({
   report,
   onTranscript,
   onConversationTranscript,
+  disabled = false,
 }: {
   report: (message: string) => void;
   onTranscript: (text: string) => void;
   onConversationTranscript?: (text: string) => void;
+  disabled?: boolean;
 }) {
   const session = useVoiceSession();
   const api = (window as unknown as { sebby?: VoiceApi }).sebby;
@@ -368,12 +370,13 @@ export function VoiceControls({
     }
   }
   return (
-    <section aria-label="Push-to-talk transcription">
+    <fieldset disabled={disabled} aria-label="Push-to-talk transcription">
       <h3>Talk with Sebby</h3>
       <p>
         Choose conversation mode for spoken replies. Start recording, speak,
         then pause or press Stop. In draft mode, press Transcribe and send the
-        draft explicitly. “Hello Sebby” is not a wake word.
+        draft explicitly. For wake-phrase listening, enable the separate
+        hands-free mode above.
       </p>
       {api?.localVoiceStatus && (
         <label>
@@ -449,7 +452,8 @@ export function VoiceControls({
       )}
       <p>{note}</p>
       <p>
-        No wake word or background listening. Up to 60 seconds / 5 MiB.
+        This push-to-talk control does not listen in the background. Up to 60
+        seconds / 5 MiB.
         {provider === "local"
           ? " Local processing, no saved recordings. Input language is separate from Reply language. Multilingual recognition quality varies and requires testing."
           : " OpenAI upload requires separate native approval, internet and API charges; provider retention policies apply."}
@@ -488,6 +492,6 @@ export function VoiceControls({
       <span role="status" aria-live="polite">
         {phase === "recording" ? "Listening · microphone active" : phase}
       </span>
-    </section>
+    </fieldset>
   );
 }

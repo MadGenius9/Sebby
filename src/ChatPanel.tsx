@@ -6,6 +6,7 @@ import {
 } from "./VoiceSession";
 import { SpeechButton } from "./SpeechButton";
 import { VoiceControls } from "./VoiceControls";
+import { HandsFreeVoice } from "./HandsFreeVoice";
 import { LocalVoiceSettings } from "./LocalVoiceSettings";
 import {
   speakNeuralText,
@@ -42,6 +43,11 @@ type Run = {
 };
 type ChatEvent = Run & { type: string; delta?: string; notice?: string };
 interface ChatApi {
+  startHandsFreeChat?(input: {
+    sessionId: string;
+    voiceSessionId: string;
+    text: string;
+  }): Promise<{ runId: string; conversationId: string }>;
   providerStatus(): Promise<{
     configured: boolean;
     model?: string;
@@ -97,6 +103,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       ? (window.sebby as unknown as ChatApi)
       : null;
   const [language, setLanguage] = useState(replyLanguage);
+  const [handsFreeActive, setHandsFreeActive] = useState(false);
   const [speechProvider, setSpeechProvider] = useState(
     () => voicePreferences().provider,
   );
@@ -124,6 +131,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
   const cancelPendingStart = useRef(false);
   const voiceReply = useRef(false),
     voiceEpoch = useRef(0);
+  const handsFreeRun = useRef(false);
   const runId = useRef<string | null>(null),
     startingRef = useRef(false),
     alive = useRef(true),
@@ -194,7 +202,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       if (event.type === "delta" && typeof event.delta === "string") {
         setPartial((value) => (value + event.delta).slice(0, 262144));
       }
-      if (event.type === "dispatched") {
+      if (event.type === "dispatched" && !handsFreeRun.current) {
         setDraft("");
         voiceSession.setDraftReady(false);
       }
@@ -275,7 +283,11 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       void stopNeuralSpeech();
     };
   }, [api, load, refreshList, refreshProfile, setDraft]);
-  async function send(textOverride?: string, voiceTurn = false) {
+  async function send(
+    textOverride?: string,
+    voiceTurn = false,
+    handsFree?: { sessionId: string; voiceSessionId: string },
+  ) {
     const text = textOverride ?? draft;
     if (
       !api ||
@@ -291,9 +303,10 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
           "Voice transcript kept as a draft. Wait for current work or configure a model before sending.",
         );
       }
-      return;
+      return false;
     }
     voiceReply.current = voiceTurn;
+    handsFreeRun.current = !!handsFree;
     const selectedFiles = files
         .split(/\r?\n/)
         .map((x) => x.trim())
@@ -303,10 +316,11 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
         .map((x) => x.trim())
         .filter(Boolean);
     if (
-      selectedFiles.length > 5 ||
-      selectedSkills.length > 5 ||
-      new Set(selectedFiles).size !== selectedFiles.length ||
-      new Set(selectedSkills).size !== selectedSkills.length
+      !handsFree &&
+      (selectedFiles.length > 5 ||
+        selectedSkills.length > 5 ||
+        new Set(selectedFiles).size !== selectedFiles.length ||
+        new Set(selectedSkills).size !== selectedSkills.length)
     ) {
       report("Choose at most five distinct file paths and five skill IDs.");
       return;
@@ -318,16 +332,22 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
     setPartial("");
     setRun({ status: "preparing" });
     try {
-      const next = await api.startChat({
-        ...(conversation ? { conversationId: conversation.id } : {}),
-        text:
-          language === "en"
-            ? text
-            : `${text}\n\nPlease reply in ${LANGUAGES.find(([code]) => code === language)?.[1] || "English"}. I may speak or type in another language. Keep code and identifiers unchanged.`,
-        includeMemory: memory,
-        filePaths: selectedFiles,
-        skillIds: selectedSkills,
-      });
+      if (handsFree && !api.startHandsFreeChat)
+        throw Error("Hands-free chat unavailable");
+      const outgoingText =
+        language === "en"
+          ? text
+          : `${text}\n\nPlease reply in ${LANGUAGES.find(([code]) => code === language)?.[1] || "English"}. I may speak or type in another language. Keep code and identifiers unchanged.`;
+      const next =
+        handsFree && api.startHandsFreeChat
+          ? await api.startHandsFreeChat({ ...handsFree, text: outgoingText })
+          : await api.startChat({
+              ...(conversation ? { conversationId: conversation.id } : {}),
+              text: outgoingText,
+              includeMemory: memory,
+              filePaths: selectedFiles,
+              skillIds: selectedSkills,
+            });
       runId.current = next.runId;
       if (cancelPendingStart.current) await cancel();
       const state = await api.chatStatus(next.runId);
@@ -336,6 +356,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
         await load(next.conversationId);
         if (terminal.has(state.status)) await refreshList();
       }
+      return true;
     } catch {
       voiceReply.current = false;
       if (alive.current)
@@ -347,6 +368,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       report(
         "Chat could not start. Review the selected profile, original workspace and context. No automatic retry was made.",
       );
+      return false;
     } finally {
       startingRef.current = false;
       if (alive.current) setStarting(false);
@@ -486,7 +508,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
           <ProviderPicker
             report={report}
             onChanged={() => void refreshProfile()}
-            disabled={busy}
+            disabled={busy || handsFreeActive}
           />
           <details className="saved-drafts">
             <summary>Conversation history · all projects</summary>
@@ -665,7 +687,26 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       </p>
       <VoiceSessionStatus />
       <LocalVoiceSettings language={language} />
+      <HandsFreeVoice
+        language={language}
+        blocked={busy || !!draft.trim() || speechProvider !== "neural"}
+        onActive={setHandsFreeActive}
+        onInterrupt={async () => {
+          await cancel();
+          voiceSession.setSpeech("idle");
+        }}
+        onTurn={async (text, sessionId, voiceSessionId) => {
+          if (draft.trim()) {
+            report(
+              "Disable hands-free and review your existing draft before continuing.",
+            );
+            return false;
+          }
+          return !!(await send(text, true, { sessionId, voiceSessionId }));
+        }}
+      />
       <VoiceControls
+        disabled={handsFreeActive}
         report={report}
         onTranscript={(text) => setDraft(draft ? `${draft}\n${text}` : text)}
         onConversationTranscript={(text) => {

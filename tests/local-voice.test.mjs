@@ -239,6 +239,59 @@ test("transcription cancellation during pending health suppresses stale text and
   assert.deepEqual(calls, ["/health"]);
 });
 
+test("only HTTP 409 exposes a local busy code, with no automatic retry or retained input audio", async () => {
+  for (const status of [409, 400, 403, 500, 503]) {
+    const calls = [];
+    const client = new LocalVoiceClient({
+      transport: async (route) => {
+        calls.push(route);
+        return route === "/health"
+          ? response(metadata)
+          : response(
+              { error: "untrusted service details" },
+              "application/json",
+              status,
+            );
+      },
+    });
+    const bytes = new Uint8Array([1, 2, 3]);
+    const result = await client.transcriber("en").transcribe({
+      bytes,
+      mimeType: "audio/webm",
+      durationMs: 900,
+    });
+    assert.equal(result.status, "error");
+    assert.equal(result.code, status === 409 ? "LOCAL_VOICE_BUSY" : undefined);
+    assert.doesNotMatch(JSON.stringify(result), /untrusted service details/);
+    assert.deepEqual(calls, ["/health", "/transcribe"]);
+    assert.deepEqual([...bytes], [0, 0, 0]);
+  }
+});
+
+test("cancellation wins over a late HTTP 409 and cannot trigger busy retries", async () => {
+  let release;
+  const client = new LocalVoiceClient({
+    transport: async (route) =>
+      route === "/health"
+        ? response(metadata)
+        : new Promise((resolve) => {
+            release = resolve;
+          }),
+  });
+  const transcriber = client.transcriber("en");
+  const pending = transcriber.transcribe({
+    bytes: new Uint8Array([1]),
+    mimeType: "audio/webm",
+    durationMs: 900,
+  });
+  while (!release) await new Promise((resolve) => setImmediate(resolve));
+  transcriber.cancel();
+  release(response({}, "application/json", 409));
+  const result = await pending;
+  assert.equal(result.status, "cancelled");
+  assert.equal(result.code, undefined);
+});
+
 test("local microphone grant is independent of cloud profile and remains one-shot/window-bound", async () => {
   const approvals = [],
     transcribed = [];

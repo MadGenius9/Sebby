@@ -377,6 +377,8 @@ if (hasLock)
       register("get-appearance", () => appearance.get());
       register("save-appearance", (input) => appearance.save(input));
       aiServices = await installAI({
+        assertHandsFreeSession: (id) =>
+          voiceController.requireHandsFree(id, window.webContents.id),
         directory: dataDirectory,
         safeStorage,
         register,
@@ -401,6 +403,10 @@ if (hasLock)
       });
       voiceController = new VoiceController({
         localVoice,
+        onHandsFreeExpired: (event) => {
+          if (window && !window.isDestroyed())
+            window.webContents.send("sebby:hands-free-expired", event);
+        },
         getContext: () => aiServices.voiceContext(),
         approveCapture: (request) =>
           confirm(
@@ -416,13 +422,22 @@ if (hasLock)
       register("voice-status", () => voiceController.status());
       register("local-voice-status", () => localVoice.status());
       register("synthesize-local-speech", (input) => {
-        if (voiceController.isBusy())
+        if (!voiceController.canPlaySpeech())
           throw Error(
             "Stop microphone capture or transcription before playback.",
           );
         return localVoice.synthesize(input);
       });
       register("cancel-local-speech", () => localVoice.cancelSpeech());
+      register("start-hands-free", (input) =>
+        voiceController.startHandsFree(input, window.webContents.id),
+      );
+      register("transcribe-hands-free", (input) =>
+        voiceController.transcribeHandsFree(input, window.webContents.id),
+      );
+      register("stop-hands-free", (id) =>
+        voiceController.stopHandsFree(id, window.webContents.id),
+      );
       register("begin-voice-capture", (input) =>
         voiceController.begin(input, window.webContents.id),
       );

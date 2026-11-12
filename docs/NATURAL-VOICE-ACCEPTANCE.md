@@ -1,5 +1,9 @@
 # Natural voice and bounded knowledge/tools follow-up
 
+Later extension: [opt-in hands-free conversation](HANDS-FREE.md) adds local
+wake-phrase listening and follow-up turns. It supersedes the earlier no-wake-word
+scope below; the observations here remain the earlier checkpoint's evidence.
+
 This continues the existing 0.11 implementation on the upgrade branch. The
 working tree was clean at intake. Existing app stores, provider profiles,
 memory, skills/tasks, Studio schema and scene storage were retained; no data

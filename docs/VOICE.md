@@ -1,5 +1,14 @@
 # Explicit voice drafts (0.5 track)
 
+## Opt-in hands-free follow-up
+
+The current source also adds a separate local-only wake-phrase session with
+continuous microphone capture, Hello Sebby recognition, automatic local chat
+and spoken follow-up turns, plus interruption. It is off by default, requires
+headphones and native session approval, and keeps ordinary paid/tool approvals.
+See [HANDS-FREE.md](HANDS-FREE.md) for controls, retention, bounds and evidence.
+Older no-wake-word statements below describe the historical draft-only path.
+
 ## Natural local voice follow-up
 
 The current source adds local Kokoro speech, local Whisper-small recognition,

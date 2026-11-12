@@ -60,6 +60,12 @@ export function localVoiceTransport(route, body, signal) {
 }
 async function read(response, limit, type, signal) {
   try {
+    signal.throwIfAborted();
+    if (response.statusCode === 409) {
+      const error = Error("Local voice is busy draining earlier CPU work.");
+      error.code = "LOCAL_VOICE_BUSY";
+      throw error;
+    }
     if (
       response.statusCode !== 200 ||
       !String(response.headers?.["content-type"]).startsWith(type)
@@ -242,9 +248,12 @@ export class LocalVoiceClient {
             text: result.text,
             language: result.language,
           };
-        } catch {
+        } catch (error) {
           return {
             status: controller.signal.aborted ? "cancelled" : "error",
+            ...(!controller.signal.aborted && error?.code === "LOCAL_VOICE_BUSY"
+              ? { code: "LOCAL_VOICE_BUSY" }
+              : {}),
             error:
               "Local transcription unavailable, unsupported language, or no speech recognized. No cloud fallback was used.",
           };

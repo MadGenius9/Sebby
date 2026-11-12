@@ -184,6 +184,22 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.invoke("sebby:read-github-file", input),
     cancelGithubRead: () => ipcRenderer.invoke("sebby:cancel-github-read"),
     voiceStatus: () => ipcRenderer.invoke("sebby:voice-status"),
+    beginHandsFreeChat: () => ipcRenderer.invoke("sebby:begin-handsfree-chat"),
+    startHandsFreeChat: (input) =>
+      ipcRenderer.invoke("sebby:start-handsfree-chat", input),
+    endHandsFreeChat: (id) =>
+      ipcRenderer.invoke("sebby:end-handsfree-chat", id),
+    startHandsFree: (input) =>
+      ipcRenderer.invoke("sebby:start-hands-free", input),
+    transcribeHandsFree: (input) =>
+      ipcRenderer.invoke("sebby:transcribe-hands-free", input),
+    stopHandsFree: (id) => ipcRenderer.invoke("sebby:stop-hands-free", id),
+    onHandsFreeExpired: (callback) => {
+      const listener = (_event, payload) => callback(payload);
+      ipcRenderer.on("sebby:hands-free-expired", listener);
+      return () =>
+        ipcRenderer.removeListener("sebby:hands-free-expired", listener);
+    },
     localVoiceStatus: () => ipcRenderer.invoke("sebby:local-voice-status"),
     prepareEvidence: (input) =>
       ipcRenderer.invoke("sebby:evidence-prepare", input),

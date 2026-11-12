@@ -13,6 +13,7 @@ import {
 } from "./anthropic-provider.mjs";
 import { XaiProvider, XAI_CAPABILITIES } from "./xai-provider.mjs";
 import { ChatService } from "./chat.mjs";
+import { HandsFreeChatSession } from "./hands-free-chat.mjs";
 import { AgentRuntime } from "./agent-runtime.mjs";
 const capabilities = {
   ollama: OLLAMA_CAPABILITIES,
@@ -52,6 +53,7 @@ export async function installAI({
   confirm,
   onEvent = () => {},
   isExternalBusy = () => false,
+  assertHandsFreeSession,
   env = process.env,
   adapters = {
     ollama: OllamaProvider,
@@ -68,6 +70,7 @@ export async function installAI({
   let orchestration;
   let childGuard = null;
   let chat,
+    handsFree,
     agents,
     testRun = null,
     settingsBusy = false,
@@ -77,6 +80,7 @@ export async function installAI({
     !!(
       closed ||
       chat?.isActive ||
+      handsFree?.isBusy ||
       agents?.isActive ||
       testRun ||
       settingsBusy ||
@@ -176,6 +180,27 @@ export async function installAI({
     store,
     skills: features.skills,
     approve: contextConsent,
+    onEvent: (event) => onEvent("chat", event),
+  });
+  handsFree = new HandsFreeChatSession({
+    getIdentity: () => {
+      const profile = selected();
+      return {
+        profileId: profile.id,
+        provider: profile.provider,
+        model: profile.model,
+        workspaceRoot: workspace.root ?? null,
+        revision: settingsRevision,
+        maxOutputTokens: profile.options.maxOutputTokens,
+      };
+    },
+    assertVoiceSession: assertHandsFreeSession,
+    confirm,
+    provider: router,
+    conversations: features.conversations,
+    workspace,
+    store,
+    skills: features.skills,
     onEvent: (event) => onEvent("chat", event),
   });
   agents = new AgentRuntime({
@@ -440,8 +465,33 @@ export async function installAI({
       maxOutputTokens: profile.options.maxOutputTokens,
     });
   });
-  register("chat-status", (runId) => chat.status(runId));
-  register("cancel-chat", (runId) => chat.cancel(runId));
+  register("begin-handsfree-chat", (input) => {
+    if (busy())
+      throw Error("Finish active AI work before enabling hands-free chat.");
+    return handsFree.begin(input);
+  });
+  register("start-handsfree-chat", (input) => {
+    if (
+      closed ||
+      settingsBusy ||
+      agents.isActive ||
+      testRun ||
+      orchestration.service.isBusy ||
+      chat.isActive ||
+      features.conversationRemovalPending
+    )
+      throw Error("Finish conflicting AI work before this hands-free turn.");
+    return handsFree.start(input);
+  });
+  register("end-handsfree-chat", (sessionId) => handsFree.end(sessionId));
+  register("chat-status", (runId) =>
+    handsFree.owns(runId) || (!runId && handsFree.chat.isActive)
+      ? handsFree.chat.status(runId)
+      : chat.status(runId),
+  );
+  register("cancel-chat", (runId) =>
+    handsFree.owns(runId) ? handsFree.chat.cancel(runId) : chat.cancel(runId),
+  );
   const ownedPlanTask = (id) =>
     orchestration.service
       .list()
@@ -482,6 +532,7 @@ export async function installAI({
     chat,
     agents,
     orchestration: orchestration.service,
+    handsFree,
     provider: router,
     isBusy: busy,
     // Main-process-only handle; never register or serialize this object over IPC.
@@ -492,6 +543,7 @@ export async function installAI({
       return {
         profileId: profile.id,
         provider: profile.provider,
+        model: profile.model,
         credentials: new RuntimeProfileCredentials(profile.id, {
           profiles,
           vault,
@@ -507,6 +559,7 @@ export async function installAI({
         pending?.promise,
         settingsPromise,
         chat.shutdown(),
+        handsFree.shutdown(),
         orchestration.shutdown(),
         agents.shutdown(),
       ]);
