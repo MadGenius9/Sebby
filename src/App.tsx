@@ -1,4 +1,5 @@
 import { KnowledgePanel } from "./KnowledgePanel";
+import { EvidenceWorkflowPanel } from "./EvidenceWorkflowPanel";
 import { lazy, Suspense } from "react";
 const StudioPanel = lazy(() =>
   import("./studio/StudioPanel").then((module) => ({
@@ -190,14 +191,19 @@ export function App() {
             ) : page === "Knowledge" ? (
               <KnowledgePanel
                 useDraft={(text) => {
-                  setDraft(text);
+                  setDraft((current) =>
+                    current.trim() ? `${current}\n\n${text}` : text,
+                  );
                   setPage("Chat");
                 }}
               />
             ) : page === "Memory" ? (
               <Memory state={state} update={setState} report={setError} />
             ) : page === "Workspace" ? (
-              <Workspace state={state} choose={choose} report={setError} />
+              <>
+                <Workspace state={state} choose={choose} report={setError} />
+                <EvidenceWorkflowPanel report={setError} />
+              </>
             ) : page === "Connections" ? (
               <Connections report={setError} />
             ) : page === "Personality" ? (

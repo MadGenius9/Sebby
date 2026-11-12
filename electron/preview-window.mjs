@@ -135,6 +135,13 @@ export function previewWindowAdapter({ BrowserWindow, session }) {
       signal?.addEventListener("abort", destroy, { once: true });
       try {
         const initialize = async () => {
+          // Start the sandboxed renderer on a trusted empty document before
+          // sending Page-domain commands. On Windows, an uninitialized hidden
+          // WebContents can otherwise leave Page.enable pending indefinitely.
+          // No untrusted markup is loaded until every required guard succeeds.
+          await win.loadURL("about:blank");
+          if (signal?.aborted || win.isDestroyed())
+            throw Error("Preview cancelled.");
           wc.debugger.attach("1.3");
           wc.debugger.on("detach", destroy);
           await wc.debugger.sendCommand("Page.enable");

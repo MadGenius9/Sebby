@@ -3,16 +3,31 @@ import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
 import { previewWindowAdapter } from "../electron/preview-window.mjs";
 import { previewDocument } from "../electron/preview.mjs";
-function fixture({ failGuard = false } = {}) {
-  const observed = { commands: [], loads: [] };
+function fixture({ failGuard = false, pendingGuard = null } = {}) {
+  const observed = { commands: [], loads: [], events: [] };
   const isolated = new EventEmitter();
   Object.assign(isolated, {
-    setPermissionRequestHandler: (fn) => (observed.permissions = fn),
-    setPermissionCheckHandler: (fn) => (observed.check = fn),
-    setDevicePermissionHandler: (fn) => (observed.device = fn),
-    webRequest: { onBeforeRequest: (fn) => (observed.requests = fn) },
+    setPermissionRequestHandler: (fn) => {
+      observed.events.push("permission-request-guard");
+      observed.permissions = fn;
+    },
+    setPermissionCheckHandler: (fn) => {
+      observed.events.push("permission-check-guard");
+      observed.check = fn;
+    },
+    setDevicePermissionHandler: (fn) => {
+      observed.events.push("device-guard");
+      observed.device = fn;
+    },
+    webRequest: {
+      onBeforeRequest: (fn) => {
+        observed.events.push("network-guard");
+        observed.requests = fn;
+      },
+    },
     protocol: {
       handle: (scheme, handler) => {
+        observed.events.push("local-protocol-guard");
         observed.scheme = scheme;
         observed.handler = handler;
       },
@@ -34,11 +49,18 @@ function fixture({ failGuard = false } = {}) {
         debugger: new EventEmitter(),
       });
       Object.assign(this.webContents.debugger, {
-        attach: (version) => (observed.debugger = version),
+        attach: (version) => {
+          observed.events.push("debugger-attached");
+          observed.debugger = version;
+        },
         sendCommand: async (name, args) => {
+          observed.events.push(`command:${name}`);
           observed.commands.push([name, args]);
           if (failGuard && name === "Page.setInterceptFileChooserDialog")
             throw Error("unsupported");
+          if (pendingGuard && name === "Page.setInterceptFileChooserDialog")
+            await pendingGuard;
+          observed.events.push(`ready:${name}`);
         },
       });
     }
@@ -53,9 +75,15 @@ function fixture({ failGuard = false } = {}) {
       this.emit("closed");
     }
     async loadURL(url) {
+      observed.events.push(
+        url === "about:blank"
+          ? "load-trusted-blank"
+          : "load-untrusted-artifact",
+      );
       observed.loads.push(url);
     }
     show() {
+      observed.events.push("show");
       observed.shown = true;
     }
   }
@@ -97,7 +125,8 @@ test("preview uses isolated ephemeral session, no preload or Node and response s
   o.permissions(null, "media", (x) => assert.equal(x, false));
   assert.equal(o.commands[1][0], "Page.setInterceptFileChooserDialog");
   assert.deepEqual(o.commands[1][1], { enabled: true, cancel: true });
-  const response = await o.handler({ url: o.loads[0], method: "GET" });
+  assert.equal(o.loads[0], "about:blank");
+  const response = await o.handler({ url: o.loads[1], method: "GET" });
   assert.match(response.headers.get("Content-Security-Policy"), /sandbox$/);
   assert.match(
     response.headers.get("Content-Security-Policy"),
@@ -108,7 +137,7 @@ test("preview uses isolated ephemeral session, no preload or Node and response s
     403,
   );
   assert.equal(
-    (await o.handler({ url: o.loads[0], method: "POST" })).status,
+    (await o.handler({ url: o.loads[1], method: "POST" })).status,
     403,
   );
   for (const url of [
@@ -119,7 +148,7 @@ test("preview uses isolated ephemeral session, no preload or Node and response s
     "ws://localhost",
   ])
     o.requests({ url }, (r) => assert.equal(r.cancel, true));
-  o.requests({ url: o.loads[0] }, (r) => assert.equal(r.cancel, false));
+  o.requests({ url: o.loads[1] }, (r) => assert.equal(r.cancel, false));
   assert.equal(o.shown, true);
   await f.adapter.closeWindow(o.window);
   assert.equal(closed, 1);
@@ -131,9 +160,53 @@ test("required file chooser guard failure never loads or shows untrusted source"
     f.adapter.openWindow(input()),
     /Required browser guards/,
   );
-  assert.equal(f.observed.loads.length, 0);
+  assert.deepEqual(f.observed.loads, ["about:blank"]);
   assert.equal(f.observed.shown, undefined);
   assert.equal(f.observed.window.dead, true);
+});
+
+test("trusted bootstrap precedes Page guards and a pending file chooser guard prevents untrusted load or show", async () => {
+  let allowGuard;
+  const pendingGuard = new Promise((resolve) => {
+    allowGuard = resolve;
+  });
+  const f = fixture({ pendingGuard });
+  const pending = f.adapter.openWindow(input());
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.deepEqual(f.observed.loads, ["about:blank"]);
+  assert.equal(f.observed.shown, undefined);
+  for (const guard of [
+    "permission-request-guard",
+    "permission-check-guard",
+    "device-guard",
+    "network-guard",
+    "local-protocol-guard",
+  ])
+    assert.ok(
+      f.observed.events.indexOf(guard) <
+        f.observed.events.indexOf("load-trusted-blank"),
+    );
+  allowGuard();
+  await pending;
+  const events = f.observed.events;
+  const requiredOrder = [
+    "load-trusted-blank",
+    "debugger-attached",
+    "ready:Page.enable",
+    "ready:Page.setInterceptFileChooserDialog",
+    "load-untrusted-artifact",
+    "show",
+  ];
+  let previous = -1;
+  for (const event of requiredOrder) {
+    const current = events.indexOf(event);
+    assert.ok(
+      current > previous,
+      `Missing or out-of-order preview step: ${event}`,
+    );
+    previous = current;
+  }
+  await f.adapter.closeWindow(f.observed.window);
 });
 test("abort, debugger detach, navigation, downloads and Escape have explicit deny or close controls", async () => {
   const f = fixture();

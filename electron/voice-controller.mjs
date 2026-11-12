@@ -6,6 +6,7 @@ export class VoiceController {
     approveCapture,
     approveUpload,
     transport,
+    localVoice,
     now = Date.now,
   }) {
     Object.assign(this, {
@@ -13,6 +14,7 @@ export class VoiceController {
       approveCapture,
       approveUpload,
       transport,
+      localVoice,
       now,
     });
     this.capture = null;
@@ -45,11 +47,16 @@ export class VoiceController {
     }
   }
   async begin(input = {}, windowId) {
-    const { model } = input ?? {};
+    const { model, provider = "openai", language = "auto" } = input ?? {};
     if (
       this.closed ||
       !input ||
-      Object.keys(input).some((k) => k !== "model") ||
+      Object.keys(input).some(
+        (k) => !["model", "provider", "language"].includes(k),
+      ) ||
+      !["openai", "local"].includes(provider) ||
+      (provider === "local" && model !== "whisper-small") ||
+      (provider === "openai" && language !== "auto") ||
       this.isBusy() ||
       !Number.isSafeInteger(windowId) ||
       typeof model !== "string" ||
@@ -59,9 +66,18 @@ export class VoiceController {
     this.pending = true;
     const epoch = this.epoch;
     try {
-      const context = await this.getContext();
+      const context =
+        provider === "local"
+          ? { provider: "local", language }
+          : await this.getContext();
       if (epoch !== this.epoch) throw Error("Recording cancelled.");
-      if (
+      if (provider === "local") {
+        const status = await this.localVoice?.status();
+        if (!status?.available || !status.inputLanguages.includes(language))
+          throw Error(
+            "Start the local voice service and choose a supported input language.",
+          );
+      } else if (
         context.provider !== "openai" ||
         !(await context.credentials.status()).configured
       )
@@ -71,8 +87,11 @@ export class VoiceController {
         !(await this.approveCapture({
           model,
           profileId: context.profileId,
+          provider,
           disclosure:
-            "Allow microphone recording while Sebby is open? Up to 60 seconds in memory. Upload to OpenAI requires separate paid-request approval.",
+            provider === "local"
+              ? "Allow push-to-talk microphone recording? Up to 60 seconds in memory, processed by the local voice service at 127.0.0.1:11435. No audio leaves this PC or is saved to disk."
+              : "Allow microphone recording while Sebby is open? Up to 60 seconds in memory. Upload to OpenAI requires separate paid-request approval.",
         })) ||
         epoch !== this.epoch
       )
@@ -150,12 +169,18 @@ export class VoiceController {
       input.durationMs > VOICE_LIMITS.maxDurationMs
     )
       throw Error("Recording session expired or invalid.");
-    c.transcriber = new VoiceTranscriber({
-      credentials: c.context.credentials,
-      approve: (details) =>
-        this.approveUpload({ ...details, profileId: c.context.profileId }),
-      transport: this.transport,
-    });
+    c.transcriber =
+      c.context.provider === "local"
+        ? this.localVoice.transcriber(c.context.language)
+        : new VoiceTranscriber({
+            credentials: c.context.credentials,
+            approve: (details) =>
+              this.approveUpload({
+                ...details,
+                profileId: c.context.profileId,
+              }),
+            transport: this.transport,
+          });
     this.uploads++;
     try {
       return await c.transcriber.transcribe({

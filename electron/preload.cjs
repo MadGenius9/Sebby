@@ -184,6 +184,15 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.invoke("sebby:read-github-file", input),
     cancelGithubRead: () => ipcRenderer.invoke("sebby:cancel-github-read"),
     voiceStatus: () => ipcRenderer.invoke("sebby:voice-status"),
+    localVoiceStatus: () => ipcRenderer.invoke("sebby:local-voice-status"),
+    prepareEvidence: (input) =>
+      ipcRenderer.invoke("sebby:evidence-prepare", input),
+    buildEvidence: (input) => ipcRenderer.invoke("sebby:evidence-build", input),
+    previewEvidence: (input) =>
+      ipcRenderer.invoke("sebby:evidence-preview", input),
+    synthesizeLocalSpeech: (input) =>
+      ipcRenderer.invoke("sebby:synthesize-local-speech", input),
+    cancelLocalSpeech: () => ipcRenderer.invoke("sebby:cancel-local-speech"),
     beginVoiceCapture: (input) =>
       ipcRenderer.invoke("sebby:begin-voice-capture", input),
     endVoiceCapture: (id) => ipcRenderer.invoke("sebby:end-voice-capture", id),

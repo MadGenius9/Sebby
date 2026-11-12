@@ -6,6 +6,12 @@ import {
 } from "./VoiceSession";
 import { SpeechButton } from "./SpeechButton";
 import { VoiceControls } from "./VoiceControls";
+import { LocalVoiceSettings } from "./LocalVoiceSettings";
+import {
+  speakNeuralText,
+  stopNeuralSpeech,
+  voicePreferences,
+} from "./localSpeech";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowUp,
@@ -91,6 +97,17 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       ? (window.sebby as unknown as ChatApi)
       : null;
   const [language, setLanguage] = useState(replyLanguage);
+  const [speechProvider, setSpeechProvider] = useState(
+    () => voicePreferences().provider,
+  );
+  useEffect(() => {
+    const update = () => setSpeechProvider(voicePreferences().provider);
+    window.addEventListener("sebby:voice-preferences-changed", update);
+    return () =>
+      window.removeEventListener("sebby:voice-preferences-changed", update);
+  }, []);
+  const languageRef = useRef(language);
+  languageRef.current = language;
   const [configured, setConfigured] = useState(false),
     [profileLabel, setProfileLabel] = useState(""),
     [items, setItems] = useState<Conversation[]>([]),
@@ -105,6 +122,8 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
     [historyNotice, setHistoryNotice] = useState(""),
     [draftTitle, setDraftTitle] = useState("");
   const cancelPendingStart = useRef(false);
+  const voiceReply = useRef(false),
+    voiceEpoch = useRef(0);
   const runId = useRef<string | null>(null),
     startingRef = useRef(false),
     alive = useRef(true),
@@ -182,10 +201,53 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       if (event.status) setRun((previous) => ({ ...previous, ...event }));
       if (event.status && terminal.has(event.status)) {
         void refreshList();
-        if (event.conversationId)
+        if (event.conversationId) {
+          const shouldRead = event.status === "completed" && voiceReply.current;
+          const epoch = voiceEpoch.current;
+          voiceReply.current = false;
           void load(event.conversationId).then(() => {
             if (alive.current) setPartial("");
           });
+          if (shouldRead)
+            void api
+              .getConversation(event.conversationId)
+              .then(async (value) => {
+                if (!alive.current || epoch !== voiceEpoch.current) return;
+                const message = [...(value.messages || [])]
+                  .reverse()
+                  .find(
+                    (m) => m.role === "assistant" && m.status === "complete",
+                  );
+                if (!message) return;
+                if (voicePreferences().provider !== "neural") {
+                  reportRef.current(
+                    "Voice turn completed. Select Local neural voice to enable automatic spoken replies; the saved reply is ready to read manually.",
+                  );
+                  return;
+                }
+                try {
+                  await speakNeuralText(
+                    message.text,
+                    languageRef.current,
+                    (state) => {
+                      if (alive.current && epoch === voiceEpoch.current)
+                        voiceSession.setSpeech(state);
+                    },
+                  );
+                } catch {
+                  if (alive.current && epoch === voiceEpoch.current)
+                    reportRef.current(
+                      "Reply saved, but local neural speech could not play. Check voice language, service and output device. No cloud fallback.",
+                    );
+                } finally {
+                  if (alive.current && epoch === voiceEpoch.current)
+                    voiceSession.setSpeech("idle");
+                }
+              })
+              .catch(() =>
+                reportRef.current("Completed voice reply could not be loaded."),
+              );
+        }
       }
     };
     const unsubscribe = api.onChatEvent(handle),
@@ -208,10 +270,30 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       unsubscribe();
       unsubscribeProfiles?.();
       loadGeneration.current++;
+      voiceEpoch.current++;
+      voiceReply.current = false;
+      void stopNeuralSpeech();
     };
   }, [api, load, refreshList, refreshProfile, setDraft]);
-  async function send() {
-    if (!api || !configured || busy || !draft.trim()) return;
+  async function send(textOverride?: string, voiceTurn = false) {
+    const text = textOverride ?? draft;
+    if (
+      !api ||
+      !configured ||
+      startingRef.current ||
+      historyBusy ||
+      (!terminal.has(run.status) && !voiceTurn) ||
+      !text.trim()
+    ) {
+      if (voiceTurn) {
+        setDraft(text);
+        report(
+          "Voice transcript kept as a draft. Wait for current work or configure a model before sending.",
+        );
+      }
+      return;
+    }
+    voiceReply.current = voiceTurn;
     const selectedFiles = files
         .split(/\r?\n/)
         .map((x) => x.trim())
@@ -240,8 +322,8 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
         ...(conversation ? { conversationId: conversation.id } : {}),
         text:
           language === "en"
-            ? draft
-            : `${draft}\n\nPlease reply in ${LANGUAGES.find(([code]) => code === language)?.[1] || "English"}. I may speak or type in another language. Keep code and identifiers unchanged.`,
+            ? text
+            : `${text}\n\nPlease reply in ${LANGUAGES.find(([code]) => code === language)?.[1] || "English"}. I may speak or type in another language. Keep code and identifiers unchanged.`,
         includeMemory: memory,
         filePaths: selectedFiles,
         skillIds: selectedSkills,
@@ -255,6 +337,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
         if (terminal.has(state.status)) await refreshList();
       }
     } catch {
+      voiceReply.current = false;
       if (alive.current)
         setRun({
           status: "error",
@@ -270,6 +353,9 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
     }
   }
   async function cancel() {
+    voiceReply.current = false;
+    voiceEpoch.current++;
+    void stopNeuralSpeech();
     if (!api) return;
     if (startingRef.current) cancelPendingStart.current = true;
     if (!runId.current) return;
@@ -285,6 +371,19 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
       );
     }
   }
+  useEffect(() => {
+    const interrupt = () => {
+      voiceEpoch.current++;
+      voiceReply.current = false;
+      void stopNeuralSpeech();
+    };
+    window.addEventListener("sebby:voice-interrupt", interrupt);
+    window.addEventListener("sebby:stop-local-speech", interrupt);
+    return () => {
+      window.removeEventListener("sebby:voice-interrupt", interrupt);
+      window.removeEventListener("sebby:stop-local-speech", interrupt);
+    };
+  }, []);
   useEffect(
     () => voiceSession.registerChat(cancel),
     [api, voiceSession.registerChat],
@@ -565,10 +664,31 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
         installed voice for the selected reply language.
       </p>
       <VoiceSessionStatus />
+      <LocalVoiceSettings language={language} />
       <VoiceControls
         report={report}
         onTranscript={(text) => setDraft(draft ? `${draft}\n${text}` : text)}
+        onConversationTranscript={(text) => {
+          if (draft.trim()) {
+            setDraft(`${draft}\n${text}`);
+            report(
+              "Spoken text appended to your existing draft. Review and send it explicitly; your unsent work was preserved.",
+            );
+            return;
+          }
+          setDraft(text);
+          void send(text, true);
+        }}
       />
+      <button
+        className="secondary"
+        disabled={
+          busy || !configured || !draft.trim() || speechProvider !== "neural"
+        }
+        onClick={() => void send(draft, true)}
+      >
+        Review, send and speak reply
+      </button>
       <div className="composer">
         <label className="sr-only" htmlFor="draft">
           Your local chat draft
@@ -598,7 +718,7 @@ function ChatPanelContent({ draft, setDraft, useSkill, report }: Props) {
           ) : (
             <button
               className="send"
-              onClick={send}
+              onClick={() => void send()}
               disabled={busy || !configured || !draft.trim()}
               aria-label={
                 configured

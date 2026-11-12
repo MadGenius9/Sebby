@@ -10,6 +10,19 @@ New: Ollama local profiles alongside existing cloud profiles; Studio with editab
 
 ## Start
 
+Natural voice follow-up: Chat now offers **Voice and speech settings** with
+local Kokoro neural voices (Heart selected on this PC), separate Whisper input
+language, and optional push-to-talk conversation mode. **Start recording**,
+speak, then pause or Stop; review the local chat request and Sebby reads its
+completed reply. Draft mode remains available. Saying “Hello Sebby” alone is
+not a wake word. See [acceptance results and limits](docs/NATURAL-VOICE-ACCEPTANCE.md)
+and [speech setup, measured latency, and licenses](native/local-voice/README.md).
+
+Knowledge now supports saved-source labels and line-cited excerpts. Workspace
+also offers authorized local HTML structural evidence → reviewed original
+static prototype → checked restricted preview. This bounded static study does
+not run REA, arbitrary target code, or a package build.
+
 On the Windows PC validated on November 12, 2026, double-click
 `Launch-Sebby.cmd`, or run `npm run launch:local` from this folder. This starts
 the installed local Ollama server if necessary, builds Sebby, and opens the

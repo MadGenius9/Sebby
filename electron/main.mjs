@@ -24,6 +24,9 @@ import { ChangeReviewGate } from "./change-review.mjs";
 import { AppearanceStore } from "./appearance.mjs";
 import { installAI } from "./ai-ipc.mjs";
 import { VoiceController } from "./voice-controller.mjs";
+import { LocalVoiceClient } from "./local-voice.mjs";
+import { installEvidenceWorkflow } from "./evidence-workflow.mjs";
+import { ArtifactWorkspace } from "./artifact-workspace.mjs";
 import { mediaPermissionPolicy } from "./media-permissions.mjs";
 import { installGitHub } from "./github-ipc.mjs";
 import { installGitHubPublishing } from "./github-publish-ipc.mjs";
@@ -38,6 +41,7 @@ const appURL = dev
   : pathToFileURL(path.join(directory, "../dist/index.html")).href;
 const workspace = new Workspace(),
   changeReview = new ChangeReviewGate();
+const localVoice = new LocalVoiceClient();
 let window,
   store,
   appearance,
@@ -53,6 +57,8 @@ let window,
   github,
   githubPublishing,
   preview,
+  evidenceWorkflow,
+  artifactPreview,
   reminderTimer;
 let prompting = false,
   maintenance = false,
@@ -248,6 +254,8 @@ if (hasLock)
           aiServices?.isBusy() ||
           developmentTools?.busy ||
           preview?.isBusy ||
+          evidenceWorkflow?.isBusy ||
+          artifactPreview?.isBusy ||
           isolation?.isBusy() ||
           githubPublishing?.isBusy()
         )
@@ -266,6 +274,8 @@ if (hasLock)
           aiServices?.isBusy() ||
           developmentTools?.busy ||
           preview?.isBusy ||
+          evidenceWorkflow?.isBusy ||
+          artifactPreview?.isBusy ||
           isolation?.isBusy() ||
           githubPublishing?.isBusy()
         )
@@ -390,11 +400,12 @@ if (hasLock)
         },
       });
       voiceController = new VoiceController({
+        localVoice,
         getContext: () => aiServices.voiceContext(),
         approveCapture: (request) =>
           confirm(
             "Allow this microphone recording?",
-            `${request.disclosure}\n\nOpenAI audio model: ${request.model}\nProvider profile: ${request.profileId}\nNo microphone access is granted before confirmation. No audio is saved to disk by Sebby.`,
+            `${request.disclosure}\n\nRecognition: ${request.provider === "local" ? "Local Whisper" : "OpenAI audio model: " + request.model}\nNo microphone access is granted before confirmation. No audio is saved to disk by Sebby.`,
           ),
         approveUpload: (request) =>
           confirm(
@@ -403,6 +414,15 @@ if (hasLock)
           ),
       });
       register("voice-status", () => voiceController.status());
+      register("local-voice-status", () => localVoice.status());
+      register("synthesize-local-speech", (input) => {
+        if (voiceController.isBusy())
+          throw Error(
+            "Stop microphone capture or transcription before playback.",
+          );
+        return localVoice.synthesize(input);
+      });
+      register("cancel-local-speech", () => localVoice.cancelSpeech());
       register("begin-voice-capture", (input) =>
         voiceController.begin(input, window.webContents.id),
       );
@@ -448,6 +468,34 @@ if (hasLock)
           outcome: value.lastOutcome,
         };
       };
+      const artifactWorkspace = new ArtifactWorkspace();
+      artifactPreview = new PreviewService({
+        workspace: artifactWorkspace,
+        ...previewWindowAdapter({ BrowserWindow, session }),
+        approve: (request) =>
+          confirm(
+            "Preview this original static prototype?",
+            `${request.path}\nSHA-256: ${request.sha256}\n\n${request.warning}`,
+          ),
+      });
+      evidenceWorkflow = installEvidenceWorkflow({
+        register,
+        workspace,
+        confirm,
+        dataDirectory,
+        preview: {
+          openArtifact: async ({ directory, path: relative, sha256 }) => {
+            if (maintenance) throw Error("Sebby is closing or restoring data.");
+            await artifactWorkspace.selectArtifact({
+              directory,
+              path: relative,
+              sha256,
+            });
+            await artifactPreview.open({ path: relative });
+            return artifactPreview.status();
+          },
+        },
+      });
       register("preview-status", previewStatus);
       register("open-preview", async (input) => {
         await preview.open(input);
@@ -491,11 +539,16 @@ if (hasLock)
             isolation.isBusy() ||
             reviewedMcp.isBusy() ||
             discovery.isBusy() ||
-            preview.isBusy
+            preview.isBusy ||
+            evidenceWorkflow.isBusy ||
+            artifactPreview.isBusy ||
+            voiceController.isBusy()
           )
             return false;
           maintenance = true;
           await preview.shutdown();
+          await evidenceWorkflow.shutdown();
+          await artifactPreview.shutdown();
           return true;
         },
         restart: () =>
@@ -532,11 +585,14 @@ app.on("before-quit", (event) => {
     await Promise.allSettled([
       localExecutor?.shutdown(),
       voiceController?.shutdown(),
+      localVoice.shutdown(),
       isolation?.shutdown(),
       reviewedMcp?.shutdown(),
       githubPublishing?.shutdown(),
       github?.shutdown(),
       preview?.shutdown(),
+      evidenceWorkflow?.shutdown(),
+      artifactPreview?.shutdown(),
       aiServices?.shutdown(),
     ]);
     await Promise.allSettled(

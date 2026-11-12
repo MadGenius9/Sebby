@@ -6,6 +6,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { stopNeuralSpeech } from "./localSpeech";
 type Session = {
   capture: string;
   speech: string;
@@ -70,6 +71,7 @@ export function VoiceSessionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
   const stop = useCallback((includeChat: boolean) => {
+    void stopNeuralSpeech();
     try {
       stopCapture.current();
     } catch {
@@ -138,10 +140,12 @@ export function VoiceSessionStatus() {
         {s.chat}. Local speech: {s.speech}.
       </p>
       <p>
-        Not realtime conversation. You separately start and stop recording,
-        approve transcription, review the draft, send chat and choose local
-        read-aloud. Nothing listens, uploads, sends or reads automatically.
-        Cancelling cannot undo provider charges or dispatched processing.
+        Push-to-talk, not continuous listening. By default you review a
+        transcription draft before sending and choose read-aloud explicitly.
+        Optional conversation mode transcribes locally after Stop, prepares a
+        native-reviewed chat request, and reads its completed reply with the
+        selected neural voice. It never starts the next recording. Cancelling
+        cannot undo provider charges or dispatched processing.
       </p>
       <button onClick={() => s.stop(false)}>Stop voice activity</button>
       <button disabled={s.chat === "idle"} onClick={() => s.stop(true)}>

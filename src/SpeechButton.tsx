@@ -1,7 +1,29 @@
 import { useVoiceSession } from "./VoiceSession";
 import { useEffect, useRef, useState } from "react";
+import { voicePreferences } from "./localSpeech";
+import { NeuralSpeechButton } from "./NeuralSpeechButton";
 /** Explicit device-local speech only. Never silently substitute a remote voice. */
 export function SpeechButton({
+  text,
+  language = "en",
+}: {
+  text: string;
+  language?: string;
+}) {
+  const [preferences, setPreferences] = useState(voicePreferences);
+  useEffect(() => {
+    const update = () => setPreferences(voicePreferences());
+    window.addEventListener("sebby:voice-preferences-changed", update);
+    return () =>
+      window.removeEventListener("sebby:voice-preferences-changed", update);
+  }, []);
+  return preferences.provider === "neural" ? (
+    <NeuralSpeechButton text={text} language={language} />
+  ) : (
+    <SystemSpeechButton text={text} language={language} />
+  );
+}
+function SystemSpeechButton({
   text,
   language = "en",
 }: {
@@ -55,6 +77,8 @@ export function SpeechButton({
             .find(
               (v) =>
                 v.localService &&
+                (!voicePreferences().systemVoice ||
+                  v.voiceURI === voicePreferences().systemVoice) &&
                 v.lang.toLowerCase().split("-")[0] === language,
             );
           if (!voice) {
@@ -67,6 +91,7 @@ export function SpeechButton({
           window.speechSynthesis.cancel();
           const value = new SpeechSynthesisUtterance(text);
           value.voice = voice;
+          value.rate = voicePreferences().speed;
           value.lang = voice.lang;
           utterance.current = value;
           const finish = () => {

@@ -41,6 +41,47 @@ if (!(await available())) {
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
 }
+// Start an explicitly installed local voice runtime. Never install/download here.
+const voiceRoot = path.join(
+  process.env.LOCALAPPDATA || "",
+  "Sebby",
+  "local-voice",
+);
+const voicePython = path.join(voiceRoot, "venv", "Scripts", "python.exe");
+const voiceServer = path.join(root, "native", "local-voice", "server.py");
+if (
+  fs.existsSync(voicePython) &&
+  fs.existsSync(voiceServer) &&
+  fs.existsSync(path.join(voiceRoot, "models", "kokoro-v1.0.onnx"))
+) {
+  let running = false;
+  try {
+    running = (
+      await fetch("http://127.0.0.1:11435/health", {
+        signal: AbortSignal.timeout(1500),
+      })
+    ).ok;
+  } catch {
+    /* Start installed service below. */
+  }
+  if (!running) {
+    const voice = spawn(
+      voicePython,
+      [voiceServer, "--assets", path.join(voiceRoot, "models")],
+      {
+        detached: true,
+        windowsHide: true,
+        stdio: "ignore",
+      },
+    );
+    voice.on("error", () =>
+      console.warn(
+        "Local voice service could not start. Sebby will show its availability.",
+      ),
+    );
+    voice.unref();
+  }
+}
 // No models, accounts, profile selection or cloud requests are changed here.
 const build = spawn(process.execPath, [npmCli, "run", "build"], {
   cwd: root,

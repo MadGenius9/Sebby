@@ -24,6 +24,11 @@ textarea {
 }
 button {
   cursor: pointer;
+  color: var(--accent);
+  background: #152b3d;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 12px;
 }
 button:disabled {
   cursor: not-allowed;
