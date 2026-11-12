@@ -10,7 +10,9 @@ import {
   imageContract,
 } from "../electron/isolation-runner.mjs";
 async function setup(t) {
-  const root = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-isolation-"));
+  const root = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-isolation-")),
+  );
   t.after(() => fs.rm(root, { recursive: true, force: true }));
   const workspace = path.join(root, "project");
   await fs.mkdir(workspace);

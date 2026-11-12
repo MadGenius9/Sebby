@@ -10,7 +10,9 @@ async function fixture(
   t,
   { confirm = async () => false, chooseGit = async () => null } = {},
 ) {
-  const base = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-ipc-"));
+  const base = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-ipc-")),
+  );
   t.after(() => fs.rm(base, { recursive: true, force: true }));
   const root = path.join(base, "project"),
     directory = path.join(base, "private");

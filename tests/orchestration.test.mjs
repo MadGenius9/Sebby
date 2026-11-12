@@ -45,8 +45,8 @@ function definition(count = 2) {
   };
 }
 async function fixture(t, overrides = {}) {
-  const directory = await fs.mkdtemp(
-    path.join(os.tmpdir(), "sebby-orchestration-"),
+  const directory = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-orchestration-")),
   );
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const root = path.join(directory, "project");

@@ -63,8 +63,12 @@ build and formatting passed. The installed speech environment separately
 passed all ten Python HTTP/decoder tests. Evidence is in
 `.jarvis-delivery-gauntlet.log` and `.gauntlet/latest.json` (local ignored logs).
 Platform symlink/POSIX skips remain explicit; passing checks do not turn skipped
-coverage into passes. CI remains subject to the previously reported GitHub
-account billing/spending restriction; this run is local Windows evidence.
+coverage into passes. Hosted CI subsequently started: Linux passed, while
+Windows exposed noncanonical temporary-directory fixtures. Reproducing with
+a differently cased Windows TEMP confirmed the failure. Those fixtures now
+resolve their actual filesystem paths before calling canonical-only services;
+production path validation was not weakened. Hosted retest results are tracked
+on PR #1; local Windows evidence remains separate from hosted runner evidence.
 
 ## Actual Windows evidence
 

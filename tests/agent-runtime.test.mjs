@@ -26,7 +26,9 @@ async function fixture(
     role = "planner",
   } = {},
 ) {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-agent-"));
+  const directory = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-agent-")),
+  );
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const project = path.join(directory, "project");
   await fs.mkdir(project);
