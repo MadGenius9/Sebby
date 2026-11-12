@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-export type ProviderName = "openai" | "anthropic" | "xai";
+export type ProviderName = "openai" | "anthropic" | "xai" | "ollama";
 export type ProviderProfile = {
   id: string;
   name: string;
@@ -38,6 +38,7 @@ type TestResult = {
   text?: string;
 };
 export interface ProviderSettingsAPI {
+  listLocalModels?(): Promise<{ name: string; size: number }[]>;
   listProviderProfiles(): Promise<ProviderSnapshot>;
   createProviderProfile(
     input: Omit<ProviderProfile, "id">,
@@ -58,11 +59,13 @@ export interface ProviderSettingsAPI {
   onProviderChanged(callback: () => void): () => void;
 }
 const labels: Record<ProviderName, string> = {
+  ollama: "Local / Ollama",
   openai: "GPT / OpenAI",
   anthropic: "Claude / Anthropic",
   xai: "Grok / xAI",
 };
 const variables: Record<ProviderName, string> = {
+  ollama: "No key required",
   openai: "OPENAI_API_KEY",
   anthropic: "ANTHROPIC_API_KEY",
   xai: "XAI_API_KEY",
@@ -157,9 +160,11 @@ export function ProviderPicker({
       </select>
       {selected && (
         <small>
-          {data?.statuses[selected.id]?.configured
-            ? "Key available · API usage may be charged"
-            : "No usable key configured"}
+          {selected.provider === "ollama"
+            ? "Local runtime · availability checked when used"
+            : data?.statuses[selected.id]?.configured
+              ? "Key available · API usage may be charged"
+              : "No usable key configured"}
         </small>
       )}
     </div>
@@ -178,7 +183,8 @@ export function ProviderSettings({ report, onChanged }: Props) {
     [form, setForm] = useState(emptyForm),
     [busy, setBusy] = useState<"metadata" | "key" | "test" | null>(null),
     [notice, setNotice] = useState(""),
-    [result, setResult] = useState<TestResult | null>(null);
+    [result, setResult] = useState<TestResult | null>(null),
+    [localModels, setLocalModels] = useState<string[]>([]);
   const keyInput = useRef<HTMLInputElement>(null),
     initialized = useRef(false);
   const selectEditor = useCallback((profile: ProviderProfile | null) => {
@@ -229,6 +235,7 @@ export function ProviderSettings({ report, onChanged }: Props) {
   const status = editId ? data.statuses[editId] : undefined,
     current = editId ? data.profiles.find((p) => p.id === editId) : undefined;
   const savedModels = [
+    ...(form.provider === "ollama" ? localModels : []),
     ...new Set(
       data.profiles
         .filter((p) => p.provider === form.provider && p.model)
@@ -242,9 +249,9 @@ export function ProviderSettings({ report, onChanged }: Props) {
     <section aria-label="Provider settings">
       <h2>Your models. Your choice.</h2>
       <p className="muted">
-        Use your own OpenAI, Anthropic, or xAI API account. ChatGPT, Claude, and
-        Grok subscriptions are separate from API billing. Every paid request
-        still needs approval.
+        Choose local Ollama or your own OpenAI, Anthropic, or xAI API account.
+        ChatGPT, Claude, and Grok subscriptions are separate from API billing.
+        Every paid request still needs approval.
       </p>
       <div className="button-row">
         <label htmlFor="edit-provider-profile">Edit profile</label>
@@ -363,6 +370,36 @@ export function ProviderSettings({ report, onChanged }: Props) {
             placeholder="Enter the model ID from your provider"
             autoComplete="off"
           />
+          {form.provider === "ollama" && (
+            <div className="callout">
+              <p>
+                Install Ollama and a model on this PC first. Sebby uses
+                127.0.0.1:11434 and never pulls a model or falls back to the
+                cloud.
+              </p>
+              <button
+                type="button"
+                disabled={!!busy}
+                onClick={async () => {
+                  try {
+                    const models = await api.listLocalModels?.();
+                    setLocalModels(models?.map((m) => m.name) || []);
+                    setNotice(
+                      models?.length
+                        ? "Installed local models loaded. Choose a model, save, then select this profile."
+                        : "No installed local models found.",
+                    );
+                  } catch {
+                    report(
+                      "Cannot reach Ollama. Start it on this PC, then refresh.",
+                    );
+                  }
+                }}
+              >
+                Refresh installed models
+              </button>
+            </div>
+          )}
           <datalist id="saved-provider-models">
             {savedModels.map((model) => (
               <option key={model} value={model} />
@@ -391,21 +428,26 @@ export function ProviderSettings({ report, onChanged }: Props) {
               })
             }
           />
-          <label className="check spaced">
-            <input
-              type="checkbox"
-              checked={form.useEnvironment}
-              onChange={(e) =>
-                setForm({ ...form, useEnvironment: e.target.checked })
-              }
-            />
-            Allow this profile to use existing {variables[form.provider]} when
-            no stored key exists
-          </label>
-          <p className="muted">
-            This reads only that fixed environment variable in the desktop main
-            process. It does not copy its value into Settings or backups.
-          </p>
+          {form.provider !== "ollama" && (
+            <>
+              <label className="check spaced">
+                <input
+                  type="checkbox"
+                  checked={form.useEnvironment}
+                  onChange={(e) =>
+                    setForm({ ...form, useEnvironment: e.target.checked })
+                  }
+                />
+                Allow this profile to use existing {variables[form.provider]}{" "}
+                when no stored key exists
+              </label>
+              <p className="muted">
+                This reads only that fixed environment variable in the desktop
+                main process. It does not copy its value into Settings or
+                backups.
+              </p>
+            </>
+          )}
           <button className="primary" type="submit">
             Save profile
           </button>
@@ -466,118 +508,122 @@ export function ProviderSettings({ report, onChanged }: Props) {
               Remove profile and stored key…
             </button>
           </div>
-          <h3 className="spaced">API key for {current.name}</h3>
-          <p className="muted">
-            {status?.configured
-              ? status.source === "environment"
-                ? `Existing ${variables[current.provider]} is available. Its value is never displayed.`
-                : "OS-encrypted key is available. Its value is never displayed."
-              : "No usable credential is configured."}{" "}
-            Key availability is not a successful connection test.
-          </p>
-          {status?.secureStorageAvailable !== true ? (
-            <p className="banner" role="status">
-              OS-protected key storage is unavailable. Saving a key is disabled;
-              no plaintext fallback is allowed. An explicitly enabled
-              environment key can still be used.
-            </p>
-          ) : (
-            <p className="muted">
-              Saving encrypts the key using this operating system, after a
-              native confirmation. Keys are excluded from backups.
-            </p>
-          )}
-          <form
-            onSubmit={async (event) => {
-              event.preventDefault();
-              const field = keyInput.current;
-              if (!field) return;
-              let key = field.value;
-              if (key.length < 20 || key.length > 1024) {
-                field.value = "";
-                key = "";
-                report(
-                  "Enter an API key in the masked field. The field has been cleared.",
-                );
-                return;
-              }
-              setBusy("key");
-              try {
-                const operation = api.saveProviderKey({
-                  profileId: current.id,
-                  key,
-                });
-                field.value = "";
-                key = "";
-                const saved = await operation;
-                await refresh();
-                setNotice(
-                  saved.saved
-                    ? "Key stored using OS encryption. No API request was made."
-                    : "Key storage cancelled. The input has been cleared.",
-                );
-                changed();
-              } catch {
-                report(
-                  "The key was not saved. Check OS-protected storage and finish active AI work before trying again. The input has been cleared.",
-                );
-              } finally {
-                field.value = "";
-                key = "";
-                setBusy(null);
-              }
-            }}
-          >
-            <label className="field-label" htmlFor="provider-api-key">
-              New API key (masked, not retained in this form)
-            </label>
-            <input
-              className="provider-input"
-              id="provider-api-key"
-              ref={keyInput}
-              type="password"
-              autoComplete="off"
-              autoCorrect="off"
-              autoCapitalize="off"
-              spellCheck={false}
-              maxLength={1024}
-              disabled={!!busy || status?.secureStorageAvailable !== true}
-            />
-            <div className="button-row spaced">
-              <button
-                className="primary"
-                type="submit"
-                disabled={!!busy || status?.secureStorageAvailable !== true}
-              >
-                Store key securely…
-              </button>
-              <button
-                className="text-button"
-                type="button"
-                disabled={!!busy}
-                onClick={async () => {
-                  if (keyInput.current) keyInput.current.value = "";
+          {current.provider !== "ollama" && (
+            <>
+              <h3 className="spaced">API key for {current.name}</h3>
+              <p className="muted">
+                {status?.configured
+                  ? status.source === "environment"
+                    ? `Existing ${variables[current.provider]} is available. Its value is never displayed.`
+                    : "OS-encrypted key is available. Its value is never displayed."
+                  : "No usable credential is configured."}{" "}
+                Key availability is not a successful connection test.
+              </p>
+              {status?.secureStorageAvailable !== true ? (
+                <p className="banner" role="status">
+                  OS-protected key storage is unavailable. Saving a key is
+                  disabled; no plaintext fallback is allowed. An explicitly
+                  enabled environment key can still be used.
+                </p>
+              ) : (
+                <p className="muted">
+                  Saving encrypts the key using this operating system, after a
+                  native confirmation. Keys are excluded from backups.
+                </p>
+              )}
+              <form
+                onSubmit={async (event) => {
+                  event.preventDefault();
+                  const field = keyInput.current;
+                  if (!field) return;
+                  let key = field.value;
+                  if (key.length < 20 || key.length > 1024) {
+                    field.value = "";
+                    key = "";
+                    report(
+                      "Enter an API key in the masked field. The field has been cleared.",
+                    );
+                    return;
+                  }
                   setBusy("key");
                   try {
-                    const removed = await api.removeProviderKey(current.id);
+                    const operation = api.saveProviderKey({
+                      profileId: current.id,
+                      key,
+                    });
+                    field.value = "";
+                    key = "";
+                    const saved = await operation;
                     await refresh();
                     setNotice(
-                      removed.removed
-                        ? "Stored key removed locally. This does not revoke it at the provider; an enabled environment key may remain available."
-                        : "Key removal cancelled.",
+                      saved.saved
+                        ? "Key stored using OS encryption. No API request was made."
+                        : "Key storage cancelled. The input has been cleared.",
                     );
                     changed();
                   } catch {
-                    report("The stored key could not be removed.");
+                    report(
+                      "The key was not saved. Check OS-protected storage and finish active AI work before trying again. The input has been cleared.",
+                    );
                   } finally {
+                    field.value = "";
+                    key = "";
                     setBusy(null);
                   }
                 }}
               >
-                Remove stored key…
-              </button>
-            </div>
-          </form>
+                <label className="field-label" htmlFor="provider-api-key">
+                  New API key (masked, not retained in this form)
+                </label>
+                <input
+                  className="provider-input"
+                  id="provider-api-key"
+                  ref={keyInput}
+                  type="password"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  maxLength={1024}
+                  disabled={!!busy || status?.secureStorageAvailable !== true}
+                />
+                <div className="button-row spaced">
+                  <button
+                    className="primary"
+                    type="submit"
+                    disabled={!!busy || status?.secureStorageAvailable !== true}
+                  >
+                    Store key securely…
+                  </button>
+                  <button
+                    className="text-button"
+                    type="button"
+                    disabled={!!busy}
+                    onClick={async () => {
+                      if (keyInput.current) keyInput.current.value = "";
+                      setBusy("key");
+                      try {
+                        const removed = await api.removeProviderKey(current.id);
+                        await refresh();
+                        setNotice(
+                          removed.removed
+                            ? "Stored key removed locally. This does not revoke it at the provider; an enabled environment key may remain available."
+                            : "Key removal cancelled.",
+                        );
+                        changed();
+                      } catch {
+                        report("The stored key could not be removed.");
+                      } finally {
+                        setBusy(null);
+                      }
+                    }}
+                  >
+                    Remove stored key…
+                  </button>
+                </div>
+              </form>
+            </>
+          )}
           <h3 className="spaced">Explicit connection test</h3>
           <p>
             Saved model for this test:{" "}
@@ -590,8 +636,11 @@ export function ProviderSettings({ report, onChanged }: Props) {
           </p>
           <p className="muted">
             A native confirmation sends only “Reply with OK.” to the saved
-            model, with a maximum of 16 output tokens. This may incur API
-            charges. No files, history, memory, or tools are included.
+            model, with a maximum of 16 output tokens.{" "}
+            {current.provider === "ollama"
+              ? "This uses local hardware and has no cloud fallback."
+              : "This may incur API charges."}{" "}
+            No files, history, memory, or tools are included.
           </p>
           <div className="button-row">
             <button
@@ -611,7 +660,9 @@ export function ProviderSettings({ report, onChanged }: Props) {
                 }
               }}
             >
-              Review paid connection test…
+              {current.provider === "ollama"
+                ? "Test local model…"
+                : "Review paid connection test…"}
             </button>
             {busy === "test" && (
               <button

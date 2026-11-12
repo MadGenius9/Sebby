@@ -1,5 +1,26 @@
 # Explicit voice drafts (0.5 track)
 
+## Opt-in hands-free follow-up
+
+The current source also adds a separate local-only wake-phrase session with
+continuous microphone capture, Hello Sebby recognition, automatic local chat
+and spoken follow-up turns, plus interruption. It is off by default, requires
+headphones and native session approval, and keeps ordinary paid/tool approvals.
+See [HANDS-FREE.md](HANDS-FREE.md) for controls, retention, bounds and evidence.
+Older no-wake-word statements below describe the historical draft-only path.
+
+## Natural local voice follow-up
+
+The current source adds local Kokoro speech, local Whisper-small recognition,
+voice/pacing selection, independent input/reply languages and an opt-in
+push-to-talk conversation mode. The original OpenAI draft path below remains
+available only when explicitly selected/configured; it still requires paid
+upload approval. Historical fake-only/native-unverified statements below
+describe the older checkpoint. Current actual evidence and limits are in
+[NATURAL-VOICE-ACCEPTANCE.md](NATURAL-VOICE-ACCEPTANCE.md); runtime setup,
+API/privacy details, primary-source comparisons and licensing are in
+[the local speech README](../native/local-voice/README.md).
+
 Implemented: OpenAI-only bounded file transcription; microphone start/stop UI; separate paid-upload native approval; transcript returned for draft review, never automatic chat send. No wake word, continuous listening, cloud voice synthesis, background recording, Anthropic/xAI audio, or audio storage. Live microphone, native permissions and API use remain unverified; tests use fake media and transport only.
 
 ## Contract and integration

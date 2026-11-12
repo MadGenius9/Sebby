@@ -18,7 +18,9 @@ async function fixture(
     isExternalBusy = () => false,
   } = {},
 ) {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-ai-ipc-"));
+  const directory = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-ai-ipc-")),
+  );
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const handlers = new Map(),
     sends = [],

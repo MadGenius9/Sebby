@@ -1,3 +1,4 @@
+import { OllamaProvider, OLLAMA_CAPABILITIES } from "./ollama-provider.mjs";
 import { createHash, randomUUID } from "node:crypto";
 import { installOrchestration } from "./orchestration-ipc.mjs";
 import {
@@ -12,8 +13,10 @@ import {
 } from "./anthropic-provider.mjs";
 import { XaiProvider, XAI_CAPABILITIES } from "./xai-provider.mjs";
 import { ChatService } from "./chat.mjs";
+import { HandsFreeChatSession } from "./hands-free-chat.mjs";
 import { AgentRuntime } from "./agent-runtime.mjs";
 const capabilities = {
+  ollama: OLLAMA_CAPABILITIES,
   openai: {
     chat: true,
     tools: true,
@@ -24,7 +27,12 @@ const capabilities = {
   anthropic: ANTHROPIC_CAPABILITIES,
   xai: XAI_CAPABILITIES,
 };
-const names = { openai: "OpenAI", anthropic: "Anthropic", xai: "xAI" };
+const names = {
+  ollama: "Ollama (this PC)",
+  openai: "OpenAI",
+  anthropic: "Anthropic",
+  xai: "xAI",
+};
 const exact = (input, keys) => {
   if (
     !input ||
@@ -45,8 +53,10 @@ export async function installAI({
   confirm,
   onEvent = () => {},
   isExternalBusy = () => false,
+  assertHandsFreeSession,
   env = process.env,
   adapters = {
+    ollama: OllamaProvider,
     openai: ResponsesProvider,
     anthropic: AnthropicProvider,
     xai: XaiProvider,
@@ -60,6 +70,7 @@ export async function installAI({
   let orchestration;
   let childGuard = null;
   let chat,
+    handsFree,
     agents,
     testRun = null,
     settingsBusy = false,
@@ -69,6 +80,7 @@ export async function installAI({
     !!(
       closed ||
       chat?.isActive ||
+      handsFree?.isBusy ||
       agents?.isActive ||
       testRun ||
       settingsBusy ||
@@ -156,8 +168,10 @@ export async function installAI({
   };
   const contextConsent = async (request) =>
     confirm(
-      "Approve this paid AI request?",
-      `${names[selected().provider]} · ${selected().name}\nModel: ${request.model}\nPrompt: ${request.promptCharacters} characters\nMemory: ${request.memoryIncluded ? request.memoryCharacters + " characters" : "not included"}\nHistory: ${request.historyCount} messages (${request.olderMessagesExcluded} older messages omitted)\nFiles: ${JSON.stringify(request.files)}\nSkills: ${JSON.stringify(request.skills)}\nOutgoing payload: ${request.totalPayloadBytes} bytes\nRough text estimate: ${request.estimatedTextTokens} tokens (not a price)\nMaximum output: ${request.maxOutputTokens} tokens\n\n${request.notice}\nYour chat subscription does not cover API usage.`,
+      selected().provider === "ollama"
+        ? "Run this local AI request?"
+        : "Approve this paid AI request?",
+      `${names[selected().provider]} · ${selected().name}\nModel: ${request.model}\nPrompt: ${request.promptCharacters} characters\nMemory: ${request.memoryIncluded ? request.memoryCharacters + " characters" : "not included"}\nHistory: ${request.historyCount} messages (${request.olderMessagesExcluded} older messages omitted)\nFiles: ${JSON.stringify(request.files)}\nSkills: ${JSON.stringify(request.skills)}\nOutgoing payload: ${request.totalPayloadBytes} bytes\nRough text estimate: ${request.estimatedTextTokens} tokens (not a price)\nMaximum output: ${request.maxOutputTokens} tokens\n\n${selected().provider === "ollama" ? "Sent only to Ollama at 127.0.0.1:11434. Uses this PC’s hardware; no cloud fallback." : request.notice + "\nYour chat subscription does not cover API usage."}`,
     );
   chat = new ChatService({
     provider: router,
@@ -166,6 +180,27 @@ export async function installAI({
     store,
     skills: features.skills,
     approve: contextConsent,
+    onEvent: (event) => onEvent("chat", event),
+  });
+  handsFree = new HandsFreeChatSession({
+    getIdentity: () => {
+      const profile = selected();
+      return {
+        profileId: profile.id,
+        provider: profile.provider,
+        model: profile.model,
+        workspaceRoot: workspace.root ?? null,
+        revision: settingsRevision,
+        maxOutputTokens: profile.options.maxOutputTokens,
+      };
+    },
+    assertVoiceSession: assertHandsFreeSession,
+    confirm,
+    provider: router,
+    conversations: features.conversations,
+    workspace,
+    store,
+    skills: features.skills,
     onEvent: (event) => onEvent("chat", event),
   });
   agents = new AgentRuntime({
@@ -278,6 +313,10 @@ export async function installAI({
     onEvent: (event) => onEvent("orchestration", event),
   });
   register("provider-status", () => router.status());
+  register("list-local-models", async () => {
+    assertIdle();
+    return new adapters.ollama().listModels();
+  });
   register("list-provider-profiles", async () => {
     const result = profiles.list();
     const statuses = {};
@@ -308,6 +347,8 @@ export async function installAI({
   mutateRegister("save-provider-key", async (input) => {
     exact(input, ["profileId", "key"]);
     const profile = profiles.get(input.profileId);
+    if (profile.provider === "ollama")
+      throw Error("Local profiles do not use API keys.");
     let key = input.key;
     input.key = "";
     try {
@@ -380,8 +421,10 @@ export async function installAI({
         controller.signal.throwIfAborted();
         if (
           !(await confirm(
-            "Make a small paid API connection test?",
-            `${names[profile.provider]} · ${profile.name}\nModel: ${profile.model}\n\nSend only: “Reply with OK.”\nMaximum output: 16 tokens. This may incur API charges and does not use your workspace, memory, history, or tools. No automatic retry.`,
+            profile.provider === "ollama"
+              ? "Test the local Ollama model?"
+              : "Make a small paid API connection test?",
+            `${names[profile.provider]} · ${profile.name}\nModel: ${profile.model}\n\nSend only: “Reply with OK.”\nMaximum output: 16 tokens. ${profile.provider === "ollama" ? "Uses local hardware, with no cloud fallback." : "This may incur API charges."} No workspace, memory, history, or tools. No automatic retry.`,
           ))
         )
           return { status: "denied" };
@@ -422,8 +465,33 @@ export async function installAI({
       maxOutputTokens: profile.options.maxOutputTokens,
     });
   });
-  register("chat-status", (runId) => chat.status(runId));
-  register("cancel-chat", (runId) => chat.cancel(runId));
+  register("begin-handsfree-chat", (input) => {
+    if (busy())
+      throw Error("Finish active AI work before enabling hands-free chat.");
+    return handsFree.begin(input);
+  });
+  register("start-handsfree-chat", (input) => {
+    if (
+      closed ||
+      settingsBusy ||
+      agents.isActive ||
+      testRun ||
+      orchestration.service.isBusy ||
+      chat.isActive ||
+      features.conversationRemovalPending
+    )
+      throw Error("Finish conflicting AI work before this hands-free turn.");
+    return handsFree.start(input);
+  });
+  register("end-handsfree-chat", (sessionId) => handsFree.end(sessionId));
+  register("chat-status", (runId) =>
+    handsFree.owns(runId) || (!runId && handsFree.chat.isActive)
+      ? handsFree.chat.status(runId)
+      : chat.status(runId),
+  );
+  register("cancel-chat", (runId) =>
+    handsFree.owns(runId) ? handsFree.chat.cancel(runId) : chat.cancel(runId),
+  );
   const ownedPlanTask = (id) =>
     orchestration.service
       .list()
@@ -464,6 +532,7 @@ export async function installAI({
     chat,
     agents,
     orchestration: orchestration.service,
+    handsFree,
     provider: router,
     isBusy: busy,
     // Main-process-only handle; never register or serialize this object over IPC.
@@ -474,6 +543,7 @@ export async function installAI({
       return {
         profileId: profile.id,
         provider: profile.provider,
+        model: profile.model,
         credentials: new RuntimeProfileCredentials(profile.id, {
           profiles,
           vault,
@@ -489,6 +559,7 @@ export async function installAI({
         pending?.promise,
         settingsPromise,
         chat.shutdown(),
+        handsFree.shutdown(),
         orchestration.shutdown(),
         agents.shutdown(),
       ]);

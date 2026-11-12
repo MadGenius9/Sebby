@@ -319,3 +319,27 @@ describe("provider settings", () => {
     expect(document.querySelector("input[type=password]")).toBeNull();
   });
 });
+
+it("shows installed-model discovery and hides key inputs for local profiles", async () => {
+  const f = setup();
+  const p = {
+    ...f.snapshot.profiles[0],
+    provider: "ollama" as const,
+    model: "local:latest",
+    useEnvironment: false,
+  };
+  f.setSnapshot({ ...f.snapshot, profiles: [p] });
+  const discover = vi.fn(async () => [{ name: "local:latest", size: 1000 }]);
+  Object.assign(f.api, { listLocalModels: discover });
+  render(<ProviderSettings report={vi.fn()} />);
+  await screen.findByRole("button", { name: "Refresh installed models" });
+  expect(screen.queryByLabelText(/New API key/)).toBeNull();
+  expect(discover).not.toHaveBeenCalled();
+  fireEvent.click(
+    screen.getByRole("button", { name: "Refresh installed models" }),
+  );
+  await waitFor(() => expect(discover).toHaveBeenCalledOnce());
+  expect(
+    screen.getByRole("button", { name: "Test local model…" }),
+  ).toBeTruthy();
+});

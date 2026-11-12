@@ -1,14 +1,21 @@
 import { useVoiceSession } from "./VoiceSession";
 import { useEffect, useRef, useState } from "react";
+import { LANGUAGES } from "./languages";
+import { stopNeuralSpeech, type LocalVoiceStatus } from "./localSpeech";
 type Result = { status: string; text?: string; error?: string };
 type VoiceApi = {
+  localVoiceStatus?(): Promise<LocalVoiceStatus>;
   onProviderChanged?(callback: () => void): () => void;
   voiceStatus(): Promise<{
     configured: boolean;
     provider: string;
     model?: string;
   }>;
-  beginVoiceCapture(input: { model: string }): Promise<{ captureId: string }>;
+  beginVoiceCapture(input: {
+    model: string;
+    provider?: string;
+    language?: string;
+  }): Promise<{ captureId: string }>;
   endVoiceCapture(id: string): Promise<unknown>;
   transcribeVoice(input: {
     captureId: string;
@@ -21,13 +28,29 @@ type VoiceApi = {
 export function VoiceControls({
   report,
   onTranscript,
+  onConversationTranscript,
+  disabled = false,
 }: {
   report: (message: string) => void;
   onTranscript: (text: string) => void;
+  onConversationTranscript?: (text: string) => void;
+  disabled?: boolean;
 }) {
   const session = useVoiceSession();
   const api = (window as unknown as { sebby?: VoiceApi }).sebby;
   const [model, setModel] = useState("");
+  const [provider, setProvider] = useState(
+    api?.localVoiceStatus ? "local" : "openai",
+  );
+  const [inputLanguage, setInputLanguage] = useState("auto");
+  const [localStatus, setLocalStatus] = useState<LocalVoiceStatus | null>(null);
+  const [conversationMode, setConversationMode] = useState(false);
+  const autoTranscribe = useRef(false);
+  const silenceTimer = useRef<ReturnType<typeof setInterval> | undefined>(
+    undefined,
+  );
+  const audioContext = useRef<AudioContext | null>(null);
+  const availabilityEpoch = useRef(0);
   const [ready, setReady] = useState(false),
     [phase, setPhase] = useState("idle"),
     [note, setNote] = useState(
@@ -51,6 +74,10 @@ export function VoiceControls({
   };
   const release = () => {
     clearTimeout(timer.current);
+    clearInterval(silenceTimer.current);
+    const context = audioContext.current;
+    audioContext.current = null;
+    if (context) void context.close().catch(() => {});
     const current = stream.current;
     stream.current = null;
     try {
@@ -91,9 +118,31 @@ export function VoiceControls({
   );
   async function refreshAvailability() {
     if (!api?.voiceStatus || phaseRef.current !== "idle") return;
+    const checking = ++availabilityEpoch.current;
     try {
+      if (provider === "local") {
+        const s = await api.localVoiceStatus?.();
+        if (
+          alive.current &&
+          phaseRef.current === "idle" &&
+          checking === availabilityEpoch.current
+        ) {
+          setLocalStatus(s || null);
+          setReady(!!s?.available);
+          setNote(
+            s?.available
+              ? "Local Whisper-small is ready. Audio is processed on this PC; recordings are never saved."
+              : "Start the local voice service. Model assets must be installed first.",
+          );
+        }
+        return;
+      }
       const s = await api.voiceStatus();
-      if (alive.current && phaseRef.current === "idle") {
+      if (
+        alive.current &&
+        phaseRef.current === "idle" &&
+        checking === availabilityEpoch.current
+      ) {
         setReady(s.configured && s.provider === "openai");
         setNote(
           s.configured && s.provider === "openai"
@@ -102,7 +151,7 @@ export function VoiceControls({
         );
       }
     } catch {
-      if (alive.current) {
+      if (alive.current && checking === availabilityEpoch.current) {
         setReady(false);
         setNote("Voice availability could not be checked.");
       }
@@ -116,12 +165,17 @@ export function VoiceControls({
     });
     return () => {
       alive.current = false;
+      availabilityEpoch.current++;
       unsubscribe?.();
       discard();
     };
-  }, [api]);
+  }, [api, provider]);
   async function start() {
     if (!api || !ready || phaseRef.current !== "idle") return;
+    // Interrupt before permission dialogs and pending device access.
+    session.stop(true);
+    window.dispatchEvent(new Event("sebby:voice-interrupt"));
+    const stoppedSpeech = stopNeuralSpeech();
     change("starting");
     const epoch = ++generation.current;
     try {
@@ -129,7 +183,17 @@ export function VoiceControls({
         (t) => MediaRecorder.isTypeSupported(t),
       );
       if (!mime) throw Error("unsupported");
-      const grant = await api.beginVoiceCapture({ model });
+      await stoppedSpeech;
+      if (!alive.current || epoch !== generation.current) return;
+      const grant = await api.beginVoiceCapture(
+        provider === "local"
+          ? {
+              model: "whisper-small",
+              provider: "local",
+              language: inputLanguage,
+            }
+          : { model },
+      );
       if (!alive.current || epoch !== generation.current) {
         void api.cancelVoice(grant.captureId).catch(() => {});
         return;
@@ -138,7 +202,11 @@ export function VoiceControls({
       window.speechSynthesis?.cancel();
       window.dispatchEvent(new Event("sebby:stop-local-speech"));
       const media = await navigator.mediaDevices.getUserMedia({
-        audio: true,
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
         video: false,
       });
       if (!alive.current || epoch !== generation.current) {
@@ -186,8 +254,10 @@ export function VoiceControls({
         void api
           .endVoiceCapture(capture.current)
           .then(() => {
-            if (alive.current && epoch === generation.current)
+            if (alive.current && epoch === generation.current) {
               change("recorded");
+              if (autoTranscribe.current) void transcribe();
+            }
           })
           .catch(() => {
             if (!alive.current || epoch !== generation.current) return;
@@ -198,6 +268,45 @@ export function VoiceControls({
           });
       };
       rec.start(250);
+      autoTranscribe.current = provider === "local" && conversationMode;
+      if (autoTranscribe.current && typeof AudioContext !== "undefined") {
+        try {
+          const context = new AudioContext();
+          audioContext.current = context;
+          const source = context.createMediaStreamSource(media),
+            analyser = context.createAnalyser();
+          analyser.fftSize = 512;
+          source.connect(analyser);
+          const samples = new Float32Array(analyser.fftSize);
+          let heard = false,
+            lastSpeech = performance.now();
+          silenceTimer.current = setInterval(() => {
+            if (epoch !== generation.current || rec.state !== "recording")
+              return;
+            analyser.getFloatTimeDomainData(samples);
+            const rms = Math.sqrt(
+              samples.reduce((sum, n) => sum + n * n, 0) / samples.length,
+            );
+            if (rms > 0.015) {
+              heard = true;
+              lastSpeech = performance.now();
+            }
+            if (
+              heard &&
+              performance.now() - lastSpeech > 1200 &&
+              performance.now() - started.current > 900
+            ) {
+              change("stopping");
+              rec.stop();
+            }
+          }, 100);
+          void context.resume().catch(() => {});
+        } catch {
+          setNote(
+            "Automatic pause detection is unavailable. Press Stop recording to finish your turn.",
+          );
+        }
+      }
       change("recording");
       timer.current = setTimeout(() => {
         if (rec.state === "recording") rec.stop();
@@ -229,10 +338,18 @@ export function VoiceControls({
       });
       if (!alive.current || epoch !== generation.current) return;
       if (result.status === "completed" && result.text) {
-        onTranscript(result.text);
-        session.setDraftReady(true);
-        setNote("Transcript added to your draft. Review before sending.");
+        const conversational = autoTranscribe.current;
         discard();
+        if (conversational && onConversationTranscript) {
+          onConversationTranscript(result.text);
+          setNote(
+            "Local transcript prepared for chat review. Native approval is still required before sending.",
+          );
+        } else {
+          onTranscript(result.text);
+          session.setDraftReady(true);
+          setNote("Transcript added to your draft. Review before sending.");
+        }
       } else {
         setNote(
           result.status === "denied"
@@ -253,31 +370,103 @@ export function VoiceControls({
     }
   }
   return (
-    <section aria-label="Push-to-talk transcription">
-      <h3>Voice draft</h3>
+    <fieldset disabled={disabled} aria-label="Push-to-talk transcription">
+      <h3>Talk with Sebby</h3>
+      <p>
+        Choose conversation mode for spoken replies. Start recording, speak,
+        then pause or press Stop. In draft mode, press Transcribe and send the
+        draft explicitly. For wake-phrase listening, enable the separate
+        hands-free mode above.
+      </p>
+      {api?.localVoiceStatus && (
+        <label>
+          Recognition provider
+          <select
+            aria-label="Recognition provider"
+            value={provider}
+            disabled={phase !== "idle"}
+            onChange={(e) => {
+              setReady(false);
+              setProvider(e.target.value);
+              setConversationMode(false);
+            }}
+          >
+            <option value="local">Local / Whisper-small</option>
+            <option value="openai">OpenAI / internet and API charges</option>
+          </select>
+        </label>
+      )}
       <button
         disabled={!api?.voiceStatus || phase !== "idle"}
         onClick={() => void refreshAvailability()}
       >
         Refresh voice availability
       </button>
-      <label>
-        Transcription model
-        <input
-          aria-label="Transcription model"
-          value={model}
-          disabled={phase !== "idle"}
-          onChange={(e) => setModel(e.target.value)}
-          placeholder="Enter an OpenAI audio transcription model"
-        />
-      </label>
+      {provider === "openai" ? (
+        <label>
+          Transcription model
+          <input
+            aria-label="Transcription model"
+            value={model}
+            disabled={phase !== "idle"}
+            onChange={(e) => setModel(e.target.value)}
+            placeholder="Enter an OpenAI audio transcription model"
+          />
+        </label>
+      ) : (
+        <label>
+          Input speech language
+          <select
+            aria-label="Input speech language"
+            disabled={phase !== "idle"}
+            value={inputLanguage}
+            onChange={(e) => setInputLanguage(e.target.value)}
+          >
+            <option value="auto">Auto detect (recognition only)</option>
+            {LANGUAGES.map(([id, label]) => (
+              <option
+                key={id}
+                value={id}
+                disabled={
+                  !!localStatus && !localStatus.inputLanguages.includes(id)
+                }
+              >
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+      {provider === "local" && onConversationTranscript && (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={conversationMode}
+            disabled={phase !== "idle"}
+            onChange={(e) => setConversationMode(e.target.checked)}
+          />
+          Conversation mode for this session: pause or Stop recording → local
+          transcription → native-reviewed chat → read the completed reply using
+          the selected local voice. No automatic next recording.
+        </label>
+      )}
       <p>{note}</p>
       <p>
-        No wake word or background listening. Up to 60 seconds / 5 MiB. OpenAI
-        only; paid upload requires a separate native confirmation.
+        This push-to-talk control does not listen in the background. Up to 60
+        seconds / 5 MiB.
+        {provider === "local"
+          ? " Local processing, no saved recordings. Input language is separate from Reply language. Multilingual recognition quality varies and requires testing."
+          : " OpenAI upload requires separate native approval, internet and API charges; provider retention policies apply."}
+      </p>
+      <p className="muted">
+        An unsent or failed recording stays in memory until Discard or leaving
+        this page. No recording file is saved. A transcription draft and sent
+        chat use normal local draft/history storage.
       </p>
       <button
-        disabled={!ready || !model.trim() || phase !== "idle"}
+        disabled={
+          !ready || (provider === "openai" && !model.trim()) || phase !== "idle"
+        }
         onClick={() => void start()}
       >
         Start recording
@@ -300,7 +489,9 @@ export function VoiceControls({
           {phase === "uploading" ? "Cancel transcription" : "Discard recording"}
         </button>
       )}
-      <span role="status">{phase}</span>
-    </section>
+      <span role="status" aria-live="polite">
+        {phase === "recording" ? "Listening · microphone active" : phase}
+      </span>
+    </fieldset>
   );
 }

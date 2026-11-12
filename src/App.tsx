@@ -1,3 +1,11 @@
+import { KnowledgePanel } from "./KnowledgePanel";
+import { EvidenceWorkflowPanel } from "./EvidenceWorkflowPanel";
+import { lazy, Suspense } from "react";
+const StudioPanel = lazy(() =>
+  import("./studio/StudioPanel").then((module) => ({
+    default: module.StudioPanel,
+  })),
+);
 import { NoticesPanel } from "./NoticesPanel";
 import { ChatPanel } from "./ChatPanel";
 import { AppearancePanel } from "./Appearance";
@@ -18,6 +26,7 @@ import {
   ListTodo,
   Clock,
   Users,
+  Box,
 } from "lucide-react";
 import { bridge, desktop, isBusy, type State } from "./bridge";
 import { skills } from "./skills";
@@ -27,7 +36,9 @@ import { TasksPanel, RemindersPanel, ImportedSkills } from "./LocalPanels";
 const sections = [
   ["Chat", MessageSquare],
   ["Workspace", Folder],
+  ["Studio", Box],
   ["Memory", Database],
+  ["Knowledge", Database],
   ["Skills", Sparkles],
   ["Tasks", ListTodo],
   ["Team", Users],
@@ -79,7 +90,7 @@ export function App() {
     setNotice("Playbook added to your local draft. No AI request was sent.");
   }
   return (
-    <div className="app">
+    <div className={page === "Studio" ? "app studio-open" : "app"}>
       <ChangeReviewDialog />
       <aside className="sidebar">
         <div className="brand">
@@ -158,7 +169,14 @@ export function App() {
           />
         ) : (
           <div className="page-content">
-            {page === "Settings" ? (
+            {page === "Studio" ? (
+              <Suspense fallback={<p>Opening Studio…</p>}>
+                <StudioPanel
+                  key={state.workspace?.path || "personal"}
+                  workspace={state.workspace?.path || "personal"}
+                />
+              </Suspense>
+            ) : page === "Settings" ? (
               <>
                 <ProviderSettings report={setError} />
                 <AppearancePanel report={setError} />
@@ -170,10 +188,22 @@ export function App() {
               <TasksPanel report={setError} />
             ) : page === "Reminders" ? (
               <RemindersPanel report={setError} />
+            ) : page === "Knowledge" ? (
+              <KnowledgePanel
+                useDraft={(text) => {
+                  setDraft((current) =>
+                    current.trim() ? `${current}\n\n${text}` : text,
+                  );
+                  setPage("Chat");
+                }}
+              />
             ) : page === "Memory" ? (
               <Memory state={state} update={setState} report={setError} />
             ) : page === "Workspace" ? (
-              <Workspace state={state} choose={choose} report={setError} />
+              <>
+                <Workspace state={state} choose={choose} report={setError} />
+                <EvidenceWorkflowPanel report={setError} />
+              </>
             ) : page === "Connections" ? (
               <Connections report={setError} />
             ) : page === "Personality" ? (
@@ -271,7 +301,7 @@ export function App() {
         </div>
         <div className="version">
           <Check size={13} />
-          Sebby 0.10 · Personal workbench
+          Sebby 0.11 · Hybrid creative workbench
         </div>
       </aside>
     </div>

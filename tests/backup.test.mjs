@@ -1,4 +1,4 @@
-import test from "node:test";
+import test from "./platform-test.mjs";
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import os from "node:os";
@@ -8,8 +8,8 @@ import { BackupService } from "../electron/backup.mjs";
 import { Store } from "../electron/services.mjs";
 import { TaskStore } from "../electron/tasks.mjs";
 async function fixture(t) {
-  const directory = await fs.mkdtemp(
-    path.join(os.tmpdir(), "sebby-backup-test-"),
+  const directory = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-backup-test-")),
   );
   t.after(() => fs.rm(directory, { recursive: true, force: true }));
   const store = new Store(directory);

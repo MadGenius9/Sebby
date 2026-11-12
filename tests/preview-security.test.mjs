@@ -4,7 +4,7 @@ import { EventEmitter } from "node:events";
 import { previewWindowAdapter } from "../electron/preview-window.mjs";
 import { previewDocument } from "../electron/preview.mjs";
 function fixture({ stallCommand = false, stallLoad = false } = {}) {
-  const seen = { loads: 0, shown: 0, closed: 0 };
+  const seen = { loads: 0, urls: [], shown: 0, closed: 0 };
   const isolated = new EventEmitter();
   Object.assign(isolated, {
     setPermissionRequestHandler() {},
@@ -46,8 +46,9 @@ function fixture({ stallCommand = false, stallLoad = false } = {}) {
       this.emit("closed");
     }
     setMenu() {}
-    loadURL() {
+    loadURL(url) {
       seen.loads++;
+      seen.urls.push(url);
       return stallLoad ? new Promise(() => {}) : Promise.resolve();
     }
     show() {
@@ -83,7 +84,7 @@ async function settles(promise) {
     clearTimeout(timeout);
   }
 }
-test("abort while required browser guard stalls destroys preview and settles without loading", async () => {
+test("abort while required browser guard stalls destroys preview and settles without loading untrusted content", async () => {
   const f = fixture({ stallCommand: true }),
     controller = new AbortController();
   const pending = f.adapter.openWindow({
@@ -94,7 +95,7 @@ test("abort while required browser guard stalls destroys preview and settles wit
   controller.abort();
   assert.equal(await settles(pending), "rejected");
   assert.equal(f.seen.window.dead, true);
-  assert.equal(f.seen.loads, 0);
+  assert.deepEqual(f.seen.urls, ["about:blank"]);
   assert.equal(f.seen.shown, 0);
   assert.equal(f.seen.closed, 1);
 });

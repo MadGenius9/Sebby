@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require("electron");
 contextBridge.exposeInMainWorld(
   "sebby",
   Object.freeze({
+    listLocalModels: () => ipcRenderer.invoke("sebby:list-local-models"),
+    exportStudio: (input) => ipcRenderer.invoke("sebby:export-studio", input),
     listTasks: (input) => ipcRenderer.invoke("sebby:list-tasks", input),
     createTask: (input) => ipcRenderer.invoke("sebby:create-task", input),
     cancelTask: (input) => ipcRenderer.invoke("sebby:cancel-task", input),
@@ -182,6 +184,31 @@ contextBridge.exposeInMainWorld(
       ipcRenderer.invoke("sebby:read-github-file", input),
     cancelGithubRead: () => ipcRenderer.invoke("sebby:cancel-github-read"),
     voiceStatus: () => ipcRenderer.invoke("sebby:voice-status"),
+    beginHandsFreeChat: () => ipcRenderer.invoke("sebby:begin-handsfree-chat"),
+    startHandsFreeChat: (input) =>
+      ipcRenderer.invoke("sebby:start-handsfree-chat", input),
+    endHandsFreeChat: (id) =>
+      ipcRenderer.invoke("sebby:end-handsfree-chat", id),
+    startHandsFree: (input) =>
+      ipcRenderer.invoke("sebby:start-hands-free", input),
+    transcribeHandsFree: (input) =>
+      ipcRenderer.invoke("sebby:transcribe-hands-free", input),
+    stopHandsFree: (id) => ipcRenderer.invoke("sebby:stop-hands-free", id),
+    onHandsFreeExpired: (callback) => {
+      const listener = (_event, payload) => callback(payload);
+      ipcRenderer.on("sebby:hands-free-expired", listener);
+      return () =>
+        ipcRenderer.removeListener("sebby:hands-free-expired", listener);
+    },
+    localVoiceStatus: () => ipcRenderer.invoke("sebby:local-voice-status"),
+    prepareEvidence: (input) =>
+      ipcRenderer.invoke("sebby:evidence-prepare", input),
+    buildEvidence: (input) => ipcRenderer.invoke("sebby:evidence-build", input),
+    previewEvidence: (input) =>
+      ipcRenderer.invoke("sebby:evidence-preview", input),
+    synthesizeLocalSpeech: (input) =>
+      ipcRenderer.invoke("sebby:synthesize-local-speech", input),
+    cancelLocalSpeech: () => ipcRenderer.invoke("sebby:cancel-local-speech"),
     beginVoiceCapture: (input) =>
       ipcRenderer.invoke("sebby:begin-voice-capture", input),
     endVoiceCapture: (id) => ipcRenderer.invoke("sebby:end-voice-capture", id),

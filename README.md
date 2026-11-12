@@ -2,9 +2,37 @@
 
 Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
 
-**Version 0.10: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
+**Version 0.11: hybrid AI, editable 3D Studio, and a searchable knowledge bank.**
+
+New: Ollama local profiles alongside existing cloud profiles; Studio with editable geometry, AI scene proposals, floor-plan tracing, undo/redo, JSON/GLB/PNG export; 16 reply-language choices and language-matched local voices; searchable notes/report imports. Run `npm run gauntlet` for source checks. See [the video-to-Sebby delivery map](docs/JARVIS-UPGRADE.md) for setup, evidence and remaining work. This is a source upgrade, not a Windows-tested installer or complete parity with the video demonstrations.
+
+**Existing provider/workbench foundation:** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
 
 ## Start
+
+Natural voice follow-up: Chat now offers **Voice and speech settings** with
+local Kokoro neural voices (Heart selected on this PC), separate Whisper input
+language, and optional push-to-talk conversation mode. **Start recording**,
+speak, then pause or Stop; review the local chat request and Sebby reads its
+completed reply. Draft mode remains available. The separate, off-by-default
+**Hands-free · Hello Sebby** mode enables local wake-phrase listening and
+follow-up turns after one session authorization. It requires headphones and
+uses English speech-segment recognition; see [hands-free setup and limits](docs/HANDS-FREE.md).
+See [acceptance results and limits](docs/NATURAL-VOICE-ACCEPTANCE.md)
+and [speech setup, measured latency, and licenses](native/local-voice/README.md).
+
+Knowledge now supports saved-source labels and line-cited excerpts. Workspace
+also offers authorized local HTML structural evidence → reviewed original
+static prototype → checked restricted preview. This bounded static study does
+not run REA, arbitrary target code, or a package build.
+
+On the Windows PC validated on November 12, 2026, double-click
+`Launch-Sebby.cmd`, or run `npm run launch:local` from this folder. This starts
+the installed local Ollama server if necessary, builds Sebby, and opens the
+desktop app. The saved **Local RTX 3080 / qwen3:8b** profile stays selected;
+the launcher never selects a cloud provider. See the
+[Windows live results](docs/WINDOWS-LIVE-RESULTS.md) for fixes, actual model/UI
+evidence, exports, and remaining validation limits.
 
 First Windows launch? Use the [short first-run guide](docs/WINDOWS-FIRST-RUN.md): check existing prerequisites, explicitly choose dependency installation, then test local features without any API key.
 
@@ -66,6 +94,14 @@ The app takes a single-instance lock. A restore stops new IPC work; incomplete r
 
 ## Verify and package on Windows
 
+GitHub Actions runs `npm ci` and the full `npm run gauntlet` on Windows and
+Linux with Node.js 24, including draft pull requests. It also runs on pushes
+to `main` and the upgrade branch. Each job uploads its gauntlet stage report
+for seven days, including on failure. These service/component/build checks
+do not install Ollama, download models, call AI providers, launch the desktop
+app, or certify native UI behavior. Platform-dependent skips remain visible
+in job logs; both matrix jobs run even if one fails.
+
 ```powershell
 .\scripts\verify-windows.ps1
 # Or skip dependency install / installer packaging:
@@ -114,3 +150,4 @@ The separate **Reviewed MCP tools** panel supports manually provisioned bearer t
 Voice now has explicit **turn-based session controls** showing observed microphone, transcription, chat and local-reading state. “Stop voice activity” does not cancel unrelated work; the separate “Stop voice and current chat” also cancels the owned chat request. Nothing records, uploads, sends or reads automatically. This is not realtime voice conversation.
 
 A reviewed **image-wrapper source contract** now transfers bounded snapshot content through stdin rather than mounting private host files. It validates the exact dependency-lock identity before a fixed web build/test recipe, with preprovisioned dependencies only. No image has been built, pulled or run; production execution remains disabled and container/daemon trust still needs native validation. The wrapper is not a sandbox or proof against hostile project code.
+

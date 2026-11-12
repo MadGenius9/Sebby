@@ -176,7 +176,7 @@ export class AgentRuntime {
     this.assertOpen();
     exact(input, ["taskId", "memberId", "model", "contextOptions", "limits"]);
     const model = bounded(input.model, 200, "Model");
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,100}$/.test(model))
+    if (!/^[a-zA-Z0-9][a-zA-Z0-9._:/-]{0,100}$/.test(model))
       throw Error("Choose an explicit valid model identifier.");
     const providerStatus = await this.provider.status();
     this.assertOpen();

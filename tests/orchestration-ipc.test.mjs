@@ -43,7 +43,9 @@ const definition = () => ({
   finalLimits: { maxOutputTokens: 500, maxTotalTokens: 100000 },
 });
 async function fixture(t, options = {}) {
-  const directory = await fs.mkdtemp(path.join(os.tmpdir(), "sebby-plan-ipc-"));
+  const directory = await fs.realpath(
+    await fs.mkdtemp(path.join(os.tmpdir(), "sebby-plan-ipc-")),
+  );
   const root = path.join(directory, "project");
   await fs.mkdir(root);
   const workspace = new Workspace();

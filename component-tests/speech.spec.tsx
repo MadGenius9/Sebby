@@ -48,3 +48,18 @@ it("refuses remote voice substitution and excessive text", () => {
   view.rerender(<SpeechButton text={"x".repeat(6001)} />);
   expect((screen.getByRole("button") as HTMLButtonElement).disabled).toBe(true);
 });
+
+it("selects a device-local voice for the requested language", () => {
+  const f = fixture(true);
+  vi.stubGlobal("speechSynthesis", {
+    speak: f.speak,
+    cancel: f.cancel,
+    getVoices: () => [
+      { localService: true, lang: "en-US" },
+      { localService: true, lang: "es-MX" },
+    ],
+  });
+  render(<SpeechButton text="Hola Chuck" language="es" />);
+  fireEvent.click(screen.getByRole("button"));
+  expect(f.speak.mock.calls[0][0].lang).toBe("es-MX");
+});
