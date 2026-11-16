@@ -1,64 +1,20 @@
 {
-  "name": "sebby-desktop",
-  "version": "0.10.0",
+  "name": "sebby",
   "private": true,
-  "description": "Sebby personal workbench with approved AI and customizable pals",
-  "type": "module",
-  "main": "electron/main.mjs",
+  "description": "Sebby cloud coding and 3D workspace, based on Bot HQ",
+  "workspaces": [
+    "server",
+    "web"
+  ],
   "scripts": {
-    "dev": "vite --host 127.0.0.1",
-    "build": "tsc --noEmit && vite build",
-    "start": "npm run build && electron .",
-    "test": "node --test tests/*.test.mjs",
-    "package:win": "npm run build && electron-builder --win nsis --publish never",
-    "test:ui": "playwright test",
-    "preview": "vite preview --host 127.0.0.1",
-    "test:components": "vitest run",
-    "format:check": "prettier --check src electron tests component-tests e2e scripts/*.mjs native/isolation-image/*.mjs *.ts *.json",
-    "release:readiness": "node scripts/release-readiness.mjs --check"
+    "dev": "npm run dev -w server & npm run dev -w web",
+    "build": "npm run build -w web && npm run build -w server",
+    "start": "npm run start -w server",
+    "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
+    "workspace": "npm run build && node scripts/workspace-local.mjs",
+    "test:workspace": "node --import tsx --test tests/workspace.test.mts"
   },
-  "dependencies": {
-    "lucide-react": "^0.468.0",
-    "parse5": "8.0.1",
-    "react": "19.3.1",
-    "react-dom": "19.3.1",
-    "three": "^0.186.1"
-  },
-  "devDependencies": {
-    "@playwright/test": "^1.64.1",
-    "@testing-library/react": "^16.3.3",
-    "@testing-library/user-event": "^14.6.8",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "@types/three": "^0.186.0",
-    "electron": "45.1.0",
-    "electron-builder": "26.18.0",
-    "jsdom": "^30.1.3",
-    "prettier": "^3.9.10",
-    "typescript": "7.0.2",
-    "vite": "8.3.5",
-    "vitest": "^5.0.5"
-  },
-  "build": {
-    "appId": "dev.sebby.companion",
-    "productName": "Sebby",
-    "files": [
-      "dist/**/*",
-      "electron/**/*",
-      "skills/**/*",
-      "package.json",
-      "docs/THIRD-PARTY-NOTICES.md"
-    ],
-    "directories": {
-      "output": "release"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "build/icon.ico"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    }
+  "engines": {
+    "node": ">=22"
   }
 }
