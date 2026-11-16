@@ -1,3 +1,4 @@
+import { dependencyFingerprint, DependencyError } from "./dependencies.js";
 import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
@@ -6,14 +7,14 @@ import { z } from "zod";
 import { db } from "../db.js";
 import { requireUser, type AuthVars } from "../lib/auth.js";
 import { ownedProject, revisionDocument, snapshot } from "./repository.js";
-import type { RunRecord, RunnerStatus } from "./schema.js";
+import type { RunRecord, RunnerStatus, ProjectDocument } from "./schema.js";
 export type { RunRecord } from "./schema.js";
 import { DockerRunner, type Runner, type RunCommand } from "./docker-runner.js";
 
 db.exec(`CREATE TABLE IF NOT EXISTS workspace_runs (
  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES workspace_projects(id) ON DELETE CASCADE,
  revision INTEGER NOT NULL, command TEXT NOT NULL, state TEXT NOT NULL, log TEXT NOT NULL DEFAULT '',
- snapshot_hash TEXT, snapshot_commit TEXT, runner_image TEXT, exit_code INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER
+ snapshot_hash TEXT, snapshot_commit TEXT, runner_image TEXT, dependency_hash TEXT, exit_code INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER
 ); CREATE INDEX IF NOT EXISTS workspace_runs_project ON workspace_runs(project_id,created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS workspace_runs_active ON workspace_runs(project_id) WHERE state IN ('preparing','running','stopping');`);
 if (
@@ -22,6 +23,12 @@ if (
   ).some((c) => c.name === "runner_image")
 )
   db.exec("ALTER TABLE workspace_runs ADD COLUMN runner_image TEXT");
+if (
+  !(
+    db.prepare("PRAGMA table_info(workspace_runs)").all() as { name: string }[]
+  ).some((c) => c.name === "dependency_hash")
+)
+  db.exec("ALTER TABLE workspace_runs ADD COLUMN dependency_hash TEXT");
 const activeStates = new Set(["preparing", "running", "stopping"]);
 export const activeRun = (r: RunRecord) => activeStates.has(r.state);
 const unpack = (r: any): RunRecord => ({
@@ -34,6 +41,7 @@ const unpack = (r: any): RunRecord => ({
   snapshotHash: r.snapshot_hash,
   snapshotCommit: r.snapshot_commit,
   image: r.runner_image,
+  lockHash: r.dependency_hash,
   exitCode: r.exit_code,
   createdAt: r.created_at,
   finishedAt: r.finished_at,
@@ -59,7 +67,7 @@ export class RunService {
     private timeoutMs = 120000,
     private logLimit = 64000,
   ) {}
-  async status(): Promise<RunnerStatus> {
+  async status(document?: ProjectDocument): Promise<RunnerStatus> {
     return this.recovering || this.closing
       ? {
           available: false,
@@ -68,14 +76,16 @@ export class RunService {
             ? "Worker is shutting down"
             : "Recovering previous runs",
         }
-      : this.runner.readiness();
+      : this.runner.readiness(document);
   }
   async start(
     userId: string,
     projectId: string,
     revision: number,
     command: RunCommand,
+    authorize?: () => void,
   ) {
+    authorize?.();
     if (!["build", "test"].includes(command))
       throw new RunError(400, "Unsupported run command");
     const project = ownedProject(userId, projectId);
@@ -104,22 +114,18 @@ export class RunService {
       !pkg.scripts[command].trim()
     )
       throw new RunError(400, `Add a ${command} script to package.json.`);
-    for (const field of ["dependencies", "devDependencies", "optionalDependencies", "peerDependencies"]) {
-      const dependencies = pkg[field];
-      if (dependencies != null && (
-        typeof dependencies !== "object" ||
-        Array.isArray(dependencies) ||
-        Object.keys(dependencies).length > 0
-      )) {
-        throw new RunError(400,
-          "This runner currently supports dependency-free Node/npm projects. Dependency images and lockfile matching are not connected yet.",
-        );
-      }
+    let lockHash: string | null;
+    try {
+      lockHash = dependencyFingerprint(project);
+    } catch (e) {
+      if (e instanceof DependencyError) throw new RunError(e.status, e.message);
+      throw e;
     }
-    const status = await this.status();
+    const status = await this.status(project);
     if (!status.available) throw new RunError(503, status.reason);
     const id = randomUUID();
     db.transaction(() => {
+      authorize?.();
       if (this.closing || this.recovering)
         throw new RunError(503, "Worker is not ready");
       const current = ownedProject(userId, projectId);
@@ -159,7 +165,7 @@ export class RunService {
           "A previous container needs cleanup. Resolve it before starting more runs.",
         );
       db.prepare(
-        "INSERT INTO workspace_runs(id,project_id,revision,command,state,created_at,runner_image) VALUES (?,?,?,?,?,?,?)",
+        "INSERT INTO workspace_runs(id,project_id,revision,command,state,created_at,runner_image,dependency_hash) VALUES (?,?,?,?,?,?,?,?)",
       ).run(
         id,
         projectId,
@@ -168,6 +174,7 @@ export class RunService {
         "preparing",
         Date.now(),
         status.image || null,
+        lockHash,
       );
     })();
     const controller = new AbortController();
@@ -177,7 +184,7 @@ export class RunService {
       cause: null as "cancelled" | "timed_out" | "output_limit" | null,
     };
     this.active.set(id, slot);
-    slot.finished = this.perform(id, slot);
+    slot.finished = this.perform(id, slot, authorize);
     return readRun(id)!;
   }
   private append(id: string, text: string) {
@@ -198,6 +205,7 @@ export class RunService {
       controller: AbortController;
       cause: "cancelled" | "timed_out" | "output_limit" | null;
     },
+    authorize?: () => void,
   ) {
     const timer = setTimeout(() => {
       if (!slot.cause) {
@@ -226,6 +234,7 @@ export class RunService {
       db.prepare("UPDATE workspace_runs SET state='running' WHERE id=?").run(
         id,
       );
+      authorize?.();
       executing = true;
       const result = await this.runner.execute(
         id,
@@ -335,7 +344,12 @@ export function createRunsApi(service: RunService) {
       return c.json({ error: "Cross-origin write refused" }, 403);
     await next();
   });
-  app.get("/runtime", async (c) => c.json(await service.status()));
+  app.get("/runtime", async (c) => {
+    const id = c.req.query("projectId");
+    const project = id ? ownedProject(c.get("user").id, id) : undefined;
+    if (id && !project) return c.json({ error: "Project not found" }, 404);
+    return c.json(await service.status(project || undefined));
+  });
   app.get("/:projectId/runs", (c) => {
     if (!ownedProject(c.get("user").id, c.req.param("projectId")))
       return c.json({ error: "Project not found" }, 404);

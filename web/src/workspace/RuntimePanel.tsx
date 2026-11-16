@@ -18,7 +18,7 @@ export function RuntimePanel({
   const refresh = useCallback(async () => {
     try {
       const [s, r] = await Promise.all([
-        workspaceApi.runtime(),
+        workspaceApi.runtime(project.id),
         workspaceApi.runs(project.id),
       ]);
       setStatus(s);

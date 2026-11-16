@@ -19,11 +19,13 @@ import {
   Play,
   Terminal,
   GitCompare,
+  Bot,
 } from "lucide-react";
 import { api } from "../lib/api";
 import { PreviewPanel } from "./PreviewPanel";
 import { RuntimePanel } from "./RuntimePanel";
 import { ChangesPanel } from "./ChangesPanel";
+import { AgentsPanel } from "./AgentsPanel";
 import { CodingPanel } from "./CodingPanel";
 import {
   download,
@@ -103,7 +105,13 @@ export function WorkspaceApp() {
   const [saved, setSaved] = useState("");
   const [busy, setBusy] = useState(false);
   const [tab, setTab] = useState<
-    "code" | "studio" | "preview" | "runs" | "changes" | "connections"
+    | "code"
+    | "studio"
+    | "preview"
+    | "runs"
+    | "changes"
+    | "agents"
+    | "connections"
   >("code");
   const [newName, setNewName] = useState("");
   const [template, setTemplate] = useState<"blank" | "web">("web");
@@ -196,6 +204,17 @@ export function WorkspaceApp() {
     } finally {
       setBusy(false);
       if (importInput.current) importInput.current.value = "";
+    }
+  };
+  const applyReviewed = async (id: string, hash: string) => {
+    if (busy || dirty)
+      throw new Error("Save your manual edits before applying a proposal.");
+    setBusy(true);
+    try {
+      adopt((await workspaceApi.applyProposal(id, hash)).project);
+      setNotice("Reviewed proposal applied and saved.");
+    } finally {
+      setBusy(false);
     }
   };
   const update = (next: Project) => {
@@ -486,6 +505,13 @@ export function WorkspaceApp() {
           >
             <GitCompare size={17} /> Changes
           </button>
+          <button
+            type="button"
+            aria-current={tab === "agents" ? "page" : undefined}
+            onClick={() => setTab("agents")}
+          >
+            <Bot size={17} /> Agents
+          </button>
         </nav>
         {tab === "connections" ? (
           <section className="workspace-empty">
@@ -506,13 +532,21 @@ export function WorkspaceApp() {
               <dd>
                 {auth.workspaceOnly
                   ? "Not connected in workspace mode"
-                  : "Available separately in the upstream agent chat; project tools are not connected yet"}
+                  : "Assign a configured agent in the project Agents panel; live engines require full service mode"}
               </dd>
             </dl>
           </section>
         ) : project ? (
           <fieldset className="workspace-content" disabled={busy}>
-            {tab === "preview" ? (
+            {tab === "agents" ? (
+              <AgentsPanel
+                key={project.id}
+                project={project}
+                dirty={dirty}
+                workspaceOnly={!!auth.workspaceOnly}
+                apply={applyReviewed}
+              />
+            ) : tab === "preview" ? (
               <PreviewPanel key={project.id} project={project} dirty={dirty} />
             ) : tab === "runs" ? (
               <RuntimePanel key={project.id} project={project} dirty={dirty} />

@@ -26,7 +26,7 @@ function Shell() {
 
   useEffect(() => {
     const st = useStore.getState();
-    st.loadBots().catch(console.error);
+    st.loadBots().then(() => { const botId=new URLSearchParams(location.search).get('bot'); const state=useStore.getState(); if(botId&&state.bots.some(b=>b.id===botId))state.selectBot(botId); }).catch(console.error);
     st.loadComputer().catch(console.error);
     const stop = startEvents();
     // OAuth popups post back here; refresh connection-dependent views and the open transcript.

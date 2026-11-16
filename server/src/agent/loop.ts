@@ -1,3 +1,5 @@
+import { bindingFor } from '../workspace/collaboration.js';
+import type { ProjectBinding } from '../workspace/schema.js';
 import { db, now } from '../db.js';
 import { newId } from '../lib/ids.js';
 import { hub } from '../lib/hub.js';
@@ -78,6 +80,7 @@ interface ToolRef { seq: number; callId: string; name: string; claimed: boolean;
 interface Outcome { status?: ToolCallBody['status']; summary?: string }
 
 interface Turn {
+  workspaceBinding: ProjectBinding | null;
   botId: string;
   userId: string;
   /** How many bot-to-bot hops led here (send_to_bot stops a ping-pong at 3). */
@@ -90,6 +93,8 @@ interface Turn {
 }
 
 const turns = new Map<string, Turn>();
+
+export const turnWorkspaceGrant = (botId: string) => turns.has(botId) ? turns.get(botId)!.workspaceBinding?.grantId ?? null : undefined;
 
 export const turnDepth = (botId: string) => turns.get(botId)?.depth ?? 0;
 
@@ -305,7 +310,7 @@ async function runTurn(botId: string, trigger: Trigger) {
   const userId: string = bot.user_id;
   const ctrl = new AbortController();
   aborts.set(botId, ctrl);
-  const turn: Turn = { botId, userId, depth: trigger.type === 'bot' ? trigger.depth : 0, silent: false, tools: [], outcomes: new Map() };
+  const turn: Turn = { workspaceBinding: bindingFor(userId, botId), botId, userId, depth: trigger.type === 'bot' ? trigger.depth : 0, silent: false, tools: [], outcomes: new Map() };
   turns.set(botId, turn);
   setLive(botId, { isRunning: true, activity: { kind: 'thinking', since: now() }, awaiting: null, startedAt: now(), caption: null, steps: 0 });
 
@@ -350,8 +355,8 @@ async function runTurn(botId: string, trigger: Trigger) {
   let failed = false;
 
   try {
-    // The screen first: the engine's browser and computer tools point at it.
-    await screenForWork(userId, botId).catch((e) => console.warn(`[computer] screen not ready for ${botId}: ${e?.message ?? e}`));
+    // Ordinary turns prepare a desktop. Assigned project turns use the scoped tools without leasing a screen.
+    if (!turn.workspaceBinding) await screenForWork(userId, botId).catch((e) => console.warn(`[computer] screen not ready for ${botId}: ${e?.message ?? e}`));
     const engine = await engineFor(botId);
     if (ctrl.signal.aborted) throw new Error('interrupted');
 
@@ -369,7 +374,7 @@ async function runTurn(botId: string, trigger: Trigger) {
         model: bot.model || 'hermes-agent',
         ...(bot.provider ? { provider: bot.provider } : {}),
         input,
-        instructions: await instructionsFor(userId, botId),
+        instructions: await instructionsFor(userId, botId, turn.workspaceBinding),
         // One engine-side thread per conversation; "New chat" bumps the generation and starts another.
         conversation: `hq-${botId}-g${bot.generation}`,
         stream: true,

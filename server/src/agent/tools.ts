@@ -1,3 +1,4 @@
+import { WORKSPACE_TOOLS } from '../workspace/agent-tools.js';
 import { db, now } from '../db.js';
 import { newId } from '../lib/ids.js';
 import { hub } from '../lib/hub.js';
@@ -17,6 +18,7 @@ export interface ToolCtx {
   botId: string;
   enqueueBotMessage: (fromBotId: string, toBotId: string, text: string, depth: number) => void;
   depth: number;
+  workspaceGrantId?: string | null;
 }
 
 export interface ToolResult {
@@ -90,6 +92,7 @@ async function xSearch(a: any): Promise<string> {
 export const LIBRARY_ROOT = '/root/grokbot/files';
 
 export const TOOLS: ToolDef[] = [
+  ...WORKSPACE_TOOLS,
   {
     name: 'save_file',
     description: "Save a finished deliverable (report, notes, CSV, code, markdown) to your Library so the user can open and download it. Saved under /root/grokbot/files/<your id>/ on your computer. Files you write into that folder yourself show up in the Library too.",

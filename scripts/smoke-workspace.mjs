@@ -34,10 +34,12 @@ try {
   const { project } = await created.json(); assert.equal(project.files.length, 6);
   const preview = await (await fetch(`${base}/api/projects/${project.id}/preview`, { headers })).json(); assert.match(preview.html, /Made with Sebby/); assert.equal(preview.revision, 1);
   const history = await (await fetch(`${base}/api/projects/${project.id}/revisions`, { headers })).json(); assert.equal(history.revisions[0].revision, 1);
-  const runtime = await (await fetch(`${base}/api/workspace/runtime`, { headers })).json(); assert.equal(runtime.available, false);
+  const agents = await (await fetch(`${base}/api/workspace/${project.id}/agents`, {headers})).json(); assert.deepEqual(agents.agents, []);
+  const proposals = await (await fetch(`${base}/api/workspace/${project.id}/proposals`, {headers})).json(); assert.deepEqual(proposals.proposals, []);
+  const runtime = await (await fetch(`${base}/api/workspace/runtime?projectId=${project.id}`, { headers })).json(); assert.equal(runtime.available, false);
   const run = await fetch(`${base}/api/workspace/${project.id}/runs`, { method: 'POST', headers, body: JSON.stringify({ revision: 1, command: 'test' }) }); assert.equal(run.status, 503);
   assert.equal((await fetch(`${base}/api/projects/${project.id}/preview`)).status, 401);
-  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, history, unavailable-worker refusal and unauthenticated access.');
+  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, history, agent/proposal routes, unavailable-worker refusal and unauthenticated access.');
 } finally {
   clearTimeout(started); child.kill('SIGTERM');
   const killed = setTimeout(() => child.kill('SIGKILL'), 5000);

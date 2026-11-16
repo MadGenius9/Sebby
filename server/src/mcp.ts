@@ -1,9 +1,10 @@
+import { bodyLimit } from 'hono/body-limit';
 import crypto from 'node:crypto';
 import { Hono } from 'hono';
 import { getBotRow } from './store.js';
 import { composioTools } from './composio.js';
 import { mcpToken, primaryBotId } from './engine.js';
-import { claimToolRow, enqueueBotMessage, markSilent, noteToolOutcome, requestApproval, turnDepth } from './agent/loop.js';
+import { claimToolRow, enqueueBotMessage, markSilent, noteToolOutcome, requestApproval, turnDepth, turnWorkspaceGrant } from './agent/loop.js';
 import { policyFor, runComposioTool, toolMap, TOOLS, type ToolCtx } from './agent/tools.js';
 
 /**
@@ -56,7 +57,7 @@ async function callTool(botId: string | null, rawName: string, args: any): Promi
   const userId: string = bot.user_id;
   const name = [...toolMap.keys()].find((k) => k.toLowerCase() === rawName.toLowerCase()) ?? rawName;
   const rowSeq = await claimToolRow(botId, name);
-  const ctx: ToolCtx = { userId, botId, enqueueBotMessage, depth: turnDepth(botId) };
+  const ctx: ToolCtx = { userId, botId, enqueueBotMessage, depth: turnDepth(botId), workspaceGrantId: turnWorkspaceGrant(botId) };
   try {
     const own = toolMap.get(name);
     if (own) {
@@ -131,6 +132,7 @@ async function handle(msg: any, botId: string | null): Promise<object | null> {
 }
 
 export const mcpApi = new Hono();
+mcpApi.use('*', bodyLimit({maxSize:1_000_000,onError:c=>c.json(rpcError(null,-32600,'Request too large'),413)}));
 
 mcpApi.post('/:bot', async (c) => {
   const who = caller(c.req.param('bot'), c.req.header('authorization'));
@@ -138,6 +140,7 @@ mcpApi.post('/:bot', async (c) => {
   let body: any;
   try { body = await c.req.json(); } catch { return c.json(rpcError(null, -32700, 'Parse error'), 400); }
   if (Array.isArray(body)) {
+    if(body.length>32)return c.json(rpcError(null,-32600,'Batch exceeds 32 requests'),400);
     const answers = (await Promise.all(body.map((m) => handle(m, who.botId)))).filter(Boolean);
     return answers.length ? c.json(answers) : c.body(null, 202);
   }

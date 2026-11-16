@@ -104,6 +104,7 @@ export type RunnerStatus = {
   reason: string;
   backend: "docker";
   image?: string;
+  lockHash?: string | null;
 };
 export type RunRecord = {
   id: string;
@@ -115,7 +116,36 @@ export type RunRecord = {
   snapshotHash: string | null;
   snapshotCommit: string | null;
   image: string | null;
+  lockHash: string | null;
   exitCode: number | null;
   createdAt: number;
   finishedAt: number | null;
+};
+
+export type ProjectBinding = {
+  botId: string;
+  projectId: string;
+  grantId: string;
+  allowRuns: boolean;
+  projectName: string;
+};
+export type ProposalSummary = {
+  id: string;
+  projectId: string;
+  botId: string;
+  botName: string;
+  summary: string;
+  baseRevision: number;
+  state: string;
+  reviewHash: string;
+  createdAt: number;
+  appliedRevision: number | null;
+  stale: boolean;
+};
+export type ProposalReview = {
+  proposal: ProposalSummary;
+  diff: string;
+  sceneChanged: boolean;
+  beforeScene: ProjectDocument["scene"];
+  afterScene: ProjectDocument["scene"];
 };

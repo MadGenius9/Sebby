@@ -1,3 +1,4 @@
+import { dependencyPlan } from "./dependencies.js";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
 import type { ProjectDocument, RunCommand, RunnerStatus } from "./schema.js";
@@ -9,7 +10,7 @@ export type RunOutcome = {
   error?: string;
 };
 export interface Runner {
-  readiness(): Promise<RunnerStatus>;
+  readiness(document?: ProjectDocument): Promise<RunnerStatus>;
   execute(
     id: string,
     document: ProjectDocument,
@@ -29,6 +30,14 @@ const doc=JSON.parse(input);const root='/workspace';
 for(const file of doc.files){
  if(typeof file.path!=='string'||file.path.startsWith('/')||file.path.includes('\\\\')||!file.path.split('/').every(p=>/^[a-zA-Z0-9_@.-]+$/.test(p)&&p!=='.'&&p!=='..'&&!['.git','node_modules'].includes(p.toLowerCase())))throw new Error('Invalid file path');
  const dest=path.join(root,file.path);await fs.mkdir(path.dirname(dest),{recursive:true});await fs.writeFile(dest,file.content,{flag:'wx'});
+}
+const expectedLock=process.argv[2];
+if(expectedLock!=='none'){
+ const {createHash}=await import('node:crypto');
+ const hash=(value)=>createHash('sha256').update(value).digest('hex');
+ if(!/^[a-f0-9]{64}$/.test(expectedLock)||hash(await fs.readFile('/workspace/package-lock.json'))!==expectedLock||hash(await fs.readFile('/opt/sebby/package-lock.json'))!==expectedLock)throw new Error('Dependency image lockfile does not match the project');
+ const modules=await fs.stat('/opt/sebby/node_modules');if(!modules.isDirectory())throw new Error('Dependency image has no node_modules tree');
+ await fs.symlink('/opt/sebby/node_modules','/workspace/node_modules','dir');
 }
 const command=process.argv[1];if(!['build','test'].includes(command))throw new Error('Unsupported command');
 const pkg=JSON.parse(await fs.readFile('/workspace/package.json','utf8'));if(typeof pkg.scripts?.[command]!=='string')throw new Error('Project has no '+command+' script');
@@ -70,6 +79,7 @@ export class DockerRunner implements Runner {
   constructor(
     private image = process.env.SEBBY_RUNNER_IMAGE || "",
     private binary = process.env.SEBBY_DOCKER_BIN || "/usr/bin/docker",
+    private catalog = process.env.SEBBY_DEPENDENCY_IMAGES || "[]",
   ) {}
   private environment() {
     // No application secrets are inherited by Docker or its container.
@@ -92,14 +102,17 @@ export class DockerRunner implements Runner {
       env: this.environment(),
     });
   }
-  async readiness(): Promise<RunnerStatus> {
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9._/:_-]*@sha256:[a-f0-9]{64}$/.test(this.image))
+  async readiness(document?: ProjectDocument): Promise<RunnerStatus> {
+    let plan;
+    try {
+      plan = dependencyPlan(document, this.image, this.catalog);
+    } catch (e) {
       return {
         available: false,
         backend: "docker",
-        reason:
-          "Configure a preloaded, digest-pinned SEBBY_RUNNER_IMAGE on a dedicated rootless Docker worker.",
+        reason: (e as Error).message,
       };
+    }
     try {
       const info = JSON.parse(
         (await this.call(["info", "--format", "{{json .}}"])).stdout,
@@ -123,11 +136,12 @@ export class DockerRunner implements Runner {
           reason:
             "The runner requires cgroup v2 with memory, swap, PID and CPU controls.",
         };
-      await this.call(["image", "inspect", this.image]);
+      await this.call(["image", "inspect", plan.image]);
       return {
         available: true,
         backend: "docker",
-        image: this.image,
+        image: plan.image,
+        lockHash: plan.lockHash,
         reason:
           "Rootless Docker and the configured image are available. Build/test runs have no network and install no dependencies.",
       };
@@ -167,8 +181,9 @@ export class DockerRunner implements Runner {
       });
     };
     try {
-      const args = dockerCreateArgs(id, this.image);
-      args.push(command);
+      const plan = dependencyPlan(document, this.image, this.catalog);
+      const args = dockerCreateArgs(id, plan.image);
+      args.push(command, plan.lockHash || "none");
       await this.call(args);
       created = true;
       if (!signal.aborted) {
