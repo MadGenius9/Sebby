@@ -12,7 +12,8 @@
     "start": "npm run start -w server",
     "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
     "workspace": "npm run build && node scripts/workspace-local.mjs",
-    "test:workspace": "node --import tsx --test tests/workspace.test.mts"
+    "test:workspace": "node --import tsx --test tests/workspace*.test.mts",
+    "test:http": "npm run build && node scripts/smoke-workspace.mjs"
   },
   "engines": {
     "node": ">=22"

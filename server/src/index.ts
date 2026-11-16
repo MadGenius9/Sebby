@@ -1,3 +1,4 @@
+import { runsApi, runService } from './workspace/runs.js';
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
@@ -32,6 +33,7 @@ const app = new Hono();
 app.get('/api/health', (c) => c.json({ ok: true, engine: 'hermes' }));
 // The app's tools for the agent engines (MCP).
 app.route('/mcp', mcpApi);
+app.route('/api/workspace', runsApi);
 app.route('/api/projects', projectsApi);
 app.route('/api/checkins', checkinsApi);
 app.route('/api/rooms', roomsApi);
@@ -55,3 +57,6 @@ initProactive(enqueue);
 } else console.log('[grokbot] scheduler disabled (GROKBOT_NO_SCHEDULER=1)');
 startIdleWatcher();
 initEngines();
+
+void runService.recover().catch(console.error);
+for (const signal of ['SIGINT','SIGTERM'] as const) process.once(signal, () => { void runService.shutdown().finally(() => process.exit(0)); });

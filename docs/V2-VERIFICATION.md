@@ -4,7 +4,7 @@
 
 - `npm ci` installed the locked dependency tree before adding Three.js and its types.
 - `npm run typecheck`: server and web TypeScript checks passed.
-- `npm run test:workspace`: two integration tests passed, covering real SQLite CRUD, cross-user isolation, stale revision rejection, cross-origin writes, invalid paths, duplicate files, invalid primitive kinds/scales, malformed JSON, payload size limits, and a separate-process read of saved scene data.
+- `npm run test:workspace`: ten tests passed, covering real SQLite CRUD, cross-user isolation, stale revision rejection, cross-origin writes, invalid paths, duplicate files, invalid primitive kinds/scales, malformed JSON, payload size limits, and a separate-process read of saved scene data.
 - `npm run build`: Vite production bundle and server TypeScript build passed.
 - Local workspace process reached startup and reported the loopback URL without external service credentials.
 
@@ -18,4 +18,12 @@ Before release, run this flow in a supported browser, inspect screenshots, confi
 
 ## Known scope limits
 
-The current coding editor is plain text. No terminal, package installation, source execution, checkout import, source diff, preview runtime, cloud deployment or agent project tools exist yet. The 3D Studio is primitive scene composition, not Blender-equivalent mesh modeling. Project JSON export is one-way until an import workflow is added. Undo/redo is session-local. Data lives in the configured server SQLite database; this branch does not implement backup automation.
+The current coding editor is plain text. There is no interactive terminal, package installation, repository import, build-artifact retrieval, cloud deployment or agent project tool integration. A configured Docker adapter implements build/test dispatch; its live container behavior remains unverified. Saved HTML/CSS/classic JavaScript preview and Git revision diffs are implemented. The 3D Studio is primitive scene composition, not Blender-equivalent mesh modeling. Project JSON export/import round trips create separate projects. Undo/redo is session-local. Data lives in the configured server SQLite database; this branch does not implement backup automation.
+
+## Runtime increment checks
+
+`npm run test:workspace` now runs 10 passing tests, including real Git snapshot commits/diffs, saved revision transactions, JSON import, reserved/case/prefix collision rejection, preview compilation/CSP placement, and the authored Web starter's syntax/build commands in a trusted test fixture. Runner lifecycle coverage uses an explicit test double (success/nonzero exit, owner checks, revision conflicts, SSE output, cancellation, timeout, output limits, cleanup failure and restart recovery). These are not real container tests.
+
+Docker is absent. A bwrap isolation probe failed with `NETLINK_ROUTE socket: Operation not permitted`. The adapter refuses to run code directly on the application host. Visible Preview/Runs/Changes interactions, GLB export and mobile layout remain unverified until browser access is available.
+
+A real HTTP smoke test of the built local server also passed: `/workspace` and its JavaScript bundle, local session creation, Web starter project creation, preview compilation, revision history, unavailable-worker refusal (503), and unauthenticated access rejection (401). Run `npm run test:http` to rebuild and repeat with disposable data. This checks server assembly and routing, not browser rendering.

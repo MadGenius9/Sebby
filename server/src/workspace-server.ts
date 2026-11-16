@@ -1,3 +1,4 @@
+import { runsApi, runService } from './workspace/runs.js';
 // Provider-free local development server. Full Bot HQ services use index.ts.
 import { serve } from '@hono/node-server';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -30,9 +31,13 @@ app.post('/api/auth/dev', async c => {
   return c.json({ ok: true });
 });
 app.post('/api/auth/logout', c => { destroySession(c); return c.json({ ok: true }); });
+app.route('/api/workspace', runsApi);
 app.route('/api/projects', projectsApi);
 app.all('/api/*', c => c.json({ error: 'This feature is not connected in workspace mode' }, 404));
 const webDist = fileURLToPath(new URL('../../web/dist/', import.meta.url));
 app.use('/*', serveStatic({ root: path.relative(process.cwd(), webDist) }));
 app.get('*', c => c.html(fs.readFileSync(path.join(webDist, 'index.html'), 'utf8')));
 serve({ fetch: app.fetch, hostname: '127.0.0.1', port: env.port }, info => console.log(`Sebby workspace: http://127.0.0.1:${info.port}/workspace (local development only)`));
+
+void runService.recover().catch(console.error);
+for (const signal of ['SIGINT','SIGTERM'] as const) process.once(signal, () => { void runService.shutdown().finally(() => process.exit(0)); });

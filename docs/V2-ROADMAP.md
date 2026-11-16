@@ -10,9 +10,11 @@ Persistent project documents, manual source editing, primitive 3D scenes, object
 
 Acceptance: API tests and build pass; visible create/edit/save/reopen/export workflow must be verified on desktop and mobile before release. Browser acceptance is currently blocked in this environment, not passed.
 
-## Milestone 2 — Complete coding task
+## Milestone 2 — Complete coding task (in progress)
 
-Introduce a workspace-runner interface backed by isolated execution. Create a real checkout per project, stream command output, support cancellation and persistent run records, integrate Git branches/diffs, and display preview servers behind authenticated routing. Add project tools to the Hermes MCP adapter. A browser/desktop screen must be optional for coding workers.
+Implemented increment: private Git snapshots, saved revision diffs, a dependency-free Web starter, JSON import, saved browser-code preview, and a Docker build/test adapter with persisted/SSE logs, cancellation, limits and recovery. Ten tests pass; container and browser validation remain pending. See V2-RUNTIME.md.
+
+Remaining: validate the isolated worker on a real Docker host, provision dependency images with lockfile matching, import repositories, add working branches and review/apply diffs, return build artifacts, and host previews on a separate authenticated origin. Add project tools to the Hermes MCP adapter. A browser/desktop screen must be optional for coding workers.
 
 Acceptance: import one small repository, request a change, inspect edits, execute its checks, open a preview and review the resulting diff. Demonstrate persistence and restart behavior. Only call a task complete with actual evidence.
 
