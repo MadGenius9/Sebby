@@ -1,3 +1,4 @@
+import { artifactsApi } from './workspace/artifact-api.js';
 import { collaborationApi } from './workspace/collaboration-api.js';
 import { runsApi, runService } from './workspace/runs.js';
 // Provider-free local development server. Full Bot HQ services use index.ts.
@@ -32,6 +33,7 @@ app.post('/api/auth/dev', async c => {
   return c.json({ ok: true });
 });
 app.post('/api/auth/logout', c => { destroySession(c); return c.json({ ok: true }); });
+app.route('/api/workspace', artifactsApi);
 app.route('/api/workspace', collaborationApi);
 app.route('/api/workspace', runsApi);
 app.route('/api/projects', projectsApi);

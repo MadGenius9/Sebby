@@ -1,3 +1,5 @@
+import Database from 'better-sqlite3';
+import { randomUUID } from 'node:crypto';
 // Exercises the built local-only server over real HTTP with disposable test data.
 import { spawn } from 'node:child_process';
 import { mkdtemp, rm } from 'node:fs/promises';
@@ -39,7 +41,23 @@ try {
   const runtime = await (await fetch(`${base}/api/workspace/runtime?projectId=${project.id}`, { headers })).json(); assert.equal(runtime.available, false);
   const run = await fetch(`${base}/api/workspace/${project.id}/runs`, { method: 'POST', headers, body: JSON.stringify({ revision: 1, command: 'test' }) }); assert.equal(run.status, 503);
   assert.equal((await fetch(`${base}/api/projects/${project.id}/preview`)).status, 401);
-  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, history, agent/proposal routes, unavailable-worker refusal and unauthenticated access.');
+  // Seed disposable output records to check HTTP delivery; this is not a Docker build.
+  const {validateArtifacts}=await import('../server/dist/workspace/artifact-protocol.js');
+  const {createHash}=await import('node:crypto');
+  const content=Buffer.from('<!doctype html><h1>HTTP build-output fixture</h1>');
+  const retained=validateArtifacts({version:1,outputDirectory:'dist',files:[{path:'index.html',base64:content.toString('base64'),sha256:createHash('sha256').update(content).digest('hex')}]});
+  const fixtureRun=randomUUID(),seed=new Database(path.join(root,'workspace.db'));
+  try{seed.transaction(()=>{
+    seed.prepare("INSERT INTO workspace_runs(id,project_id,revision,command,state,created_at,artifact_state) VALUES (?,?,1,'build','succeeded',?,'ready')").run(fixtureRun,project.id,Date.now());
+    seed.prepare('INSERT INTO workspace_builds(run_id,output_directory,manifest_hash,total_bytes,created_at) VALUES (?,?,?,?,?)').run(fixtureRun,'dist',retained.manifestHash,retained.totalBytes,Date.now());
+    for(const f of retained.files)seed.prepare('INSERT INTO workspace_build_files(run_id,path,bytes,sha256,mime,data) VALUES (?,?,?,?,?,?)').run(fixtureRun,f.path,f.bytes,f.sha256,f.mime,f.data);
+  })();}finally{seed.close();}
+  const build=await fetch(`${base}/api/workspace/runs/${fixtureRun}/outputs`,{headers});assert.equal(build.status,200);assert.equal((await build.json()).manifest.previewVerified,false);
+  const zip=await fetch(`${base}/api/workspace/runs/${fixtureRun}/outputs.zip`,{headers});assert.equal(zip.status,200);assert.equal(Buffer.from(await zip.arrayBuffer()).readUInt32LE(0),0x04034b50);
+  const builtPreview=await fetch(`${base}/api/workspace/runs/${fixtureRun}/build-preview`,{headers});assert.equal(builtPreview.status,200);assert.match((await builtPreview.json()).html,/HTTP build-output fixture/);
+  assert.equal((await fetch(`${base}/api/workspace/runs/${fixtureRun}/outputs.zip`)).status,401);
+
+  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, history, agent/proposal routes, seeded build download/preview, unavailable-worker refusal and unauthenticated access.');
 } finally {
   clearTimeout(started); child.kill('SIGTERM');
   const killed = setTimeout(() => child.kill('SIGKILL'), 5000);

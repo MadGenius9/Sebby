@@ -1,3 +1,8 @@
+import {
+  ARTIFACT_LIMITS,
+  COLLECT_OUTPUT_SOURCE,
+  outputDirectory,
+} from "./artifact-protocol.js";
 import { dependencyPlan } from "./dependencies.js";
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
@@ -8,6 +13,7 @@ export type RunOutcome = {
   exitCode: number | null;
   cleanupVerified: boolean;
   error?: string;
+  artifacts?: unknown;
 };
 export interface Runner {
   readiness(document?: ProjectDocument): Promise<RunnerStatus>;
@@ -41,8 +47,14 @@ if(expectedLock!=='none'){
 }
 const command=process.argv[1];if(!['build','test'].includes(command))throw new Error('Unsupported command');
 const pkg=JSON.parse(await fs.readFile('/workspace/package.json','utf8'));if(typeof pkg.scripts?.[command]!=='string')throw new Error('Project has no '+command+' script');
-const child=spawn('npm',['run',command],{cwd:root,stdio:'inherit',env:{PATH:process.env.PATH,HOME:'/tmp',CI:'1',npm_config_audit:'false',npm_config_fund:'false',npm_config_update_notifier:'false'}});
-child.on('error',()=>process.exit(127));child.on('exit',(code)=>process.exit(code??1));
+const child=spawn('npm',['run',command],{cwd:root,stdio:['ignore',2,2],env:{PATH:process.env.PATH,HOME:'/tmp',CI:'1',npm_config_audit:'false',npm_config_fund:'false',npm_config_update_notifier:'false'}});
+${COLLECT_OUTPUT_SOURCE}
+child.on('error',()=>process.exit(127));
+child.on('exit',async(code)=>{
+ if(code!==0||command!=='build'){process.exit(code??1);return;}
+ try{const directory=pkg.sebby?.outputDirectory??'dist';const artifacts=await collectOutput(root,directory);await new Promise((resolve,reject)=>process.stdout.write(JSON.stringify(artifacts),(e)=>e?reject(e):resolve()));process.exit(0);}
+ catch(e){console.error('Build output collection failed:',e.message);process.exit(1);}
+});
 `;
 export function dockerCreateArgs(id: string, image: string) {
   if (!/^[0-9a-f-]{36}$/.test(id)) throw new Error("Invalid run id");
@@ -174,6 +186,9 @@ export class DockerRunner implements Runner {
       cleanupVerified = false,
       exitCode: number | null = null,
       error: string | undefined;
+    let transport = "",
+      transportBytes = 0,
+      artifacts: unknown;
     let child: ReturnType<typeof spawn> | undefined;
     const stop = () => {
       void this.cleanup(id).then((ok) => {
@@ -181,6 +196,7 @@ export class DockerRunner implements Runner {
       });
     };
     try {
+      if (command === "build") outputDirectory(document);
       const plan = dependencyPlan(document, this.image, this.catalog);
       const args = dockerCreateArgs(id, plan.image);
       args.push(command, plan.lockHash || "none");
@@ -194,7 +210,19 @@ export class DockerRunner implements Runner {
         );
         signal.addEventListener("abort", stop, { once: true });
         if (signal.aborted) stop();
-        child.stdout!.on("data", (b: Buffer) => output(b.toString("utf8")));
+        child.stdout!.on("data", (b: Buffer) => {
+          if (command !== "build") {
+            output(b.toString("utf8"));
+            return;
+          }
+          transportBytes += b.length;
+          if (transportBytes > ARTIFACT_LIMITS.transportBytes) {
+            error = "Build output transfer exceeded its size limit";
+            stop();
+            return;
+          }
+          transport += b.toString("utf8");
+        });
         child.stderr!.on("data", (b: Buffer) => output(b.toString("utf8")));
         child.stdin!.on("error", () => {});
         child.stdin!.end(JSON.stringify(document));
@@ -202,6 +230,18 @@ export class DockerRunner implements Runner {
           child!.once("error", reject);
           child!.once("close", resolve);
         });
+        if (
+          command === "build" &&
+          exitCode === 0 &&
+          !signal.aborted &&
+          !error
+        ) {
+          try {
+            artifacts = JSON.parse(transport);
+          } catch {
+            error = "The worker did not return valid build outputs";
+          }
+        }
       }
     } catch (e) {
       error = (e as Error).message.slice(0, 1000);
@@ -214,6 +254,7 @@ export class DockerRunner implements Runner {
       exitCode,
       cleanupVerified: created && cleanupVerified,
       ...(error ? { error } : {}),
+      ...(artifacts !== undefined ? { artifacts } : {}),
     };
   }
 }

@@ -29,6 +29,8 @@ Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH`
 - Compare saved source revisions through Git diffs.
 - Capture private Git snapshots and persist/stream build/test run records through a configured isolated Docker adapter.
 - Cancel runs and track timeouts, output limits, interruptions and cleanup failures.
+- Retain validated successful build files with revision/source/image/lock provenance.
+- Download owner-only build ZIPs/files and prepare limited sandbox previews of retained static frontends.
 - Assign existing agents to a project with scoped read/propose tools and optional build/test permission.
 - Review exact file/scene proposals, then apply/reject them with revision protection.
 - Select dependency images through exact npm lock hashes and prepare minimal operator build contexts.
@@ -37,7 +39,7 @@ Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH`
 
 **Not connected yet:** an interactive terminal, repository import, Google Drive, the PC companion, Blender, mesh/vertex editing, advanced automatic modeling, deployment, GBrain and cloud hosting. The Connections screen reports these as planned.
 
-Projects currently contain up to 40 virtual text files (100,000 characters each), 100 primitive objects and a 1 MB save request. Files are stored as project data; build/test runs materialize a private Git snapshot and transfer source to an ephemeral container. Docker readiness and native worker verification are required; no host execution fallback exists. See [runtime setup and limits](docs/V2-RUNTIME.md).
+Projects currently contain up to 40 virtual text files (100,000 characters each), 100 primitive objects and a 1 MB save request. Files are stored as project data; build/test runs materialize a private Git snapshot and transfer source to an ephemeral container. Docker readiness and native worker verification are required; no host execution fallback exists. See [runtime setup and limits](docs/V2-RUNTIME.md) and [build outputs/previews](docs/V2-BUILD-OUTPUTS.md).
 
 ## Existing Bot HQ services
 
@@ -54,7 +56,7 @@ npm run build
 npm run test:http
 ```
 
-Twenty-one tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, and runner lifecycle test doubles. A separate real HTTP smoke test passes for the built server. Real Docker execution is unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
+Twenty-nine tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real container and visual browser validation remain pending. A separate real HTTP smoke test passes for the built server. Real Docker execution is unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
 
 See [the implementation roadmap](docs/V2-ROADMAP.md), [architecture decisions](docs/V2-ARCHITECTURE.md), and [provenance](docs/UPSTREAM.md).
 

@@ -1,3 +1,4 @@
+import { buildManifest } from "./artifacts.js";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
@@ -67,6 +68,35 @@ const result = (data: unknown, summary: string) => ({
   summary,
 });
 export const WORKSPACE_TOOLS = [
+  {
+    name: "project_build_outputs",
+    description:
+      "Read the retained build output manifest for a successful run in the assigned project. Outputs belong to that run revision, not necessarily the latest project. previewCandidate is not evidence of a working UI; previewVerified is false until independent browser verification. Returns metadata only, not binary files.",
+    parameters: object({ ...scopeProperties, runId: { type: "string" } }, [
+      "projectId",
+      "grantId",
+      "runId",
+    ]),
+    activity: "working" as const,
+    label: "Reading build output manifest",
+    impl: async (a: unknown, ctx: WorkspaceToolContext) => {
+      const p = parse(
+        z.object({ ...scope, runId: z.string().uuid() }).strict(),
+        a,
+      );
+      assertBinding(
+        ctx.userId,
+        ctx.botId,
+        p.projectId,
+        p.grantId,
+        ctx.workspaceGrantId,
+      );
+      const manifest = buildManifest(ctx.userId, p.runId);
+      if (!manifest || manifest.projectId !== p.projectId)
+        throw new WorkspaceError(404, "Build outputs are not available");
+      return result({ manifest }, "Read retained build outputs");
+    },
+  },
   {
     name: "project_overview",
     description:

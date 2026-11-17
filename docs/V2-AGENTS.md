@@ -22,6 +22,7 @@ Assignment applies to the agent's turns until unassigned, including any existing
 | `project_proposal_status` | Pending/applied/rejected/revoked status, staleness and applied revision |
 | `project_start_run` | An isolated build/test request, only under explicit run permission |
 | `project_run_status` | Persisted state, source/image/lock provenance and bounded run output |
+| `project_build_outputs` | Retained file manifest for a successful run; preview candidacy is not visual verification |
 
 There is no model tool to apply a proposal. Only the user's authenticated apply endpoint updates source. The review hash binds the stored candidate, author, grant, summary and base revision. Apply checks ownership, pending state, current grant, the exact review hash and unchanged base revision in one database transaction. Repeated, stale, revoked and no-op proposals cannot silently overwrite work.
 

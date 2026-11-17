@@ -21,6 +21,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return result as T;
 }
 export const workspaceApi = {
+  buildManifest: (runId: string) =>
+    request<{ manifest: import("@shared/workspace/schema").BuildManifest }>(
+      `/workspace/runs/${runId}/outputs`,
+    ),
+  buildPreview: (runId: string) =>
+    request<import("@shared/workspace/schema").BuildPreview>(
+      `/workspace/runs/${runId}/build-preview`,
+    ),
   projectAgents: (id: string) =>
     request<{
       agents: {

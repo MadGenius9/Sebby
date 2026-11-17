@@ -28,7 +28,7 @@ Dependency-free projects use the base Node/npm image. Dependency-bearing project
 
 ## Remaining work
 
-Real Docker integration tests, user-facing snapshot restoration, build artifact retrieval, native dependency-image validation, authenticated preview hosting, repository import and the complete live AI edit/test/review loop are still pending. A Docker adapter plus passing test doubles does not certify hostile-code isolation or native worker operation.
+Real Docker integration tests, user-facing snapshot restoration, native dependency-image validation, full separate-origin framework preview hosting, repository import and the complete live AI edit/test/review loop are still pending. Bounded build output retention/download and authenticated sandbox preview preparation are implemented; see V2-BUILD-OUTPUTS.md. A Docker adapter plus passing test doubles does not certify hostile-code isolation or native worker operation.
 
 ## Dependency-aware images
 

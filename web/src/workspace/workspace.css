@@ -950,3 +950,72 @@
 .assigned-agent span {
   overflow-wrap: anywhere;
 }
+.run-details {
+  overflow-y: auto;
+}
+.run-log {
+  flex: 1 0 160px;
+  max-height: 420px;
+}
+.build-outputs {
+  padding: 18px 20px;
+  border-top: 1px solid var(--color-border-secondary);
+}
+.build-outputs > header {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.build-outputs > header h2 {
+  margin: 0;
+}
+.build-outputs > header span {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+.build-output-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.build-outputs .workspace-note {
+  padding-left: 0;
+  padding-right: 0;
+}
+.build-outputs details {
+  margin: 16px 0;
+  font-size: 12px;
+}
+.build-outputs summary {
+  cursor: pointer;
+}
+.build-file-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+.build-file-list li {
+  display: flex;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.build-file-list a {
+  flex: 1;
+  min-width: 160px;
+  overflow-wrap: anywhere;
+  color: var(--color-text-primary);
+}
+.build-file-list span,
+.build-file-list code {
+  color: var(--color-text-secondary);
+  font-size: 11px;
+}
+.build-outputs iframe {
+  width: 100%;
+  height: 480px;
+  border: 1px solid var(--color-border-secondary);
+  background: #fff;
+}

@@ -1,3 +1,4 @@
+import { artifactsApi } from './workspace/artifact-api.js';
 import { collaborationApi } from './workspace/collaboration-api.js';
 import { runsApi, runService } from './workspace/runs.js';
 import { serve } from '@hono/node-server';
@@ -34,6 +35,7 @@ const app = new Hono();
 app.get('/api/health', (c) => c.json({ ok: true, engine: 'hermes' }));
 // The app's tools for the agent engines (MCP).
 app.route('/mcp', mcpApi);
+app.route('/api/workspace', artifactsApi);
 app.route('/api/workspace', collaborationApi);
 app.route('/api/workspace', runsApi);
 app.route('/api/projects', projectsApi);

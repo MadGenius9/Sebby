@@ -1,3 +1,4 @@
+import { BuildOutputs } from './BuildOutputs';
 import { useCallback, useEffect, useState } from "react";
 import type { RunRecord, RunnerStatus } from "@shared/workspace/schema";
 import { workspaceApi, type Project } from "./api";
@@ -180,6 +181,7 @@ export function RuntimePanel({
               >
                 {selected.log || "No output recorded yet."}
               </pre>
+              <BuildOutputs key={selected.id} run={selected}/>
               {selected.state === "cleanup_failed" && (
                 <p role="alert" className="workspace-message is-error">
                   Container cleanup could not be verified. The worker blocks new

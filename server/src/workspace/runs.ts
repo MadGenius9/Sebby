@@ -1,3 +1,5 @@
+import { retainArtifacts, validateArtifacts } from "./artifacts.js";
+import { outputDirectory } from "./artifact-protocol.js";
 import { dependencyFingerprint, DependencyError } from "./dependencies.js";
 import { randomUUID } from "node:crypto";
 import { Hono } from "hono";
@@ -14,7 +16,7 @@ import { DockerRunner, type Runner, type RunCommand } from "./docker-runner.js";
 db.exec(`CREATE TABLE IF NOT EXISTS workspace_runs (
  id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES workspace_projects(id) ON DELETE CASCADE,
  revision INTEGER NOT NULL, command TEXT NOT NULL, state TEXT NOT NULL, log TEXT NOT NULL DEFAULT '',
- snapshot_hash TEXT, snapshot_commit TEXT, runner_image TEXT, dependency_hash TEXT, exit_code INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER
+ snapshot_hash TEXT, snapshot_commit TEXT, runner_image TEXT, dependency_hash TEXT, artifact_state TEXT NOT NULL DEFAULT 'not_collected', exit_code INTEGER, created_at INTEGER NOT NULL, finished_at INTEGER
 ); CREATE INDEX IF NOT EXISTS workspace_runs_project ON workspace_runs(project_id,created_at);
 CREATE UNIQUE INDEX IF NOT EXISTS workspace_runs_active ON workspace_runs(project_id) WHERE state IN ('preparing','running','stopping');`);
 if (
@@ -29,6 +31,14 @@ if (
   ).some((c) => c.name === "dependency_hash")
 )
   db.exec("ALTER TABLE workspace_runs ADD COLUMN dependency_hash TEXT");
+if (
+  !(
+    db.prepare("PRAGMA table_info(workspace_runs)").all() as { name: string }[]
+  ).some((c) => c.name === "artifact_state")
+)
+  db.exec(
+    "ALTER TABLE workspace_runs ADD COLUMN artifact_state TEXT NOT NULL DEFAULT 'not_collected'",
+  );
 const activeStates = new Set(["preparing", "running", "stopping"]);
 export const activeRun = (r: RunRecord) => activeStates.has(r.state);
 const unpack = (r: any): RunRecord => ({
@@ -42,6 +52,7 @@ const unpack = (r: any): RunRecord => ({
   snapshotCommit: r.snapshot_commit,
   image: r.runner_image,
   lockHash: r.dependency_hash,
+  artifactState: r.artifact_state,
   exitCode: r.exit_code,
   createdAt: r.created_at,
   finishedAt: r.finished_at,
@@ -114,6 +125,13 @@ export class RunService {
       !pkg.scripts[command].trim()
     )
       throw new RunError(400, `Add a ${command} script to package.json.`);
+    if (command === "build") {
+      try {
+        outputDirectory(project);
+      } catch (e) {
+        throw new RunError(400, (e as Error).message);
+      }
+    }
     let lockHash: string | null;
     try {
       lockHash = dependencyFingerprint(project);
@@ -165,7 +183,7 @@ export class RunService {
           "A previous container needs cleanup. Resolve it before starting more runs.",
         );
       db.prepare(
-        "INSERT INTO workspace_runs(id,project_id,revision,command,state,created_at,runner_image,dependency_hash) VALUES (?,?,?,?,?,?,?,?)",
+        "INSERT INTO workspace_runs(id,project_id,revision,command,state,created_at,runner_image,dependency_hash,artifact_state) VALUES (?,?,?,?,?,?,?,?,?)",
       ).run(
         id,
         projectId,
@@ -175,6 +193,7 @@ export class RunService {
         Date.now(),
         status.image || null,
         lockHash,
+        command === "build" ? "pending" : "not_requested",
       );
     })();
     const controller = new AbortController();
@@ -243,16 +262,44 @@ export class RunService {
         slot.controller.signal,
         (text) => this.append(id, text),
       );
+      db.prepare("UPDATE workspace_runs SET exit_code=? WHERE id=?").run(
+        result.exitCode,
+        id,
+      );
       if (result.error) this.append(id, `\nRunner error: ${result.error}\n`);
       const state = !result.cleanupVerified
         ? "cleanup_failed"
         : slot.cause ||
           (result.exitCode === 0 && !result.error ? "succeeded" : "failed");
-      db.prepare(
-        "UPDATE workspace_runs SET state=?,exit_code=?,finished_at=? WHERE id=?",
-      ).run(state, result.exitCode, Date.now(), id);
+      let artifacts;
+      if (
+        state === "succeeded" &&
+        r.command === "build" &&
+        result.artifacts !== undefined
+      )
+        artifacts = validateArtifacts(result.artifacts);
+      if (artifacts && artifacts.outputDirectory !== outputDirectory(document))
+        throw new Error(
+          "Worker output directory does not match the saved project",
+        );
+      const artifactState =
+        r.command !== "build"
+          ? "not_requested"
+          : state !== "succeeded"
+            ? "withheld"
+            : artifacts
+              ? artifacts.files.length
+                ? "ready"
+                : "absent"
+              : "not_collected";
+      db.transaction(() => {
+        if (artifactState === "ready") retainArtifacts(id, artifacts!);
+        db.prepare(
+          "UPDATE workspace_runs SET state=?,exit_code=?,finished_at=?,artifact_state=? WHERE id=?",
+        ).run(state, result.exitCode, Date.now(), artifactState, id);
+      })();
     } catch (e) {
-      this.append(id, `\nPreparation error: ${(e as Error).message}\n`);
+      this.append(id, `\nRun error: ${(e as Error).message}\n`);
       db.prepare(
         "UPDATE workspace_runs SET state=?,finished_at=? WHERE id=?",
       ).run(
@@ -263,6 +310,9 @@ export class RunService {
         id,
       );
     } finally {
+      db.prepare(
+        "UPDATE workspace_runs SET artifact_state='withheld' WHERE id=? AND command='build' AND state<>'succeeded'",
+      ).run(id);
       clearTimeout(timer);
       this.active.delete(id);
     }
@@ -298,6 +348,9 @@ export class RunService {
           "UPDATE workspace_runs SET state=?,finished_at=? WHERE id=?",
         ).run(ok ? "interrupted" : "cleanup_failed", Date.now(), row.id);
       }
+      db.prepare(
+        "UPDATE workspace_runs SET artifact_state='withheld' WHERE command='build' AND state<>'succeeded'",
+      ).run();
     } finally {
       this.recovering = false;
     }

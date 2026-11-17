@@ -117,6 +117,7 @@ export type RunRecord = {
   snapshotCommit: string | null;
   image: string | null;
   lockHash: string | null;
+  artifactState: string;
   exitCode: number | null;
   createdAt: number;
   finishedAt: number | null;
@@ -148,4 +149,28 @@ export type ProposalReview = {
   sceneChanged: boolean;
   beforeScene: ProjectDocument["scene"];
   afterScene: ProjectDocument["scene"];
+};
+
+export type BuildManifest = {
+  runId: string;
+  projectId: string;
+  revision: number;
+  sourceHash: string | null;
+  image: string | null;
+  lockHash: string | null;
+  outputDirectory: string;
+  manifestHash: string;
+  totalBytes: number;
+  createdAt: number;
+  files: { path: string; bytes: number; sha256: string; mime: string }[];
+  previewCandidate: boolean;
+  previewVerified: false;
+};
+export type BuildPreview = {
+  html: string;
+  warnings: string[];
+  runId: string;
+  revision: number;
+  manifestHash: string;
+  previewVerified: false;
 };
