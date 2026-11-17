@@ -28,4 +28,4 @@ Current product limits are explicit: 40 virtual text files per project, 1 MB sav
 
 ## Public GitHub increment
 
-Six tests bring the deterministic workspace suite to 57. The real public-network `npm run test:github` check passed against octocat/Hello-World at commit 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d. GitHub inspection is read-only, retains commit/archive provenance in the reviewed document and creates no project until the separate import step. The browser increment mocks network review only and uses real project creation/edit/save/reopen. See V2-GITHUB-IMPORT.md and the latest CI result.
+Six tests bring the deterministic workspace suite to 57. The real public-network `npm run test:github` check passed against octocat/Hello-World at commit 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d. GitHub inspection is read-only, retains commit/archive provenance in the reviewed document and creates no project until the separate import step. The browser increment mocks network review only and uses real project creation/edit/save/reopen. The hosted browser flow and all three platform jobs passed in run 44023098239. See V2-GITHUB-IMPORT.md.

@@ -110,6 +110,12 @@ export async function reviewGithubRepository(
   if (
     !/^[A-Za-z0-9_.\/-]+$/.test(ref) ||
     ref.includes("..") ||
+    ref
+      .split("/")
+      .some(
+        (part) =>
+          part.startsWith(".") || part.endsWith(".") || part.endsWith(".lock"),
+      ) ||
     ref.startsWith("/") ||
     ref.endsWith("/") ||
     ref.includes("//") ||

@@ -198,6 +198,18 @@ test("GitHub review rejects private/oversized/corrupt source and reserved proven
     reviewGithubRepository({ ...input, ref: "../secret" }, transport().fetcher),
     /traversal/,
   );
+  for (const ref of [
+    ".",
+    "feature/./source",
+    "feature/.hidden",
+    "feature/source.lock",
+  ]) {
+    await assert.rejects(
+      reviewGithubRepository({ ...input, ref }, transport().fetcher),
+      /traversal/,
+    );
+  }
+
   await assert.rejects(
     reviewGithubRepository(
       input,
