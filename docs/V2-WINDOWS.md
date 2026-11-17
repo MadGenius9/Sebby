@@ -32,3 +32,5 @@ Create a plain-text file named `.env.local` in the Sebby folder. Add `XAI_API_KE
 After hanging up, open **Last voice transcript** to review the available captions, download a text file, or add it to the open project. Use **Save** to keep an attached transcript in project history. The workspace keeps the last transcript in the current tab until you clear it, reload, or finish a newer call with captions.
 
 To discuss a project, open it and select **Talk about this project**. Review or edit the preview before choosing **Share brief and start**. The call sends the project name and up to 4,000 characters of the text you approve to Grok. The preview starts with the project brief in `SEBBY.md`, including any edits currently in the workspace. Choose **Start live voice** for a general conversation.
+
+Open **Voice settings** in the Projects sidebar to choose Sebby’s voice and speaking speed for future calls. The setting is remembered in that browser and applies to both general and project calls.

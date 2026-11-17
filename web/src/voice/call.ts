@@ -1,3 +1,4 @@
+import type { WorkspaceVoicePreferences } from '@shared/lib/voice-preferences';
 // The in-browser voice agent. Grok Bot runs calls as a second, lightweight agent against the xAI realtime
 // API that speaks as the bot and relays real work to the bot's main text agent (send_task). Results come
 // back through the normal transcript stream and are injected into the call as [work_landed] notes.
@@ -51,16 +52,18 @@ export interface WorkspaceVoiceBrief {
   brief: string;
 }
 
-export function startCall(botId: string, workspaceCall = false, brief?: WorkspaceVoiceBrief) {
+export function startCall(botId: string, workspaceCall = false, brief?: WorkspaceVoiceBrief, preferences?: WorkspaceVoicePreferences) {
   if (current && !current.ended) {
     if (current.botId === botId && current.workspaceCall === workspaceCall) return;
     current.end();
   }
-  current = new VoiceCall(botId, workspaceCall, brief);
+  current = new VoiceCall(botId, workspaceCall, brief, preferences);
   void current.start();
 }
 
-export function startWorkspaceCall(brief?: WorkspaceVoiceBrief) { startCall('', true, brief); }
+export function startWorkspaceCall(brief?: WorkspaceVoiceBrief, preferences?: WorkspaceVoicePreferences) {
+  startCall('', true, brief, preferences);
+}
 export function endCall() { current?.end(); }
 export function toggleMute() { current?.setMuted(!useVoice.getState().muted); }
 export function callLevels(): { out: number; mic: number } {
@@ -99,7 +102,7 @@ class VoiceCall {
     else if (this.sess && !this.ended) voiceApi.endBeacon(this.botId, this.sess.callId, this.transcript());
   };
 
-  constructor(readonly botId: string, readonly workspaceCall: boolean, private readonly brief?: WorkspaceVoiceBrief) {
+  constructor(readonly botId: string, readonly workspaceCall: boolean, private readonly brief?: WorkspaceVoiceBrief, private readonly preferences?: WorkspaceVoicePreferences) {
     // Created synchronously inside the click so autoplay policy lets it run.
     this.ctx = createAudioContext();
     this.player = new PcmPlayer(this.ctx);
@@ -130,7 +133,7 @@ class VoiceCall {
       this.mic = new MicCapture(this.ctx, stream, (pcm) => this.sendAudio(pcm));
       await this.mic.start();
       if (this.ended) return;
-      this.sess = await (this.workspaceCall ? voiceApi.localSession() : voiceApi.session(this.botId));
+      this.sess = await (this.workspaceCall ? voiceApi.localSession(this.preferences) : voiceApi.session(this.botId));
       if (this.ended) {
         if (!this.workspaceCall) void voiceApi.end(this.botId, this.sess.callId, [], 'Cancelled').catch(() => {});
         return;

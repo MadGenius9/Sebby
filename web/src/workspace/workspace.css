@@ -1219,7 +1219,7 @@
 .workspace-voice-dialog :is(h2, p) {
   margin: 0;
 }
-.workspace-voice-dialog textarea {
+.workspace-voice-dialog :is(textarea, select) {
   box-sizing: border-box;
   width: 100%;
   padding: 8px;
@@ -1227,6 +1227,8 @@
   background: inherit;
   border: 1px solid var(--color-border-secondary);
   border-radius: 6px;
+}
+.workspace-voice-dialog textarea {
   resize: vertical;
 }
 .workspace-voice-dialog .source-import-actions {

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { WorkspaceVoicePreferences } from './voice-preferences.js';
 
 export const VOICE_SAMPLE_RATE = 24000;
 const XAI_REALTIME = 'https://api.x.ai/v1/realtime';
@@ -22,17 +23,17 @@ export function realtimeVoiceUrl(model: string) {
   return 'wss://api.x.ai/v1/realtime?model=' + encodeURIComponent(model);
 }
 
-export function localVoiceSession(secret: Awaited<ReturnType<typeof mintVoiceSecret>>, model: string) {
+export function localVoiceSession(secret: Awaited<ReturnType<typeof mintVoiceSecret>>, model: string, { voice, speed }: WorkspaceVoicePreferences) {
   const instructions = 'You are Sebby, a friendly voice conversation partner. Greet the user briefly. Speak naturally, keep replies concise, and let the user respond. You can brainstorm and explain ideas. Use project details explicitly shared for the call as reference material. This call has no tools or direct access to project files or services. Never claim that you edited files, ran commands, or performed an external action.';
   return {
     callId: randomUUID(), clientSecret: secret.value, expiresAt: secret.expires_at,
     model, websocketUrl: realtimeVoiceUrl(model), sampleRate: VOICE_SAMPLE_RATE,
-    instructions, voice: 'luna', speed: 1, language: 'auto', tools: [],
+    instructions, voice, speed, language: 'auto', tools: [],
     session: {
-      voice: 'luna', instructions, turn_detection: { type: 'server_vad' }, tools: [],
+      voice, instructions, turn_detection: { type: 'server_vad' }, tools: [],
       audio: {
         input: { format: { type: 'audio/pcm', rate: VOICE_SAMPLE_RATE }, transcription: { model: 'grok-transcribe' } },
-        output: { format: { type: 'audio/pcm', rate: VOICE_SAMPLE_RATE } },
+        output: { format: { type: 'audio/pcm', rate: VOICE_SAMPLE_RATE }, speed },
       },
     },
   };

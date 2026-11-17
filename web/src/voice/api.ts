@@ -1,3 +1,4 @@
+import type { WorkspaceVoicePreferences } from '@shared/lib/voice-preferences';
 import type { VoiceOption } from '@shared/types';
 
 export interface VoiceSession {
@@ -34,7 +35,7 @@ export const voiceApi = {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json() as Promise<VoiceOptions>;
   }).catch((e) => { optionsPromise = null; throw e; })),
-  localSession: () => post<VoiceSession>('/session', {}, '/api/local-voice'),
+  localSession: (preferences?: WorkspaceVoicePreferences) => post<VoiceSession>('/session', preferences ?? {}, '/api/local-voice'),
   session: (botId: string) => post<VoiceSession>('/session', { botId }),
   tool: (botId: string, callId: string, name: string, args: unknown) => post<{ output: string; taskSeq?: number }>('/tool', { botId, callId, name, args }),
   end: (botId: string, callId: string, transcript: { role: 'user' | 'assistant'; text: string }[], error?: string) => post<{ ok: true }>('/end', { botId, callId, transcript, error }),

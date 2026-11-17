@@ -1,13 +1,28 @@
+import { DEFAULT_WORKSPACE_VOICE, VOICE_SPEEDS, WORKSPACE_VOICES, isWorkspaceVoicePreferences, type WorkspaceVoicePreferences } from '@shared/lib/voice-preferences';
 import { useEffect, useRef, useState } from 'react';
-import { Mic, MessageSquare } from 'lucide-react';
+import { Mic, MessageSquare, SlidersHorizontal } from 'lucide-react';
 import { endCall, startWorkspaceCall, useVoice, type WorkspaceVoiceBrief } from '../voice/call';
 import type { Project } from './api';
 
 const BRIEF_LIMIT = 4000;
+const VOICE_PREFERENCES_KEY = 'sebby.workspace.voice';
+
+function readPreferences(): WorkspaceVoicePreferences {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(VOICE_PREFERENCES_KEY) ?? 'null');
+    if (isWorkspaceVoicePreferences(value)) return value;
+  } catch {
+    // The current tab can still use voice when browser storage is unavailable.
+  }
+  return DEFAULT_WORKSPACE_VOICE;
+}
 
 export function LocalVoiceButton({ project }: { project: Project | null }) {
   const active = useVoice(state => state.workspaceCall && (state.status === 'live' || state.status === 'connecting'));
   const dialog = useRef<HTMLDialogElement>(null);
+  const settingsDialog = useRef<HTMLDialogElement>(null);
+  const [preferences, setPreferences] = useState(readPreferences);
+  const [draft, setDraft] = useState(preferences);
   const [preview, setPreview] = useState<WorkspaceVoiceBrief | null>(null);
   const [truncated, setTruncated] = useState(false);
 
@@ -29,7 +44,7 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
 
   return (
     <>
-      <button type="button" onClick={() => active ? endCall() : startWorkspaceCall()}>
+      <button type="button" onClick={() => active ? endCall() : startWorkspaceCall(undefined, preferences)}>
         <Mic size={16} /> {active ? 'End live voice' : 'Start live voice'}
       </button>
       {project && !active && (
@@ -37,12 +52,50 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
           <MessageSquare size={16} /> Talk about this project
         </button>
       )}
+      {!active && (
+        <button type="button" onClick={() => {
+          setDraft(preferences);
+          settingsDialog.current?.showModal();
+        }}>
+          <SlidersHorizontal size={16} /> Voice settings
+        </button>
+      )}
+      <dialog ref={settingsDialog} className="workspace-voice-dialog" aria-labelledby="workspace-voice-settings-title">
+        <form method="dialog" onSubmit={() => {
+          setPreferences(draft);
+          try {
+            localStorage.setItem(VOICE_PREFERENCES_KEY, JSON.stringify(draft));
+          } catch {
+            // Keep the selection for this tab if persistence is unavailable.
+          }
+        }}>
+          <h2 id="workspace-voice-settings-title">Voice settings</h2>
+          <label htmlFor="workspace-voice">Voice</label>
+          <select id="workspace-voice" value={draft.voice} onChange={event => {
+            const voice = WORKSPACE_VOICES.find(option => option === event.target.value);
+            if (voice) setDraft({ ...draft, voice });
+          }}>
+            {WORKSPACE_VOICES.map(voice => <option key={voice} value={voice}>{voice[0].toUpperCase() + voice.slice(1)}</option>)}
+          </select>
+          <label htmlFor="workspace-voice-speed">Speaking speed</label>
+          <select id="workspace-voice-speed" value={draft.speed} onChange={event => {
+            const speed = VOICE_SPEEDS.find(option => String(option) === event.target.value);
+            if (speed !== undefined) setDraft({ ...draft, speed });
+          }}>
+            {VOICE_SPEEDS.map(speed => <option key={speed} value={speed}>{speed}×</option>)}
+          </select>
+          <div className="source-import-actions">
+            <button className="btn btn--primary" type="submit">Save voice settings</button>
+            <button className="btn btn--secondary" type="button" onClick={() => settingsDialog.current?.close()}>Cancel</button>
+          </div>
+        </form>
+      </dialog>
       <dialog ref={dialog} className="workspace-voice-dialog" aria-labelledby="voice-brief-title" onClose={() => setPreview(null)}>
         {preview && (
           <form method="dialog" onSubmit={event => {
             event.preventDefault();
             dialog.current?.close();
-            startWorkspaceCall({ ...preview, brief: preview.brief.trim() });
+            startWorkspaceCall({ ...preview, brief: preview.brief.trim() }, preferences);
           }}>
             <h2 id="voice-brief-title">Talk about {preview.projectName}</h2>
             <p>Grok will receive the project name and the text below when the call starts.</p>

@@ -75,10 +75,15 @@ try{
    };
  });
  await voicePage.route('**/api/local-voice/status',route=>route.fulfill({json:{configured:true}}));
- await voicePage.route('**/api/local-voice/session',route=>route.fulfill({json:{
-   callId:'local-voice-fixture',clientSecret:'fixture',sampleRate:24000,instructions:'Fixture voice instructions',
-   websocketUrl:base.replace('http:','ws:')+'/fixture-voice',session:{instructions:'Fixture voice instructions',tools:[],turn_detection:{type:'server_vad'}},
- }}));
+ await voicePage.route('**/api/local-voice/session',route=>{
+   const {voice,speed}=route.request().postDataJSON();
+   assert.deepEqual({voice,speed},{voice:'rex',speed:1.15});
+   return route.fulfill({json:{
+     callId:'local-voice-fixture',clientSecret:'fixture',sampleRate:24000,instructions:'Fixture voice instructions',
+     websocketUrl:base.replace('http:','ws:')+'/fixture-voice',
+     session:{instructions:'Fixture voice instructions',tools:[],turn_detection:{type:'server_vad'},voice,audio:{output:{speed}}},
+   }});
+ });
  let microphoneFrame=false, interrupted=false, closed=false;
  const voiceInstructions=[];
  await voicePage.routeWebSocket('**/fixture-voice',socket=>{
@@ -88,6 +93,7 @@ try{
      const send=(data)=>socket.send(JSON.stringify(data));
      if(event.type==='session.update'){
        assert.deepEqual(event.session.tools,[]);
+       assert.equal(event.session.voice,'rex');assert.equal(event.session.audio.output.speed,1.15);
        voiceInstructions.push(event.session.instructions);
        send({type:'session.updated'});
      }
@@ -109,6 +115,20 @@ try{
    });
  });
  await voicePage.goto(base+'/workspace');
+ const voiceSettingsButton=voicePage.getByRole('button',{name:'Voice settings',exact:true});
+ const voiceSettings=voicePage.getByRole('dialog',{name:'Voice settings',exact:true});
+ await voiceSettingsButton.click();
+ await voiceSettings.getByLabel('Voice',{exact:true}).selectOption('rex');
+ await voiceSettings.getByLabel('Speaking speed',{exact:true}).selectOption('1.15');
+ await voicePage.screenshot({path:path.join(qa,'desktop-workspace-voice-settings.png')});
+ await voiceSettings.getByRole('button',{name:'Save voice settings',exact:true}).click();
+ await voicePage.reload();
+ await voiceSettingsButton.click();
+ assert.equal(await voiceSettings.getByLabel('Voice',{exact:true}).inputValue(),'rex');
+ assert.equal(await voiceSettings.getByLabel('Speaking speed',{exact:true}).inputValue(),'1.15');
+ await voiceSettings.getByLabel('Voice',{exact:true}).selectOption('eve');
+ await voiceSettings.getByRole('button',{name:'Cancel',exact:true}).click();
+
  await voicePage.getByRole('navigation',{name:'Projects',exact:true}).getByRole('button',{name:'Browser acceptance',exact:true}).click();
  await voicePage.getByRole('button',{name:'Start live voice',exact:true}).click();
  const call=voicePage.getByRole('region',{name:'Voice call with Sebby',exact:true});
@@ -160,5 +180,5 @@ try{
  await call.getByRole('button',{name:'End call',exact:true}).click();
  await call.waitFor({state:'hidden'});
  await voiceContext.close();
- assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow','local voice handshake, audio, interruption, captions, hang-up, transcript download and draft attachment and explicit brief sharing (simulated xAI)'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
+ assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow','local voice handshake, audio, interruption, captions, hang-up, transcript download and draft attachment, explicit brief sharing and persistent voice settings (simulated xAI)'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
 }catch(error){try{await browser?.contexts()[0]?.pages()[0]?.screenshot({path:path.join(qa,'failure.png')});}catch{}throw error;}finally{fixtures?.close();clearTimeout(timer);await browser?.close();child.kill('SIGTERM');const force=setTimeout(()=>child.kill('SIGKILL'),5000);await exited;clearTimeout(force);await rm(root,{recursive:true,force:true});}

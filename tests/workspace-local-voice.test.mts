@@ -41,6 +41,8 @@ test('local voice only mints a temporary browser token for authenticated same-or
   const session = JSON.parse(payload);
   assert.equal(session.clientSecret, 'temporary-token');
   assert.equal(session.sampleRate, 24000);
+  assert.equal(session.session.voice, 'luna');
+  assert.equal(session.session.audio.output.speed, 1);
   assert.deepEqual(session.session.tools, []);
   assert.deepEqual(session.session.turn_detection, { type: 'server_vad' });
   assert.equal((await api.request('/session', { method: 'POST', headers })).status, 429);
@@ -55,4 +57,26 @@ test('missing keys and upstream errors give actionable responses without exposin
   const failure = await failing.request('/session', { method: 'POST', headers });
   assert.equal(failure.status, 502);
   assert.ok(!(await failure.text()).includes(config.apiKey));
+});
+
+
+test('workspace voice validates preferences before minting and applies them to realtime audio', async () => {
+  let requests = 0;
+  const api = createLocalVoiceApi(config, async () => {
+    requests++;
+    return Response.json({ value: 'temporary-token', expires_at: 1795000000 });
+  });
+  const start = (body: unknown) => api.request('/session', {
+    method: 'POST', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+  assert.equal((await start({ voice: 'unknown', speed: 1 })).status, 400);
+  assert.equal((await start({ voice: 'rex', speed: 8 })).status, 400);
+  assert.equal((await start({ voice: 'rex', speed: '1.15' })).status, 400);
+  assert.equal(requests, 0);
+  const result = await start({ voice: 'rex', speed: 1.15 });
+  assert.equal(result.status, 200);
+  assert.equal(requests, 1);
+  const payload = await result.json();
+  assert.equal(payload.session.voice, 'rex');
+  assert.equal(payload.session.audio.output.speed, 1.15);
 });

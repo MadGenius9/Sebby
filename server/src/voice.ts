@@ -1,3 +1,4 @@
+import { VOICE_SPEEDS } from './lib/voice-preferences.js';
 // Voice calls, the way Grok Bot does them: a second, lightweight voice agent runs in the browser against
 // the xAI realtime API, speaks as the bot, and relays real work to the bot's main text agent loop.
 // This module mints the ephemeral secret, builds the voice agent's prompt and tools, serves the relay
@@ -42,7 +43,7 @@ export const LANGUAGES: { code: string; name: string }[] = [
   { code: 'pt-BR', name: 'Portuguese (Brazil)' }, { code: 'pt-PT', name: 'Portuguese (Portugal)' }, { code: 'ru', name: 'Russian' },
   { code: 'es-MX', name: 'Spanish (Mexico)' }, { code: 'es-ES', name: 'Spanish (Spain)' }, { code: 'tr', name: 'Turkish' }, { code: 'vi', name: 'Vietnamese' },
 ];
-export const SPEEDS = [0.7, 0.85, 1, 1.15, 1.3, 1.5];
+
 
 let voiceCache: { at: number; voices: VoiceOption[] } | null = null;
 async function listVoices(): Promise<VoiceOption[]> {
@@ -238,7 +239,7 @@ const fmtDuration = (ms: number) => {
   return s < 60 ? `${s}s` : `${Math.floor(s / 60)}m ${String(s % 60).padStart(2, '0')}s`;
 };
 
-voiceApi.get('/options', async (c) => c.json({ voices: await listVoices(), languages: LANGUAGES, speeds: SPEEDS }));
+voiceApi.get('/options', async (c) => c.json({ voices: await listVoices(), languages: LANGUAGES, speeds: VOICE_SPEEDS }));
 
 voiceApi.post('/session', async (c) => {
   const user = c.get('user');
