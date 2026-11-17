@@ -15,7 +15,9 @@
     "test:workspace": "node --import tsx --test tests/workspace*.test.mts",
     "test:http": "npm run build && node scripts/smoke-workspace.mjs",
     "test:browser": "npm run build && node tests/workspace-browser.mjs",
-    "test:docker": "node --import tsx tests/docker-live.mts"
+    "test:docker": "node --import tsx tests/docker-live.mts",
+    "test:voice": "node --import tsx --test tests/voice*.test.mts",
+    "gauntlet": "node scripts/gauntlet.mjs"
   },
   "engines": {
     "node": ">=22"

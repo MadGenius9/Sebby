@@ -52,6 +52,8 @@ Bot HQ's agent chat, Hermes adapter, Orgo viewer, voice and Composio service cod
 
 The project API and scoped agent tools are integrated with existing sessions/MCP. Use the project Agents panel to assign a configured engine, review proposals and optionally enable runs. A pending proposal does not change source or scenes. See [project agents](docs/V2-AGENTS.md). We have not run live provider, OAuth, desktop or paid-service tests. The upstream shell/browser approval limitations still apply to that service mode. Do not treat this branch as a production deployment.
 
+See [realtime voice setup and acceptance](docs/V2-VOICE.md) for the tracked voice-to-agent relay, call lifecycle checks and live-service requirements. Run `npm run gauntlet` for the complete automated gate.
+
 ## Checks
 
 ```bash

@@ -29,6 +29,7 @@ const server = createServer(async (req, res) => {
 await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = (server.address() as any).port;
 process.env.SEBBY_WORKSPACE_ONLY = "1";
+process.env.XAI_API_KEY = "fixture-not-a-real-key";
 process.env.SESSION_SECRET = randomUUID();
 process.env.DB_PATH = path.join(dir, "test.db");
 process.env.HERMES_URL = `http://127.0.0.1:${port}`;
@@ -142,4 +143,64 @@ test("a scripted Hermes gateway exercises a headless project turn and real MCP t
     (db.prepare("SELECT count(*) AS n FROM screens").get() as any).n,
     0,
   );
+});
+
+test('voice HTTP handoff binds jobs to a live owned call and preserves exact queued results', async () => {
+  process.env.XAI_API_KEY = 'fixture-not-a-real-key';
+  const { Hono } = await import('hono');
+  const { voiceApi } = await import('../server/src/voice.js');
+  const app = new Hono<any>();
+  app.use('*', async (c, next) => { c.set('user', { id: c.req.header('x-test-owner') || 'alice' }); await next(); });
+  app.route('/voice', voiceApi);
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    if (String(url).startsWith('https://api.x.ai/')) {
+      if (String(url).endsWith('/client_secrets')) return Response.json({ value: 'ephemeral-fixture', expires_at: Date.now() / 1000 + 300 });
+      return Response.json({ output_text: 'Fixture summary' });
+    }
+    return realFetch(url, init);
+  };
+  try {
+    const post = (route: string, body: unknown, owner = 'alice') => app.request(`http://localhost/voice/${route}`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-test-owner': owner }, body: JSON.stringify(body) });
+    const session = await (await post('session', { botId: 'bot-alice' })).json();
+    assert.equal(session.clientSecret, 'ephemeral-fixture');
+    const callId = session.callId;
+    const bad = await post('tool', { botId: 'bot-alice', callId: 'ended', name: 'send_task', toolCallId: 'a', args: { request: 'work' } });
+    assert.equal(bad.status, 409);
+    const foreign = await app.request(`http://localhost/voice/work/${callId}`, { headers: { 'x-test-owner': 'mallory' } });
+    assert.equal(foreign.status, 404);
+    let n = 0;
+    gatewayWork = async res => {
+      const delta = ++n === 1 ? 'First exact result' : 'Second exact result';
+      res.write(`event: response.output_text.delta\ndata: ${JSON.stringify({ delta })}\n\n`);
+    };
+    const base = { botId: 'bot-alice', callId, name: 'send_task' };
+    const before = requests;
+    await post('tool', { ...base, toolCallId: 'one', args: { request: 'first' } });
+    await post('tool', { ...base, toolCallId: 'one', args: { request: 'first' } });
+    assert.equal((await post('tool', { ...base, toolCallId: 'one', args: { request: 'different' } })).status, 409);
+    await post('tool', { ...base, toolCallId: 'two', args: { request: 'second' } });
+    let jobs: any[] = [];
+    const deadline = Date.now() + 5000;
+    do {
+      await new Promise(r => setTimeout(r, 10));
+      jobs = (await (await app.request(`http://localhost/voice/work/${callId}`)).json()).jobs;
+      if (Date.now() > deadline) throw new Error('Voice jobs did not settle');
+    } while (jobs.some(j => j.status === 'pending'));
+    assert.equal(requests - before, 2);
+    assert.deepEqual(jobs.map(j => [j.id, j.text]), [['one', 'First exact result'], ['two', 'Second exact result']]);
+    await post('end', { botId: 'bot-alice', callId, transcript: [] });
+    assert.equal((await post('tool', { ...base, toolCallId: 'late', args: { request: 'late' } })).status, 409);
+  } finally { globalThis.fetch = realFetch; }
+});
+
+test('a failed gateway turn returns failure to voice even after partial assistant text', async () => {
+  gatewayWork = async res => {
+    res.write(`event: response.output_text.delta\ndata: ${JSON.stringify({ delta: 'Starting the build' })}\n\n`);
+    res.write(`event: response.failed\ndata: ${JSON.stringify({ response: { error: { message: 'fixture failure' } } })}\n\n`);
+  };
+  const result = await enqueue('bot-alice', { type: 'user', text: 'Fixture failed build' });
+  assert.equal(result.status, 'failed');
+  assert.doesNotMatch(result.text, /Starting the build/);
+  assert.match(result.text, /could not finish/);
 });

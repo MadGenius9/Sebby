@@ -30,16 +30,19 @@ export type Trigger =
 
 // ---------- per-bot serial queue ----------
 
-const queues = new Map<string, Promise<void>>();
+const queues = new Map<string, Promise<unknown>>();
 const aborts = new Map<string, AbortController>();
 
-export function enqueue(botId: string, trigger: Trigger) {
+export interface TurnResult { status: 'completed' | 'failed' | 'cancelled'; text: string }
+
+export function enqueue(botId: string, trigger: Trigger): Promise<TurnResult> {
   // A new message from the user supersedes whatever is waiting for their approval.
   if (trigger.type === 'user') expireApprovals(botId);
   const prev = queues.get(botId) ?? Promise.resolve();
-  const next = prev.then(() => runTurn(botId, trigger)).catch((e) => console.error('[agent] turn failed', botId, e));
+  const next = prev.then(() => runTurn(botId, trigger)).catch(() => ({ status: 'failed' as const, text: 'The agent could not finish this request.' }));
   queues.set(botId, next);
   next.finally(() => { if (queues.get(botId) === next) queues.delete(botId); });
+  return next;
 }
 
 export function interrupt(botId: string) {
@@ -304,9 +307,9 @@ function captionFrom(reasoning: string): string | null {
 /** Hermes' own tool lookup (it loads rarely used tools on demand). */
 const TOOLBOX = new Set(['tool_search', 'tool_describe']);
 
-async function runTurn(botId: string, trigger: Trigger) {
+async function runTurn(botId: string, trigger: Trigger): Promise<TurnResult> {
   const bot = getBotRow(botId);
-  if (!bot || bot.kind === 'room') return;
+  if (!bot || bot.kind === 'room') return { status: 'failed', text: 'Agent unavailable.' };
   const userId: string = bot.user_id;
   const ctrl = new AbortController();
   aborts.set(botId, ctrl);
@@ -319,6 +322,8 @@ async function runTurn(botId: string, trigger: Trigger) {
   let text = '';
   let lastFlush = 0;
   let wroteText = false;
+  const spokenResults: string[] = [];
+  let failure = '';
   const flush = (streaming: boolean) => {
     const b: MessageBody = { type: 'message', role: 'assistant', text, streaming };
     if (msgSeq === null) msgSeq = appendRow(botId, 'message', b).seq;
@@ -329,6 +334,7 @@ async function runTurn(botId: string, trigger: Trigger) {
     if (msgSeq === null) return;
     if (text.trim()) {
       flush(false);
+      spokenResults.push(text.trim());
       db.prepare('UPDATE bots SET unread = unread + 1 WHERE id=?').run(botId);
     } else updateRow(botId, msgSeq, { type: 'message', role: 'assistant', text: '', streaming: false });
     msgSeq = null;
@@ -340,6 +346,7 @@ async function runTurn(botId: string, trigger: Trigger) {
     appendRow(botId, 'message', { type: 'message', role: 'assistant', text: t.trim(), streaming: false });
     db.prepare('UPDATE bots SET unread = unread + 1 WHERE id=?').run(botId);
     wroteText = true;
+    spokenResults.push(t.trim());
   };
 
   let reasoning = '';
@@ -485,6 +492,7 @@ async function runTurn(botId: string, trigger: Trigger) {
     }
   } catch (e: any) {
     failed = true;
+    failure = ctrl.signal.aborted ? 'The request was stopped.' : 'The agent could not finish this request. Check the chat for details.';
     const stopped = ctrl.signal.aborted;
     closeMessage();
     appendRow(botId, 'notice', { type: 'notice', text: stopped ? 'Stopped.' : `Something went wrong: ${e?.message ?? e}`, tone: stopped ? 'info' : 'error' });
@@ -504,4 +512,5 @@ async function runTurn(botId: string, trigger: Trigger) {
     else setLive(botId, { isRunning: false, caption: null });
     emitBot(botId);
   }
+  return { status: failed ? (ctrl.signal.aborted ? 'cancelled' : 'failed') : 'completed', text: failed ? failure : spokenResults.join('\n\n').slice(-6000) || 'The turn ended without a written result. Check the chat.' };
 }
