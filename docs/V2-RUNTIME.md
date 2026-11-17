@@ -8,7 +8,7 @@ Open **Changes** to compare saved revisions. Source changes use real Git diffs; 
 
 ## Worker configuration
 
-The **Runs** tab reports worker readiness, lists persisted history, streams recorded output, and offers build/test/cancel controls. It starts no commands while the worker is unavailable. Docker and Git must be installed on the Linux server. This environment has Git but no Docker service; namespace isolation probing also failed. Real container execution has not been validated here.
+The **Runs** tab reports worker readiness, lists persisted history, streams recorded output, and offers build/test/cancel controls. It starts no commands while the worker is unavailable. Docker and Git must be installed on the Linux server. This environment has Git but no Docker service; namespace isolation probing also failed. The local container has no Docker, but a separate hosted rootless worker passed the base-image workflow in GitHub run 44012435801; see V2-VERIFICATION.md.
 
 Configure `SEBBY_RUNNER_IMAGE` to the full name and immutable SHA-256 digest of an image you have already provisioned on a dedicated **rootless Docker** worker. The daemon must support cgroup v2 and the resource limits used by the adapter. `SEBBY_DOCKER_BIN` optionally selects an absolute Docker CLI path (default `/usr/bin/docker`). `DOCKER_HOST` or `DOCKER_CONTEXT` can identify an operator-configured worker. No image is downloaded by the application.
 
@@ -28,7 +28,7 @@ Dependency-free projects use the base Node/npm image. Dependency-bearing project
 
 ## Remaining work
 
-Real Docker integration tests, user-facing snapshot restoration, native dependency-image validation, full separate-origin framework preview hosting, GitHub URL cloning and the complete live AI edit/test/review loop are still pending. Bounded build output retention/download and authenticated sandbox preview preparation are implemented; see V2-BUILD-OUTPUTS.md. A Docker adapter plus passing test doubles does not certify hostile-code isolation or native worker operation.
+The base-image real Docker acceptance now passes. User-facing snapshot restoration, native dependency-image validation, full separate-origin framework preview hosting, GitHub URL cloning and the complete live AI edit/test/review loop are still pending. Bounded build output retention/download and authenticated sandbox preview preparation are implemented; see V2-BUILD-OUTPUTS.md. A Docker adapter plus passing test doubles does not certify hostile-code isolation or native worker operation.
 
 ## Dependency-aware images
 
@@ -44,4 +44,4 @@ node --import tsx scripts/prepare-dependencies.mts exported-project.json NEW_OUT
 
 This creates a new private directory containing only `package.json`, `package-lock.json`, a Dockerfile and `profile.json` with the lock hash. It refuses an existing destination. It does not install dependencies, run Docker, copy source files, or build an image. The included Dockerfile is an operator-only provisioning recipe: supply a trusted SHA-256-pinned Node base as `NODE_IMAGE`, review the manifests, build/publish the image on your worker, then register its resulting immutable digest with the lock hash. Provisioning network access is separate from execution; builds/tests still run with no network.
 
-A dependency image must keep the exact lockfile at `/opt/sebby/package-lock.json` and dependencies at `/opt/sebby/node_modules`. Before a project command starts, the guest verifies both the supplied project lock and image lock against the expected hash and links that dependency tree into `/workspace`. The image root/dependency tree stays read-only. Packages requiring native postinstall steps, writable node_modules caches, private registries or workspace linking need additional provisioning work and are not certified by this increment. Container execution, including real React/Vite builds, remains unverified in this environment.
+A dependency image must keep the exact lockfile at `/opt/sebby/package-lock.json` and dependencies at `/opt/sebby/node_modules`. Before a project command starts, the guest verifies both the supplied project lock and image lock against the expected hash and links that dependency tree into `/workspace`. The image root/dependency tree stays read-only. Packages requiring native postinstall steps, writable node_modules caches, private registries or workspace linking need additional provisioning work and are not certified by this increment. Real dependency-image React/Vite builds remain unverified. The dependency-free base-image worker passed real hosted Docker acceptance.

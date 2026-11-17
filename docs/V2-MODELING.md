@@ -14,4 +14,4 @@ Tests verify deterministic, non-mutating extrusion/inset, a closed oriented fixt
 
 Viewport gizmo picking, highlighted-face rendering, browser GLB download and mobile controls are not certified by the headless Blender check. `npm run test:browser` exercises mesh controls, numeric transforms, persistence and browser downloads on a Chromium-capable host; current local Chromium cannot launch under this environment's process restrictions.
 
-Hosted Chromium acceptance passed for mesh editing controls, numeric transforms, undo/redo, persistence and GLB download in GitHub Actions run 44011023185. Desktop and mobile screenshots were reviewed. Actual gizmo dragging still needs its own interaction check.
+Hosted Chromium acceptance passed for mesh editing controls, numeric transforms, undo/redo, persistence and GLB download in GitHub Actions run 44011023185. Desktop and mobile screenshots were reviewed. Actual gizmo dragging then passed in hosted Chromium run 44011964811, changing the saved object position and surviving persistence.

@@ -1166,11 +1166,11 @@
   justify-content: space-between;
   gap: 12px;
 }
-.mobile-project-toggle {
+.workspace-shell .mobile-project-toggle {
   display: none;
 }
 @media (max-width: 800px) {
-  .mobile-project-toggle {
+  .workspace-shell .mobile-project-toggle {
     display: inline-flex;
   }
   .workspace-sidebar[data-mobile-collapsed="true"] .workspace-projects,
