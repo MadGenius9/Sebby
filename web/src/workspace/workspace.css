@@ -1019,3 +1019,48 @@
   border: 1px solid var(--color-border-secondary);
   background: #fff;
 }
+
+.source-import-panel {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+  min-height: 0;
+}
+.source-import-panel form {
+  display: grid;
+  gap: 10px;
+  max-width: 640px;
+}
+.source-import-panel p {
+  max-width: 760px;
+  color: var(--color-text-secondary);
+}
+.source-import-panel input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+}
+.source-import-panel code {
+  overflow-wrap: anywhere;
+}
+.source-import-check,
+.source-import-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.source-import-list {
+  max-height: 240px;
+  overflow: auto;
+  padding-left: 24px;
+}
+.source-import-list li {
+  margin: 6px 0;
+}
+.source-import-list span {
+  display: block;
+  font-size: 12px;
+}
+.source-import-panel details {
+  margin: 12px 0;
+}

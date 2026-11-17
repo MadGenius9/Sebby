@@ -21,6 +21,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return result as T;
 }
 export const workspaceApi = {
+  reviewSourceZip: async (file: File, name: string, stripRoot: boolean) => {
+    if (file.size > 4_000_000) throw new Error("Source ZIP must be under 4 MB");
+    const response = await fetch(
+      `/api/projects/import-source/review?${new URLSearchParams({ name, stripRoot: String(stripRoot) })}`,
+      {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/zip" },
+        body: file,
+      },
+    );
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Could not inspect ZIP");
+    return result as import("@shared/workspace/schema").SourceImportReview;
+  },
   buildManifest: (runId: string) =>
     request<{ manifest: import("@shared/workspace/schema").BuildManifest }>(
       `/workspace/runs/${runId}/outputs`,

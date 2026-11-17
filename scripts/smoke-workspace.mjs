@@ -1,3 +1,4 @@
+import { zipSync, strToU8 } from 'fflate';
 import Database from 'better-sqlite3';
 import { randomUUID } from 'node:crypto';
 // Exercises the built local-only server over real HTTP with disposable test data.
@@ -41,6 +42,13 @@ try {
   const runtime = await (await fetch(`${base}/api/workspace/runtime?projectId=${project.id}`, { headers })).json(); assert.equal(runtime.available, false);
   const run = await fetch(`${base}/api/workspace/${project.id}/runs`, { method: 'POST', headers, body: JSON.stringify({ revision: 1, command: 'test' }) }); assert.equal(run.status, 503);
   assert.equal((await fetch(`${base}/api/projects/${project.id}/preview`)).status, 401);
+  const sourceZip=zipSync({'small-main/index.html':strToU8('<h1>Imported HTTP source</h1>'),'small-main/.env':strToU8('FIXTURE=excluded')});
+  const sourceReview=await fetch(`${base}/api/projects/import-source/review?name=HTTP%20source&stripRoot=true`,{method:'POST',headers:{...headers,'content-type':'application/zip'},body:sourceZip});
+  assert.equal(sourceReview.status,200);const candidate=await sourceReview.json();assert.equal(candidate.sourceRoot,'small-main/');assert.equal(candidate.skipped.length,1);assert.equal(candidate.document.files[0].path,'index.html');
+  const sourceImport=await fetch(`${base}/api/projects/import`,{method:'POST',headers,body:JSON.stringify(candidate.document)});assert.equal(sourceImport.status,201);
+  const imported=(await sourceImport.json()).project;
+  const sourcePreview=await fetch(`${base}/api/projects/${imported.id}/preview`,{headers});assert.match((await sourcePreview.json()).html,/Imported HTTP source/);
+  assert.equal((await fetch(`${base}/api/projects/import-source/review`,{method:'POST',headers:{'content-type':'application/zip'},body:sourceZip})).status,401);
   // Seed disposable output records to check HTTP delivery; this is not a Docker build.
   const {validateArtifacts}=await import('../server/dist/workspace/artifact-protocol.js');
   const {createHash}=await import('node:crypto');
@@ -57,7 +65,7 @@ try {
   const builtPreview=await fetch(`${base}/api/workspace/runs/${fixtureRun}/build-preview`,{headers});assert.equal(builtPreview.status,200);assert.match((await builtPreview.json()).html,/HTTP build-output fixture/);
   assert.equal((await fetch(`${base}/api/workspace/runs/${fixtureRun}/outputs.zip`)).status,401);
 
-  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, history, agent/proposal routes, seeded build download/preview, unavailable-worker refusal and unauthenticated access.');
+  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, source ZIP review/import, history, agent/proposal routes, seeded build download/preview, unavailable-worker refusal and unauthenticated access.');
 } finally {
   clearTimeout(started); child.kill('SIGTERM');
   const killed = setTimeout(() => child.kill('SIGKILL'), 5000);

@@ -1,3 +1,4 @@
+import { SourceImportPanel } from "./SourceImportPanel";
 import {
   lazy,
   Suspense,
@@ -116,6 +117,7 @@ export function WorkspaceApp() {
   const [newName, setNewName] = useState("");
   const [template, setTemplate] = useState<"blank" | "web">("web");
   const importInput = useRef<HTMLInputElement>(null);
+  const [sourceImport, setSourceImport] = useState(false);
   const [past, setPast] = useState<Project[]>([]);
   const [future, setFuture] = useState<Project[]>([]);
   const projectRef = useRef(project);
@@ -149,6 +151,7 @@ export function WorkspaceApp() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   const adopt = (p: Project) => {
+    setSourceImport(false);
     setProject(p);
     setSaved(fingerprint(p));
     setPast([]);
@@ -345,6 +348,14 @@ export function WorkspaceApp() {
           >
             Import project JSON
           </button>
+          <button
+            type="button"
+            className="btn btn--secondary import-project"
+            disabled={busy}
+            onClick={() => setSourceImport(true)}
+          >
+            Import source ZIP
+          </button>
           <input
             ref={importInput}
             type="file"
@@ -513,7 +524,26 @@ export function WorkspaceApp() {
             <Bot size={17} /> Agents
           </button>
         </nav>
-        {tab === "connections" ? (
+        {sourceImport ? (
+          <SourceImportPanel
+            close={() => setSourceImport(false)}
+            create={async (document) => {
+              if (busy)
+                throw new Error("Wait for the current operation to finish");
+              if (!canLeave()) return;
+              setBusy(true);
+              try {
+                adopt((await workspaceApi.importProject(document)).project);
+                setTab("code");
+                setNotice(
+                  "Source imported as a new project. Review it before running any scripts.",
+                );
+              } finally {
+                setBusy(false);
+              }
+            }}
+          />
+        ) : tab === "connections" ? (
           <section className="workspace-empty">
             <Settings2 size={32} />
             <h1>Connected tools</h1>
@@ -523,7 +553,7 @@ export function WorkspaceApp() {
             </p>
             <dl>
               <dt>GitHub</dt>
-              <dd>Repository import and coding workflow — planned</dd>
+              <dd>GitHub URL import and pull requests — planned</dd>
               <dt>Google Drive</dt>
               <dd>Project references and deliverables — planned</dd>
               <dt>My computer</dt>
@@ -573,8 +603,8 @@ export function WorkspaceApp() {
               files and objects stay together.
             </p>
             <p className="workspace-note">
-              Foundation release · Manual editing and scene tools are ready to
-              try. AI project execution is the next milestone.
+              Create a starter or import source. Assign agents and review their
+              proposed edits; isolated builds require a configured worker.
             </p>
           </section>
         )}

@@ -30,6 +30,6 @@ This is a private sandbox preview, not a deployment or production preview host. 
 
 ## Verification and remaining work
 
-Twenty-nine tests pass. Collector tests use real temporary files, links and size limits. Persistence/auth/download tests use explicit runner fixtures; a CLI fixture checks actual Docker adapter stream handling without running Docker. A trusted authored React/Vite project is built on the test host and its retained modules/CSS are prepared for preview. This is not a host-execution fallback for user projects. A small trusted module fixture is exercised against a minimal test DOM; no visual browser pass is claimed.
+Thirty-six tests pass. Collector tests use real temporary files, links and size limits. Persistence/auth/download tests use explicit runner fixtures; a CLI fixture checks actual Docker adapter stream handling without running Docker. A trusted authored React/Vite project is built on the test host and its retained modules/CSS are prepared for preview. This is not a host-execution fallback for user projects. A small trusted module fixture is exercised against a minimal test DOM; no visual browser pass is claimed.
 
 The built-server HTTP smoke uses disposable seeded output records to verify manifest, ZIP and preview delivery. Real Docker transfer/cleanup, live model use, desktop/mobile interaction, GLB validity, framework routing and production preview origin/network isolation remain release work. Existing data backups should now include build-output BLOBs; retention/deletion controls are not implemented yet.

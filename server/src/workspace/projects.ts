@@ -1,3 +1,4 @@
+import { reviewSourceZip } from "./source-import.js";
 import { z } from "zod";
 import { starter } from "./templates.js";
 import { buildPreview } from "./preview.js";
@@ -12,11 +13,7 @@ import { Hono } from "hono";
 import { bodyLimit } from "hono/body-limit";
 import { db } from "../db.js";
 import { requireUser, type AuthVars } from "../lib/auth.js";
-import {
-  documentSchema,
-  saveSchema,
-  type Project,
-} from "./schema.js";
+import { documentSchema, saveSchema, type Project } from "./schema.js";
 
 type Stored = {
   id: string;
@@ -36,9 +33,9 @@ projectsApi.use("*", requireUser);
 projectsApi.use(
   "*",
   bodyLimit({
-    maxSize: 1_000_000,
+    maxSize: 4_000_000,
     onError: (c) =>
-      c.json({ error: "Project exceeds the 1 MB request limit" }, 413),
+      c.json({ error: "Request exceeds the 4 MB upload limit" }, 413),
   }),
 );
 // Cookie-authenticated writes must originate from this app. No cross-origin API use.
@@ -47,6 +44,52 @@ projectsApi.use("*", async (c, next) => {
   if (c.req.method !== "GET" && origin && origin !== new URL(c.req.url).origin)
     return c.json({ error: "Cross-origin write refused" }, 403);
   await next();
+});
+// ZIP inspection has a separate upload cap; existing JSON project writes keep their limit.
+const jsonLimit = bodyLimit({
+  maxSize: 1_000_000,
+  onError: (c) =>
+    c.json({ error: "Project exceeds the 1 MB request limit" }, 413),
+});
+projectsApi.use("*", (c, next) =>
+  c.req.path.endsWith("/import-source/review") ? next() : jsonLimit(c, next),
+);
+projectsApi.post("/import-source/review", async (c) => {
+  if (
+    !c.req.header("content-type")?.toLowerCase().startsWith("application/zip")
+  )
+    return c.json(
+      { error: "Upload a ZIP with application/zip content type" },
+      415,
+    );
+  const name = c.req.query("name") || "Imported project";
+  if (!documentSchema.shape.name.safeParse(name).success)
+    return c.json(
+      { error: "Enter a project name between 1 and 80 characters" },
+      400,
+    );
+  try {
+    return c.json(
+      await reviewSourceZip(
+        Buffer.from(await c.req.arrayBuffer()),
+        name,
+        c.req.query("stripRoot") === "true",
+      ),
+    );
+  } catch (error) {
+    console.warn("Source ZIP refused:", (error as Error).message.slice(0, 240));
+    return c.json(
+      {
+        error:
+          "Could not import source ZIP. " +
+          ((error as Error).message.startsWith("[")
+            ? "Source paths or content exceed project limits."
+            : (error as Error).message
+          ).slice(0, 240),
+      },
+      400,
+    );
+  }
 });
 projectsApi.get("/", (c) => {
   const rows = db

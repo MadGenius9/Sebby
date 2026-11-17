@@ -174,3 +174,12 @@ export type BuildPreview = {
   manifestHash: string;
   previewVerified: false;
 };
+
+export type SourceImportReview = {
+  document: ProjectDocument;
+  archiveSha256: string;
+  sourceRoot: string;
+  totalBytes: number;
+  skipped: { path: string; reason: string }[];
+  warnings: string[];
+};

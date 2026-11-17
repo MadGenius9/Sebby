@@ -4,7 +4,7 @@
 
 - `npm ci` installed the locked dependency tree before adding Three.js and its types.
 - `npm run typecheck`: server and web TypeScript checks passed.
-- `npm run test:workspace`: 29 tests passed, covering real SQLite CRUD, cross-user isolation, stale revision rejection, cross-origin writes, invalid paths, duplicate files, invalid primitive kinds/scales, malformed JSON, payload size limits, and a separate-process read of saved scene data.
+- `npm run test:workspace`: 36 tests passed, covering real SQLite CRUD, cross-user isolation, stale revision rejection, cross-origin writes, invalid paths, duplicate files, invalid primitive kinds/scales, malformed JSON, payload size limits, and a separate-process read of saved scene data.
 - `npm run build`: Vite production bundle and server TypeScript build passed.
 - Local workspace process reached startup and reported the loopback URL without external service credentials.
 
@@ -18,7 +18,7 @@ Before release, run this flow in a supported browser, inspect screenshots, confi
 
 ## Known scope limits
 
-The current coding editor is plain text. There is no interactive terminal, package installation, repository import, general framework preview hosting, cloud deployment. A configured Docker adapter implements build/test dispatch; its live container behavior remains unverified. Saved HTML/CSS/classic JavaScript preview and Git revision diffs are implemented. The 3D Studio is primitive scene composition, not Blender-equivalent mesh modeling. Project JSON export/import round trips create separate projects. Undo/redo is session-local. Data lives in the configured server SQLite database; this branch does not implement backup automation.
+The current coding editor is plain text. There is no interactive terminal, package installation, GitHub URL cloning, general framework preview hosting, cloud deployment. A configured Docker adapter implements build/test dispatch; its live container behavior remains unverified. Saved HTML/CSS/classic JavaScript preview and Git revision diffs are implemented. The 3D Studio is primitive scene composition, not Blender-equivalent mesh modeling. Project JSON export/import round trips create separate projects. Undo/redo is session-local. Data lives in the configured server SQLite database; this branch does not implement backup automation.
 
 ## Runtime increment checks
 
@@ -30,10 +30,14 @@ A real HTTP smoke test of the built local server also passed: `/workspace` and i
 
 ## Agent/dependency increment checks
 
-Twenty-nine tests now pass. New tests use the actual MCP handler and a scripted localhost Hermes-compatible gateway to exercise the real turn queue, scope instructions, SSE tool row updates and project tool dispatch. No live model/provider calls or paid services are used. The headless fixture creates no desktop lease. Tests verify file/scene proposal review/apply, owner isolation, stale/no-op/revoked rejection, mid-preparation authorization revocation, exact lockfile/image catalog matching and minimal dependency-context preparation. Dependency catalog fixtures test the contract, not real npm resolution or a real React build.
+Thirty-six tests now pass. New tests use the actual MCP handler and a scripted localhost Hermes-compatible gateway to exercise the real turn queue, scope instructions, SSE tool row updates and project tool dispatch. No live model/provider calls or paid services are used. The headless fixture creates no desktop lease. Tests verify file/scene proposal review/apply, owner isolation, stale/no-op/revoked rejection, mid-preparation authorization revocation, exact lockfile/image catalog matching and minimal dependency-context preparation. Dependency catalog fixtures test the contract, not real npm resolution or a real React build.
 
 The real HTTP smoke includes agent/proposal routes and project-specific runtime readiness. Browser review interactions, live Hermes behavior and actual dependency container builds remain unverified.
 
 ## Build output increment checks
 
-Twenty-nine tests pass. Real filesystem collector fixtures cover regular files, links, hardlinks, traversal and size limits. Runner fixtures exercise retained provenance, owner-only ZIP/file access, hash checks and suppression after failure/cancellation/invalid output/unverified cleanup. A Docker CLI fixture checks stream separation; it does not run containers. A trusted authored React/Vite fixture builds and is prepared for sandbox preview; a minimal trusted DOM fixture executes a rebundled module. None of these claims visual UI correctness or real Docker execution. The real HTTP smoke now checks disposable seeded build manifest/download/preview routes. See V2-BUILD-OUTPUTS.md.
+Thirty-six tests pass. Real filesystem collector fixtures cover regular files, links, hardlinks, traversal and size limits. Runner fixtures exercise retained provenance, owner-only ZIP/file access, hash checks and suppression after failure/cancellation/invalid output/unverified cleanup. A Docker CLI fixture checks stream separation; it does not run containers. A trusted authored React/Vite fixture builds and is prepared for sandbox preview; a minimal trusted DOM fixture executes a rebundled module. None of these claims visual UI correctness or real Docker execution. The real HTTP smoke now checks disposable seeded build manifest/download/preview routes. See V2-BUILD-OUTPUTS.md.
+
+## Source import increment checks
+
+Seven new tests bring the suite to 36 passing tests. ZIP inspection checks included/skipped files, optional outer-folder removal, bounded decompression, actual size/CRC, UTF-8, traversal/links, collisions and malformed archives. Authenticated inspection creates no project until the candidate is imported. Imported source supports owner isolation, saved preview, edit/save, Git diff and snapshot creation. A real Git source archive fixture imports. The HTTP smoke also exercises the ZIP review/create/preview routes. Browser file-picker and visual behavior remain unverified. See V2-SOURCE-IMPORT.md.
