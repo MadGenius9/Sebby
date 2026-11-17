@@ -1,3 +1,4 @@
+import { validProjectPath } from "@shared/workspace/schema";
 import { useState } from "react";
 import type { Project } from "./api";
 export function CodingPanel({
@@ -19,21 +20,7 @@ export function CodingPanel({
       setError("This workspace supports up to 40 files per project.");
       return;
     }
-    if (
-      !p ||
-      p.length > 180 ||
-      p.startsWith("/") ||
-      p.includes("\\") ||
-      !p
-        .split("/")
-        .every(
-          (s) =>
-            /^[a-zA-Z0-9_@.-]+$/.test(s) &&
-            s !== "." &&
-            s !== ".." &&
-            ![".git", "node_modules"].includes(s.toLowerCase()),
-        )
-    ) {
+    if (!validProjectPath(p)) {
       setError("Use a relative file path, such as src/app.ts.");
       return;
     }

@@ -81,7 +81,12 @@ try {
   const builtPreview=await fetch(`${base}/api/workspace/runs/${fixtureRun}/build-preview`,{headers});assert.equal(builtPreview.status,200);assert.match((await builtPreview.json()).html,/HTTP build-output fixture/);
   assert.equal((await fetch(`${base}/api/workspace/runs/${fixtureRun}/outputs.zip`)).status,401);
 
-  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, source ZIP review/import, history, agent/proposal routes, real companion CLI read/write/revoke, Drive setup status, knowledge search, seeded build download/preview, unavailable-worker refusal and unauthenticated access.');
+  const editedProject={name:'Edited HTTP project',files:project.files.map(file=>file.path==='index.html'?{...file,content:'<h1>Edited HTTP source</h1>'}:file),scene:project.scene,revision:1};
+  const editedResponse=await fetch(`${base}/api/projects/${project.id}`,{method:'PUT',headers,body:JSON.stringify(editedProject)});assert.equal(editedResponse.status,200);
+  const restoreReview=await fetch(`${base}/api/projects/${project.id}/restore-review?revision=2&target=1`,{headers});assert.equal(restoreReview.status,200);const restoration=await restoreReview.json();assert.match(restoration.diff,/Edited HTTP source/);
+  const restoredResponse=await fetch(`${base}/api/projects/${project.id}/restore`,{method:'POST',headers,body:JSON.stringify({revision:2,targetRevision:1,reviewHash:restoration.reviewHash})});assert.equal(restoredResponse.status,200);const restoredProject=(await restoredResponse.json()).project;assert.equal(restoredProject.revision,3);assert.equal(restoredProject.name,project.name);
+  const restoredHistory=await(await fetch(`${base}/api/projects/${project.id}/revisions`,{headers})).json();assert.equal(restoredHistory.revisions[0].restoredFrom,1);
+  console.log('HTTP smoke passed: entry/bundle, local session, project, preview, source ZIP review/import, history, agent/proposal routes, real companion CLI read/write/revoke, Drive setup status, knowledge search, reviewed restoration, seeded build download/preview, unavailable-worker refusal and unauthenticated access.');
 } finally {
   if(companionProcess){companionProcess.kill('SIGTERM');const force=setTimeout(()=>companionProcess.kill('SIGKILL'),5000);await companionExited;clearTimeout(force);}
   clearTimeout(started); child.kill('SIGTERM');

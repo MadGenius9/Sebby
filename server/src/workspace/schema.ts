@@ -41,6 +41,25 @@ export const objectSchema = z.discriminatedUnion("kind", [
     .extend({ kind: z.literal("mesh"), mesh: meshSchema })
     .strict(),
 ]);
+export function validProjectPath(p: string) {
+  return (
+    p.length > 0 &&
+    p.length <= 180 &&
+    !p.startsWith("/") &&
+    !p.includes("\\") &&
+    p
+      .split("/")
+      .every(
+        (s) =>
+          /^[a-zA-Z0-9_@.-]+$/.test(s) &&
+          s !== "." &&
+          s !== ".." &&
+          !/[. ]$/.test(s) &&
+          ![".git", "node_modules"].includes(s.toLowerCase()) &&
+          !/^(?:con|prn|aux|nul|com[1-9]|lpt[1-9])(?:\.|$)/i.test(s),
+      )
+  );
+}
 const fileSchema = z
   .object({
     path: z
@@ -48,19 +67,8 @@ const fileSchema = z
       .min(1)
       .max(180)
       .refine(
-        (p) =>
-          !p.startsWith("/") &&
-          !p.includes("\\") &&
-          p
-            .split("/")
-            .every(
-              (s) =>
-                /^[a-zA-Z0-9_@.-]+$/.test(s) &&
-                s !== "." &&
-                s !== ".." &&
-                ![".git", "node_modules"].includes(s.toLowerCase()),
-            ),
-        "Use a relative project path without traversal",
+        validProjectPath,
+        "Use a portable relative project path without reserved names or trailing dots",
       ),
     content: z.string().max(100_000),
   })
@@ -218,4 +226,18 @@ export type KnowledgeHit = {
   snippet: string;
   sha256: string;
   score: number;
+};
+
+export type RestoreReview = {
+  projectId: string;
+  baseRevision: number;
+  targetRevision: number;
+  reviewHash: string;
+  diff: string;
+  sceneChanged: boolean;
+  nameChanged: boolean;
+  beforeName: string;
+  afterName: string;
+  beforeScene: ProjectDocument["scene"];
+  afterScene: ProjectDocument["scene"];
 };

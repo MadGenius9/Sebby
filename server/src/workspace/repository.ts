@@ -99,6 +99,15 @@ async function git(cwd: string, args: string[]) {
   });
   return stdout.trim();
 }
+async function preserveSourceBytes(directory: string) {
+  const info = path.join(directory, ".git", "info");
+  await fs.mkdir(info, { recursive: true, mode: 0o700 });
+  await fs.writeFile(
+    path.join(info, "attributes"),
+    "* -text -filter -ident -working-tree-encoding diff\n",
+    { mode: 0o600 },
+  );
+}
 export async function snapshot(document: ProjectDocument, runId: string) {
   if (!/^[0-9a-f-]{36}$/.test(runId)) throw new Error("Invalid snapshot id");
   const root = path.resolve(
@@ -110,6 +119,7 @@ export async function snapshot(document: ProjectDocument, runId: string) {
   try {
     await writeSources(dir, document);
     await git(dir, ["init", "--initial-branch=workspace"]);
+    await preserveSourceBytes(dir);
     await git(dir, ["add", "--force", "--all", "--", "."]);
     await git(dir, [
       "commit",
@@ -135,6 +145,7 @@ export async function revisionDiff(
   try {
     await writeSources(dir, before);
     await git(dir, ["init", "--initial-branch=workspace"]);
+    await preserveSourceBytes(dir);
     await git(dir, ["add", "--force", "--all", "--", "."]);
     await git(dir, ["commit", "--allow-empty", "-m", "Before"]);
     for (const item of await fs.readdir(dir))
@@ -148,6 +159,7 @@ export async function revisionDiff(
         ...gitArgs,
         "diff",
         "--cached",
+        "--text",
         "--no-ext-diff",
         "--no-textconv",
         "--no-color",

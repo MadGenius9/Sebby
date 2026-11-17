@@ -1,3 +1,8 @@
+import {
+  reviewRestoration,
+  applyRestoration,
+  RestoreError,
+} from "./restoration.js";
 import { createGithubImportApi } from "./github-import.js";
 import { searchProject } from "./knowledge.js";
 import { reviewSourceZip } from "./source-import.js";
@@ -201,7 +206,7 @@ projectsApi.get("/:id/revisions", (c) => {
   return c.json({
     revisions: db
       .prepare(
-        "SELECT revision,created_at AS createdAt FROM workspace_revisions WHERE project_id=? ORDER BY revision DESC LIMIT 100",
+        "SELECT r.revision,r.created_at AS createdAt,s.source_revision AS restoredFrom FROM workspace_revisions r LEFT JOIN workspace_restores s ON r.project_id=s.project_id AND r.revision=s.revision WHERE r.project_id=? ORDER BY r.revision DESC LIMIT 100",
       )
       .all(c.req.param("id")),
   });
@@ -278,4 +283,63 @@ projectsApi.get("/:id/search", (c) => {
   if (query.length > 200)
     return c.json({ error: "Search query must be under 200 characters" }, 400);
   return c.json(searchProject(project, query));
+});
+
+projectsApi.get("/:id/restore-review", async (c) => {
+  try {
+    return c.json(
+      await reviewRestoration(
+        c.get("user").id,
+        c.req.param("id"),
+        Number(c.req.query("revision")),
+        Number(c.req.query("target")),
+      ),
+    );
+  } catch (error) {
+    return c.json(
+      {
+        error:
+          error instanceof RestoreError
+            ? error.message
+            : "Could not review the saved revision",
+      },
+      error instanceof RestoreError ? error.status : 503,
+    );
+  }
+});
+projectsApi.post("/:id/restore", async (c) => {
+  const parsed = z
+    .object({
+      revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      targetRevision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      reviewHash: z.string().regex(/^[a-f0-9]{64}$/),
+    })
+    .strict()
+    .safeParse(await c.req.json().catch(() => null));
+  if (!parsed.success)
+    return c.json(
+      { error: "Review an earlier saved revision before restoring" },
+      400,
+    );
+  try {
+    return c.json({
+      project: applyRestoration(
+        c.get("user").id,
+        c.req.param("id"),
+        parsed.data.revision,
+        parsed.data.targetRevision,
+        parsed.data.reviewHash,
+      ),
+    });
+  } catch (error) {
+    return c.json(
+      {
+        error:
+          error instanceof RestoreError
+            ? error.message
+            : "Could not restore the saved revision",
+      },
+      error instanceof RestoreError ? error.status : 503,
+    );
+  }
 });

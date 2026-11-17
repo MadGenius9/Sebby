@@ -6,7 +6,7 @@ This is the **v2 foundation**, not a finished autonomous coding OS. The previous
 
 ## Try the workspace locally
 
-Requires Node.js 22 or newer and npm. From the repository root:
+Requires Node.js 22 or newer, npm and Git. From the repository root:
 
 ```bash
 npm ci
@@ -28,7 +28,7 @@ Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH`
 - Save with revision checks; a stale tab cannot overwrite a newer save.
 - Import project JSON, inspect a small source ZIP, or review a public GitHub commit snapshot before creating a new project.
 - Create a working Web starter and preview saved HTML/CSS/classic JavaScript.
-- Compare saved source revisions through Git diffs.
+- Compare saved source revisions through Git diffs and [review restoration](docs/V2-RESTORATION.md) before creating a new revision from earlier code, notes and scenes.
 - Keep a project brief/requirements/decisions with source-backed search and scoped agent retrieval.
 - Connect Google Drive for selected-file references and new project exports after configuring OAuth.
 - Pair a selected-folder companion for source reads and opt-in reviewed writes with local backups.
@@ -61,7 +61,7 @@ npm run build
 npm run test:http
 ```
 
-57 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real base-image Docker and core desktop/mobile Chromium acceptance passed on GitHub Actions. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. Real dependency-image builds and live provider/Drive setup remain unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
+66 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real base-image Docker and core desktop/mobile Chromium acceptance passed on GitHub Actions. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. Real dependency-image builds and live provider/Drive setup remain unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
 
 See [the implementation roadmap](docs/V2-ROADMAP.md), [architecture decisions](docs/V2-ARCHITECTURE.md), and [provenance](docs/UPSTREAM.md).
 

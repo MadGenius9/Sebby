@@ -1178,3 +1178,8 @@
     display: none;
   }
 }
+
+.restoration-review { min-width: 0; }
+.restoration-review p { color: var(--color-text-secondary); }
+.restoration-scenes { display: grid; gap: 12px; margin: 16px 0; }
+.restoration-scenes pre { max-height: 300px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 12px; border: 1px solid var(--color-border-secondary); }

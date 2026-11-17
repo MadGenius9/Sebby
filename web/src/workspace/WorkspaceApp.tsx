@@ -228,6 +228,30 @@ export function WorkspaceApp() {
       setBusy(false);
     }
   };
+  const restoreSaved = async (
+    review: import("@shared/workspace/schema").RestoreReview,
+  ) => {
+    const current = projectRef.current;
+    if (
+      busy ||
+      !current ||
+      current.id !== review.projectId ||
+      current.revision !== review.baseRevision ||
+      fingerprint(current) !== saved
+    )
+      throw new Error(
+        "Save your manual edits and review the current project before restoring.",
+      );
+    setBusy(true);
+    try {
+      adopt((await workspaceApi.restore(review)).project);
+      setNotice(
+        `Restored revision ${review.targetRevision} as new revision ${review.baseRevision + 1}. Previous history is preserved.`,
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
   const update = (next: Project) => {
     if (busy) return;
     setPast((p) => [...p.slice(-49), projectRef.current!]);
@@ -645,7 +669,12 @@ export function WorkspaceApp() {
             ) : tab === "runs" ? (
               <RuntimePanel key={project.id} project={project} dirty={dirty} />
             ) : tab === "changes" ? (
-              <ChangesPanel key={project.id} project={project} dirty={dirty} />
+              <ChangesPanel
+                key={project.id}
+                project={project}
+                dirty={dirty}
+                restore={restoreSaved}
+              />
             ) : tab === "code" ? (
               <CodingPanel key={project.id} project={project} update={update} />
             ) : (

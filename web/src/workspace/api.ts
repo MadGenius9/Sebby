@@ -21,6 +21,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return result as T;
 }
 export const workspaceApi = {
+  restoreReview: (id: string, revision: number, target: number) =>
+    request<import("@shared/workspace/schema").RestoreReview>(
+      `/projects/${id}/restore-review?revision=${revision}&target=${target}`,
+    ),
+  restore: (review: import("@shared/workspace/schema").RestoreReview) =>
+    request<{ project: Project }>(`/projects/${review.projectId}/restore`, {
+      method: "POST",
+      body: JSON.stringify({
+        revision: review.baseRevision,
+        targetRevision: review.targetRevision,
+        reviewHash: review.reviewHash,
+      }),
+    }),
   reviewGithub: (url: string, name: string, ref: string) =>
     request<import("@shared/workspace/schema").SourceImportReview>(
       "/projects/import-github/review",
@@ -177,9 +190,13 @@ export const workspaceApi = {
       body: JSON.stringify(document),
     }),
   revisions: (id: string) =>
-    request<{ revisions: { revision: number; createdAt: number }[] }>(
-      `/projects/${id}/revisions`,
-    ),
+    request<{
+      revisions: {
+        revision: number;
+        createdAt: number;
+        restoredFrom: number | null;
+      }[];
+    }>(`/projects/${id}/revisions`),
   diff: (id: string, from: number, to: number) =>
     request<{ diff: string; sceneChanged: boolean; nameChanged: boolean }>(
       `/projects/${id}/diff?from=${from}&to=${to}`,
