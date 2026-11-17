@@ -48,6 +48,24 @@ jobs:
       - run: npm run test:http
       - run: npm run test:local
 
+      - name: Assemble Windows x64 test ZIP
+        run: ./scripts/package-windows.ps1 -OutputDirectory "${{ runner.temp }}/sebby-package"
+      - name: Test the extracted Windows ZIP
+        run: |
+          $archive = "${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-1.zip"
+          $directory = "${{ runner.temp }}/Sebby Windows Test"
+          Expand-Archive -LiteralPath $archive -DestinationPath $directory
+          $env:SEBBY_WINDOWS_TEST_ROOT = Join-Path $directory 'Sebby'
+          node --test tests/local-launcher.test.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sebby-Windows-x64-Test-1
+          path: |
+            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-1.zip
+            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-1.zip.sha256
+          compression-level: 0
+          if-no-files-found: error
+
   isolated-worker:
     runs-on: ubuntu-24.04
     timeout-minutes: 15

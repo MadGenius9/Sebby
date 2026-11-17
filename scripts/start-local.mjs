@@ -21,25 +21,32 @@ function run(args, env = process.env) {
 }
 async function main() {
   const flags = new Set(process.argv.slice(2));
-  for (const flag of flags) if (!['--check', '--no-open', '--no-install', '--no-build'].includes(flag) && !/^--port=\d+$/.test(flag)) throw new Error('Use npm run local -- [--check] [--no-open] [--port=8787].');
+  for (const flag of flags) if (!['--check', '--no-open', '--no-install', '--no-build', '--prebuilt'].includes(flag) && !/^--port=\d+$/.test(flag)) throw new Error('Use npm run local -- [--check] [--no-open] [--port=8787].');
   const [major, minor] = process.versions.node.split('.').map(Number);
   if (major < 22 || major === 22 && minor < 12) throw new Error('Install Node.js 22.12 or newer from https://nodejs.org/en/download. Node 22 is tested by CI.');
+  const prebuilt = flags.has('--prebuilt');
   const npm = process.env.npm_execpath;
-  if (!npm || !existsSync(npm)) throw new Error('Start with npm run local (Windows: npm.cmd run local), or double-click Start-Sebby.cmd.');
+  if (!prebuilt && (!npm || !existsSync(npm))) throw new Error('Start with npm run local (Windows: npm.cmd run local), or double-click Start-Sebby.cmd.');
   let git;
   try { git = execFileSync('git', ['--version'], { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }).trim(); }
-  catch { throw new Error('Install Git from https://git-scm.com/downloads/win, then reopen the terminal.'); }
+  catch {
+    if (!prebuilt) throw new Error('Install Git from https://git-scm.com/downloads/win, then reopen the terminal.');
+    git = null;
+  }
   const portFlags = [...flags].filter(f => f.startsWith('--port='));
   if (portFlags.length > 1) throw new Error('Choose one local port.');
   const port = Number(portFlags[0]?.slice(7) ?? process.env.PORT ?? 8787);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Port must be an integer between 1 and 65535.');
-  const dependencyHash = createHash('sha256');
-  for (const file of ['package-lock.json', 'package.json', 'server/package.json', 'web/package.json']) dependencyHash.update(file).update(readFileSync(path.join(root, file)));
-  const lockHash = dependencyHash.digest('hex');
-  const installKey = [process.platform, process.arch, process.versions.modules, lockHash].join(':');
   const marker = path.join(root, 'node_modules', '.sebby-local-install');
-  let installed = false;
-  try { installed = readFileSync(marker, 'utf8') === installKey; } catch {}
+  let installKey, installed = prebuilt;
+  if (!prebuilt) {
+    const dependencyHash = createHash('sha256');
+    for (const file of ['package-lock.json', 'package.json', 'server/package.json', 'web/package.json']) dependencyHash.update(file).update(readFileSync(path.join(root, file)));
+    installKey = [process.platform, process.arch, process.versions.modules, dependencyHash.digest('hex')].join(':');
+    try { installed = readFileSync(marker, 'utf8') === installKey; } catch {}
+  }
+  const buildReady = () => ['server/dist/workspace-server.js', 'web/dist/index.html'].every(file => existsSync(path.join(root, file)));
+  if (prebuilt && !buildReady()) throw new Error('Package files are missing. Extract the entire Sebby test ZIP again.');
   if (flags.has('--check')) { console.log(JSON.stringify({ node: process.versions.node, git, root, url: `http://127.0.0.1:${port}/workspace`, installNeeded: !installed, mode: 'workspace', liveAgents: false }, null, 2)); return; }
   // Do not open a browser to an unrelated service already using Sebby's port.
   await new Promise((resolve, reject) => {
@@ -51,8 +58,8 @@ async function main() {
     await run([npm, 'ci']); if (stopping) return;
     writeFileSync(marker, installKey, { mode: 0o600 });
   }
-  if (!flags.has('--no-build')) { console.log('Building Sebby...'); await run([npm, 'run', 'build']); if (stopping) return; }
-  if (!existsSync(path.join(root, 'server/dist/workspace-server.js')) || !existsSync(path.join(root, 'web/dist/index.html'))) throw new Error('Build files are missing. Run npm run local without --no-build.');
+  if (!prebuilt && !flags.has('--no-build')) { console.log('Building Sebby...'); await run([npm, 'run', 'build']); if (stopping) return; }
+  if (!buildReady()) throw new Error('Build files are missing. Run npm run local without --no-build.');
   const base = `http://127.0.0.1:${port}`;
   console.log('Starting the local workspace. Live AI engines and Google authorization require separate configuration.');
   const finished = run(['--env-file-if-exists=.env.local', 'server/dist/workspace-server.js'], { ...process.env, PORT: String(port), APP_URL: base, SEBBY_WORKSPACE_ONLY: '1', DEV_LOGIN: '1', SESSION_SECRET: process.env.SESSION_SECRET || randomBytes(32).toString('hex') });

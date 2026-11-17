@@ -1,5 +1,9 @@
 # Windows 11 local workspace
 
+For the first portable test, use the **Sebby-Windows-x64-Test-1.zip** artifact from the Windows job in [workspace checks](https://github.com/MadGenius9/Sebby/actions/workflows/workspace.yml). Extract the whole ZIP, read **READ-ME-FIRST.txt**, then double-click **Start-Sebby.cmd**. It uses the included x64 Node runtime. Git is optional for startup and is required for revision comparisons and Git-backed tools. The test job checks the extracted archive from a path containing spaces.
+
+## Running from source
+
 Download the `sebby-v2` source ZIP from GitHub, extract it to a normal folder you control, then double-click **Start-Sebby.cmd**. Do not run inside the ZIP viewer. If prerequisites are missing, the launcher points to the official Node.js and Git installers; install them and reopen the launcher. Use Node.js 22.12 or newer; Node 22 is the CI-tested version. No administrator elevation, registry changes or global PowerShell policy changes are performed by this launcher.
 
 The launcher checks prerequisites, runs `npm ci` when its dependency/Node-ABI marker changes, builds the app and starts it on **http://127.0.0.1:8787/workspace**. It opens the browser after the health endpoint confirms readiness. Keep the console open; press Ctrl+C there to stop. A port already in use is refused before installation or browser opening. To use a different port, run `Start-Sebby.cmd --port=8788` in Command Prompt.
@@ -22,7 +26,7 @@ Move your stopped data and necessary private configuration to the new host, rein
 
 `Start-Sebby.cmd --check` (or `npm.cmd run local -- --check`) prints a read-only prerequisite report without opening a browser, starting the server or creating a database. `npm.cmd run local -- --no-open` leaves browser opening to you. A failed install/build remains visible in the console; a failed install is not marked successful.
 
-`npm run test:local` builds the app and tests prerequisite diagnostics, occupied-port refusal, real loopback startup, saved-project persistence across restarts, and supervised child shutdown. On Windows, it also invokes the actual CMD wrapper from a junction path containing spaces. These are hosted Windows runner checks, not proof of installation on Chuck's Windows 11 machine. Native Windows package/ACL/antivirus behavior and the full WSL/provider/worker setup remain to be validated.
+`npm run test:local` builds the app and tests prerequisite diagnostics, occupied-port refusal, real loopback startup, saved-project persistence across restarts, and supervised child shutdown. On Windows, it also invokes the actual CMD wrapper from a junction path containing spaces. These are hosted Windows runner checks, not proof of installation on Chuck's Windows 11 machine. Windows 11 desktop and antivirus behavior and the full WSL/provider/worker setup still need a PC test.
 
 
 ## Live voice

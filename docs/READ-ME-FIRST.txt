@@ -1,0 +1,29 @@
+Sebby | First Windows 11 x64 test
+
+1. Extract this whole ZIP to a writable folder, such as Documents.
+2. Open the extracted Sebby folder and double-click Start-Sebby.cmd.
+3. In the browser, enter an email to select your local profile.
+4. Create a Web project, edit a file, and click Save. Try a 3D project
+   and export a GLB. Close and reopen Sebby with the same email to
+   verify that your projects are still there.
+
+Keep the console open while using Sebby. Press Ctrl+C there to quit.
+If the browser does not open, visit http://127.0.0.1:8787/workspace.
+If that port is occupied, run Start-Sebby.cmd --port=8788 in Command Prompt.
+Your local data stays in the extracted folder under data. Stop Sebby
+before copying this directory for a backup.
+
+The included Windows x64 runtime starts the local coding and 3D
+workspace without a separate Node.js installation. Install Git for
+Windows if you want to use revision comparisons or Git-backed tools.
+The local profile is independent of your Google account.
+Blender automation, cloud agents and Drive setup are outside this test.
+
+Optional live voice: create .env.local beside Start-Sebby.cmd with
+XAI_API_KEY=your_key_here on its own line. Restart, sign in to the
+workspace, and choose Start live voice. Allow browser microphone access.
+The voice call sends audio to xAI during the call. Keep your key private.
+
+If startup fails, copy the console error. For a quick setup report,
+run Start-Sebby.cmd --check in Command Prompt.
+Source and documentation: https://github.com/MadGenius9/Sebby/tree/sebby-v2
