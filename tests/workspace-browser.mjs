@@ -76,10 +76,11 @@ try{
  });
  await voicePage.route('**/api/local-voice/status',route=>route.fulfill({json:{configured:true}}));
  await voicePage.route('**/api/local-voice/session',route=>route.fulfill({json:{
-   callId:'local-voice-fixture',clientSecret:'fixture',sampleRate:24000,
-   websocketUrl:base.replace('http:','ws:')+'/fixture-voice',session:{tools:[],turn_detection:{type:'server_vad'}},
+   callId:'local-voice-fixture',clientSecret:'fixture',sampleRate:24000,instructions:'Fixture voice instructions',
+   websocketUrl:base.replace('http:','ws:')+'/fixture-voice',session:{instructions:'Fixture voice instructions',tools:[],turn_detection:{type:'server_vad'}},
  }}));
  let microphoneFrame=false, interrupted=false, closed=false;
+ const voiceInstructions=[];
  await voicePage.routeWebSocket('**/fixture-voice',socket=>{
    socket.onClose(()=>{closed=true;});
    socket.onMessage(message=>{
@@ -87,6 +88,7 @@ try{
      const send=(data)=>socket.send(JSON.stringify(data));
      if(event.type==='session.update'){
        assert.deepEqual(event.session.tools,[]);
+       voiceInstructions.push(event.session.instructions);
        send({type:'session.updated'});
      }
      if(event.type==='response.create'){
@@ -106,10 +108,13 @@ try{
      }
    });
  });
- await voicePage.goto(base+'/workspace');await voicePage.getByRole('button',{name:'Start live voice',exact:true}).click();
+ await voicePage.goto(base+'/workspace');
+ await voicePage.getByRole('navigation',{name:'Projects',exact:true}).getByRole('button',{name:'Browser acceptance',exact:true}).click();
+ await voicePage.getByRole('button',{name:'Start live voice',exact:true}).click();
  const call=voicePage.getByRole('region',{name:'Voice call with Sebby',exact:true});
  await call.getByText('Tell me about my idea',{exact:true}).waitFor();
  assert.equal(microphoneFrame,true);assert.equal(interrupted,true);
+ assert.deepEqual(voiceInstructions,['Fixture voice instructions']);
  await voicePage.screenshot({path:path.join(qa,'desktop-local-voice.png')});
  await call.getByRole('button',{name:'End call',exact:true}).click();
  await call.waitFor({state:'hidden'});
@@ -136,6 +141,24 @@ try{
  const savedVoiceProject=savedProjects.projects.find(project=>project.name==='Voice transcript fixture');
  const savedVoiceDocument=await (await voiceContext.request.get(base+'/api/projects/'+savedVoiceProject.id)).json();
  assert.match(savedVoiceDocument.project.files.find(file=>file.path===transcriptDownload.suggestedFilename()).content,/You: Tell me about my idea/);
+ await voicePage.getByRole('navigation',{name:'Projects',exact:true}).getByRole('button',{name:'Browser acceptance',exact:true}).click();
+ const talk=voicePage.getByRole('button',{name:'Talk about this project',exact:true});
+ await talk.click();
+ const briefDialog=voicePage.getByRole('dialog',{name:'Talk about Browser acceptance'});
+ const brief=briefDialog.getByRole('textbox',{name:'Project brief to share',exact:true});
+ assert.match(await brief.inputValue(),/Browseracceptance requires editable meshes/);
+ await briefDialog.getByRole('button',{name:'Cancel',exact:true}).click();
+ await briefDialog.waitFor({state:'hidden'});
+ assert.equal(voiceInstructions.length,1);
+ await talk.click();
+ await brief.fill('Discuss silhouettes for the scene.');
+ await voicePage.screenshot({path:path.join(qa,'desktop-voice-brief.png')});
+ await briefDialog.getByRole('button',{name:'Share brief and start',exact:true}).click();
+ await call.getByText('Hello from Sebby',{exact:true}).waitFor();
+ assert.match(voiceInstructions[1],/"projectName":"Browser acceptance","brief":"Discuss silhouettes for the scene\."/);
+ assert.doesNotMatch(voiceInstructions[1],/requires editable meshes|Persistent source/);
+ await call.getByRole('button',{name:'End call',exact:true}).click();
+ await call.waitFor({state:'hidden'});
  await voiceContext.close();
- assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow','local voice handshake, audio, interruption, captions, hang-up, transcript download and draft attachment (simulated xAI)'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
+ assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow','local voice handshake, audio, interruption, captions, hang-up, transcript download and draft attachment and explicit brief sharing (simulated xAI)'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
 }catch(error){try{await browser?.contexts()[0]?.pages()[0]?.screenshot({path:path.join(qa,'failure.png')});}catch{}throw error;}finally{fixtures?.close();clearTimeout(timer);await browser?.close();child.kill('SIGTERM');const force=setTimeout(()=>child.kill('SIGKILL'),5000);await exited;clearTimeout(force);await rm(root,{recursive:true,force:true});}

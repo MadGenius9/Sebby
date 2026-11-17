@@ -1199,3 +1199,45 @@
 .workspace-call-transcript .source-import-actions {
   flex-wrap: wrap;
 }
+
+.workspace-voice-dialog {
+  width: min(560px, calc(100% - 32px));
+  max-height: 90dvh;
+  padding: 20px;
+  color: var(--color-text-primary);
+  background: var(--color-bg-pane);
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+}
+.workspace-voice-dialog::backdrop {
+  background: #0008;
+}
+.workspace-voice-dialog form {
+  display: grid;
+  gap: 12px;
+}
+.workspace-voice-dialog :is(h2, p) {
+  margin: 0;
+}
+.workspace-voice-dialog textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 8px;
+  color: inherit;
+  background: inherit;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 6px;
+  resize: vertical;
+}
+.workspace-voice-dialog .source-import-actions {
+  flex-wrap: wrap;
+}
+
+
+.workspace-sidebar-footer .workspace-voice-dialog .btn--primary {
+  color: var(--color-bg-pane);
+  background: var(--color-primary);
+}
+.workspace-sidebar-footer .workspace-voice-dialog .btn--primary:hover {
+  background: var(--color-bg-primary-hover);
+}

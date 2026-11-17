@@ -429,7 +429,7 @@ export function WorkspaceApp() {
           />
         </div>
         <div className="workspace-sidebar-footer">
-          {auth.workspaceOnly && <LocalVoiceButton />}
+          {auth.workspaceOnly && <LocalVoiceButton project={project} />}
           {!auth.workspaceOnly && (
             <a
               href="/"
