@@ -86,7 +86,7 @@ test('Windows double-click wrapper runs its read-only check from a path containi
   const directory = await mkdtemp(path.join(os.tmpdir(), 'sebby windows ')), linked = path.join(directory, 'Sebby workspace');
   try {
     if (!packageRoot) await symlink(root, linked, 'junction');
-    const { stdout } = await exec('cmd.exe', ['/d', '/s', '/c', 'Start-Sebby.cmd --check'], { cwd: packageRoot || linked, env: { ...testEnv, SEBBY_LAUNCHER_NO_PAUSE: '1' }, timeout: 15000 });
+    const { stdout } = await exec('cmd.exe', ['/d', '/s', '/c', 'Start-Sebby.cmd --check'], { cwd: packageRoot || linked, env: { ...testEnv, npm_config_loglevel: 'silent', SEBBY_LAUNCHER_NO_PAUSE: '1' }, timeout: 15000 });
     const info = JSON.parse(stdout);
     assert.equal(info.mode, 'workspace'); assert.equal(info.liveAgents, false);
     if (packageRoot) {
