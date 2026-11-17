@@ -35,7 +35,12 @@ export const voiceApi = {
     return r.json() as Promise<VoiceOptions>;
   }).catch((e) => { optionsPromise = null; throw e; })),
   session: (botId: string) => post<VoiceSession>('/session', { botId }),
-  tool: (botId: string, callId: string, name: string, args: unknown) => post<{ output: string; taskSeq?: number }>('/tool', { botId, callId, name, args }),
+  tool: (botId: string, callId: string, name: string, args: unknown, toolCallId: string) => post<{ output: string; taskId?: string }>('/tool', { botId, callId, name, args, toolCallId }),
+  async work(callId: string) {
+    const r = await fetch(`/api/voice/work/${encodeURIComponent(callId)}`, { credentials: 'include', cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error('Lost connection to the voice task service.');
+    return r.json() as Promise<{ awaiting?: string; jobs: { id: string; request: string; status: string; text: string }[] }>;
+  },
   end: (botId: string, callId: string, transcript: { role: 'user' | 'assistant'; text: string }[], error?: string) => post<{ ok: true }>('/end', { botId, callId, transcript, error }),
   /** Best-effort end on tab close. */
   endBeacon: (botId: string, callId: string, transcript: { role: 'user' | 'assistant'; text: string }[]) => {

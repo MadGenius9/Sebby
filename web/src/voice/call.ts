@@ -1,9 +1,8 @@
 // The in-browser voice agent. Grok Bot runs calls as a second, lightweight agent against the xAI realtime
 // API that speaks as the bot and relays real work to the bot's main text agent (send_task). Results come
-// back through the normal transcript stream and are injected into the call as [work_landed] notes.
+// back through call-scoped job status and are injected into the call as [work_landed] notes.
 import { create } from 'zustand';
-import type { Row } from '@shared/types';
-import { sortedRows, useStore } from '../store';
+import { useStore } from '../store';
 import { voiceApi, type VoiceSession } from './api';
 import { MicCapture, PcmPlayer, base64ToPcm, createAudioContext, micErrorMessage, openMic, pcmToBase64 } from './audio';
 
@@ -23,7 +22,7 @@ interface VoiceState {
   /** A response is being generated but no audio yet. */
   thinking: boolean;
   /** send_task requests still running in the text agent. */
-  working: { seq: number; request: string }[];
+  working: { seq: string; request: string }[];
   captions: Caption[];
   error: string | null;
   startedAt: number | null;
@@ -57,9 +56,8 @@ export const isCallActive = (s: VoiceState = useVoice.getState()) => s.status ==
 
 type Json = Record<string, any>;
 
-interface PendingTask { seq: number; request: string; since: number; startedBusy: boolean; sawRunning: boolean; awaitingNoted: boolean; doneSince: number | null }
 
-class VoiceCall {
+export class VoiceCall {
   ended = false;
   readonly ctx: AudioContext;
   readonly player: PcmPlayer;
@@ -75,20 +73,24 @@ class VoiceCall {
   private userSpeaking = false;
   private inflight = new Map<string, { name: string; promise: Promise<string> }>();
   private handledCalls = new Set<string>();
-  private tasks: PendingTask[] = [];
+  private tasks = new Map<string, string>();
+  private workFailures = 0;
+  private approvalNotice: string | null = null;
   private notes: string[] = [];
   private flushWaiting = false;
-  private unsubStore: (() => void) | null = null;
   private checkTimer: ReturnType<typeof setTimeout> | null = null;
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
-  private onUnload = () => { if (this.sess && !this.ended) voiceApi.endBeacon(this.botId, this.sess.callId, this.transcript()); };
+  private onUnload = () => {
+    if (this.sess && !this.ended) voiceApi.endBeacon(this.botId, this.sess.callId, this.transcript());
+    this.end(undefined, true);
+  };
 
   constructor(readonly botId: string) {
     // Created synchronously inside the click so autoplay policy lets it run.
     this.ctx = createAudioContext();
     this.player = new PcmPlayer(this.ctx);
-    this.player.onStart = () => setV({ speaking: true, thinking: false });
-    this.player.onIdle = () => setV({ speaking: false });
+    this.player.onStart = () => { if (!this.ended) setV({ speaking: true, thinking: false }); };
+    this.player.onIdle = () => { if (!this.ended) setV({ speaking: false }); };
   }
 
   micLevel() { return useVoice.getState().muted ? 0 : this.mic?.level ?? 0; }
@@ -107,8 +109,9 @@ class VoiceCall {
     try {
       this.mic = new MicCapture(this.ctx, stream, (pcm) => this.sendAudio(pcm));
       await this.mic.start();
+      if (this.ended) { this.mic.stop(); return; }
       this.sess = await voiceApi.session(this.botId);
-      if (this.ended) { void voiceApi.end(this.botId, this.sess.callId, [], 'Cancelled'); return; }
+      if (this.ended) { void voiceApi.end(this.botId, this.sess.callId, [], 'Cancelled').catch(() => {}); return; }
       setV({ callId: this.sess.callId });
       this.connect(this.sess);
     } catch (e) {
@@ -122,6 +125,7 @@ class VoiceCall {
     this.connectTimer = setTimeout(() => { if (!this.ready) this.end('Couldn’t connect the call'); }, 15000);
     ws.onopen = () => this.send({ type: 'session.update', session: sess.session });
     ws.onmessage = (m) => {
+      if (this.ended) return;
       if (typeof m.data !== 'string') return;
       try { this.handle(JSON.parse(m.data)); } catch (e) { console.warn('[voice] bad event', e); }
     };
@@ -132,7 +136,7 @@ class VoiceCall {
   }
 
   private send(ev: Json) {
-    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(ev));
+    if (!this.ended && this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify(ev));
   }
 
   private sendAudio(pcm: Int16Array) {
@@ -149,13 +153,13 @@ class VoiceCall {
   // ---------- realtime events ----------
 
   private handle(ev: Json) {
+    if (this.ended) return;
     switch (ev.type) {
       case 'session.updated':
         if (!this.ready) {
           this.ready = true;
           if (this.connectTimer) clearTimeout(this.connectTimer);
           setV({ status: 'live', startedAt: Date.now() });
-          this.watchTranscript();
           this.send({ type: 'response.create' }); // the bot greets first
         }
         return;
@@ -241,7 +245,7 @@ class VoiceCall {
         const code = ev.error?.code ?? ev.code ?? '';
         if (/cancel/i.test(String(code)) || /no active response/i.test(String(ev.error?.message ?? ''))) return;
         console.warn('[voice] realtime error', ev.error ?? ev);
-        if (!this.ready) this.end(ev.error?.message ?? 'Voice service error');
+        this.end('Voice service error. Please start a new call.');
         return;
       }
     }
@@ -269,7 +273,7 @@ class VoiceCall {
   // ---------- relay tools ----------
 
   private startTool(callId: string | undefined, name: string | undefined, rawArgs: string | undefined) {
-    if (!callId || !name || this.handledCalls.has(callId)) return;
+    if (this.ended || !callId || !name || this.handledCalls.has(callId)) return;
     this.handledCalls.add(callId);
     let args: Json = {};
     try { args = rawArgs ? JSON.parse(rawArgs) : {}; } catch { /* model sent bad JSON */ }
@@ -277,19 +281,20 @@ class VoiceCall {
     if (name === 'end_the_call') promise = Promise.resolve('Ending the call.');
     else {
       // Show "working" right away; replaced by the real task once the server answers.
-      const placeholder = { seq: -1, request: String(args.request ?? '') };
+      const placeholder = { seq: `pending:${callId}`, request: String(args.request ?? '') };
       const dropOptimistic = () => setV({ working: useVoice.getState().working.filter((x) => x !== placeholder) });
       if (name === 'send_task') setV({ working: [...useVoice.getState().working, placeholder] });
-      promise = voiceApi.tool(this.botId, this.sess!.callId, name, args)
+      promise = voiceApi.tool(this.botId, this.sess!.callId, name, args, callId)
         .then((r) => {
+          if (this.ended) return r.output;
           if (name === 'send_task') {
             dropOptimistic();
-            if (r.taskSeq) this.addTask(r.taskSeq, String(args.request ?? ''));
+            if (r.taskId) this.addTask(r.taskId, String(args.request ?? ''));
           }
           return r.output;
         })
         .catch((e) => {
-          if (name === 'send_task') dropOptimistic();
+          if (!this.ended && name === 'send_task') dropOptimistic();
           return `Tool error: ${(e as Error).message}. Tell the user it didn't go through.`;
         });
     }
@@ -316,66 +321,44 @@ class VoiceCall {
     } else this.flushNotes();
   }
 
-  // ---------- work_landed: watch the text agent finish what was asked by voice ----------
+  // ---------- work_landed: retrieve the exact turn requested by voice ----------
 
-  private addTask(seq: number, request: string) {
-    const live = useStore.getState().live[this.botId];
-    this.tasks.push({ seq, request, since: Date.now(), startedBusy: !!live?.isRunning, sawRunning: false, awaitingNoted: false, doneSince: null });
+  private addTask(id: string, request: string) {
+    this.tasks.set(id, request);
     this.syncWorking();
-    this.scheduleCheck(800);
+    this.scheduleCheck(250);
   }
 
   private syncWorking() {
-    const optimistic = useVoice.getState().working.filter((x) => x.seq === -1);
-    setV({ working: [...this.tasks.map((t) => ({ seq: t.seq, request: t.request })), ...optimistic] });
+    const pending = useVoice.getState().working.filter(x => x.seq.startsWith('pending:'));
+    setV({ working: [...this.tasks].map(([seq, request]) => ({ seq, request })).concat(pending) });
   }
 
-  private watchTranscript() {
-    this.unsubStore = useStore.subscribe((s, prev) => {
-      if (!this.tasks.length) return;
-      if (s.live[this.botId] !== prev.live[this.botId] || s.transcripts[this.botId] !== prev.transcripts[this.botId]) {
-        if (s.live[this.botId]?.isRunning) for (const t of this.tasks) t.sawRunning = true;
-        this.scheduleCheck(400);
-      }
-    });
-  }
 
   private scheduleCheck(ms: number) {
     if (this.checkTimer) clearTimeout(this.checkTimer);
-    this.checkTimer = setTimeout(() => this.checkTasks(), ms);
+    this.checkTimer = setTimeout(() => void this.checkTasks(), ms);
   }
 
-  private checkTasks() {
-    if (this.ended || !this.tasks.length) return;
-    const st = useStore.getState();
-    const live = st.live[this.botId];
-    const rows = sortedRows(st.transcripts[this.botId]);
-    const now = Date.now();
-    let recheck = false;
-    for (const task of [...this.tasks]) {
-      if (live?.isRunning) task.sawRunning = true;
-      const after = rows.filter((r) => r.seq > task.seq);
-      if (live?.awaiting) {
-        if (!task.awaitingNoted) {
-          task.awaitingNoted = true;
-          this.queueNote(`The work you handed off ("${clip(task.request, 160)}") is paused and needs ${this.firstName()}'s OK in the chat: ${live.awaiting.reason}. Tell them it's waiting for their approval on screen.`);
-        }
-        task.doneSince = null;
-        continue;
+  private async checkTasks() {
+    if (this.ended || !this.tasks.size || !this.sess) return;
+    try {
+      const { jobs, awaiting } = await voiceApi.work(this.sess.callId);
+      if (this.ended) return;
+      this.workFailures = 0;
+      if (awaiting && awaiting !== this.approvalNotice) this.queueNote(`Your agent is waiting for approval or input in chat: ${clip(awaiting, 300)}. Ask the user to review it on screen.`);
+      this.approvalNotice = awaiting ?? null;
+      for (const job of jobs) {
+        if (!this.tasks.has(job.id) || job.status === 'pending') continue;
+        this.tasks.delete(job.id);
+        this.queueNote(`Tracked request: ${clip(job.request, 200)}. Status: ${job.status}. Result: ${clip(job.text, 1800) || 'No written result was returned; do not claim a successful outcome.'}`);
       }
-      task.awaitingNoted = false;
-      const replies = after.filter((r) => r.body.type === 'message' && r.body.role === 'assistant' && !r.body.streaming);
-      const streaming = after.some((r) => r.body.type === 'message' && r.body.streaming);
-      const finished = !live?.isRunning && !streaming && (replies.length > 0 || (task.sawRunning && !task.startedBusy)) && now - task.since > 1500;
-      if (!finished) { task.doneSince = null; continue; }
-      // Stay "finished" for a moment: back-to-back queued turns briefly look idle.
-      if (task.doneSince === null) { task.doneSince = now; recheck = true; continue; }
-      if (now - task.doneSince < 1200) { recheck = true; continue; }
-      this.tasks = this.tasks.filter((t) => t !== task);
-      this.queueNote(landedNote(task.request, replies, after));
+      this.syncWorking();
+    } catch {
+      if (this.ended) return;
+      if (++this.workFailures >= 3) { this.end('Lost task updates. Check chat for results; submitted work may continue.'); return; }
     }
-    this.syncWorking();
-    if (recheck) this.scheduleCheck(700);
+    if (this.tasks.size) this.scheduleCheck(1000);
   }
 
   private firstName() {
@@ -405,19 +388,18 @@ class VoiceCall {
 
   // ---------- teardown ----------
 
-  end(error?: string) {
+  end(error?: string, beaconSent = false) {
     if (this.ended) return;
     this.ended = true;
     window.removeEventListener('pagehide', this.onUnload);
     if (this.connectTimer) clearTimeout(this.connectTimer);
     if (this.checkTimer) clearTimeout(this.checkTimer);
-    this.unsubStore?.();
     try { this.ws?.close(1000, 'call ended'); } catch { /* ignore */ }
     this.mic?.stop();
     this.player.dispose();
     void this.ctx.close().catch(() => {});
     const transcript = this.transcript();
-    if (this.sess) void voiceApi.end(this.botId, this.sess.callId, transcript, error).catch((e) => console.warn('[voice] end failed', e));
+    if (this.sess && !beaconSent) void voiceApi.end(this.botId, this.sess.callId, transcript, error).catch((e) => console.warn('[voice] end failed', e));
     if (current === this) current = null;
     if (error) {
       setV({ status: 'error', error, speaking: false, listening: false, thinking: false, working: [] });
@@ -429,15 +411,6 @@ class VoiceCall {
 }
 
 const clip = (s: string, n: number) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
-
-function landedNote(request: string, replies: Row[], after: Row[]): string {
-  const text = replies.map((r) => (r.body.type === 'message' ? r.body.text : '')).join('\n\n').trim();
-  const waiting = after
-    .map((r) => r.body)
-    .filter((b) => b.type === 'card' && b.status === 'pending')
-    .map((b) => (b.type === 'card' ? (b.card === 'approval' ? b.title : b.card === 'question' ? `a question: ${b.question}` : b.card === 'connect' ? `connecting ${b.toolkitName}` : 'a draft to review') : ''));
-  return `The work you handed off just finished. Request: "${clip(request, 200)}". ${text ? `Your text agent replied:\n"""\n${clip(text, 1800)}\n"""` : 'It finished without a written reply.'}${waiting.length ? `\nStill waiting on the user in the chat: ${waiting.join('; ')}.` : ''}`;
-}
 
 /** Play a short TTS sample through the same PCM path the call uses. */
 export async function previewVoice(p: { botId: string; voice?: string; speed?: number; language?: string }): Promise<void> {

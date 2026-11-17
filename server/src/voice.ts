@@ -2,6 +2,7 @@
 // the xAI realtime API, speaks as the bot, and relays real work to the bot's main text agent loop.
 // This module mints the ephemeral secret, builds the voice agent's prompt and tools, serves the relay
 // tools, records call start/end rows, and proxies TTS (voice preview) and STT (composer dictation).
+import { VoiceWork } from './voice-work.js';
 import { Hono } from 'hono';
 import OpenAI from 'openai';
 import { db, now } from './db.js';
@@ -175,7 +176,7 @@ function voiceInstructions(userId: string, bot: any, language: string): string {
   const lang = language !== 'auto' ? langName(language) : null;
 
   return `# Who you are
-You are ${bot.name}, on a live voice call with ${firstName}, the person you work for. You are an AI Bot on their Grokbot team${bot.label ? `, and your job is: ${bot.label}` : ''}.${bot.description ? ` ${bot.description}` : ''}${bot.is_primary ? ` You are ${firstName}'s primary Bot and main point of contact.` : ''}
+You are ${bot.name}, on a live voice call with ${firstName}, the person you work for. You are an AI assistant on their Sebby team${bot.label ? `, and your job is: ${bot.label}` : ''}.${bot.description ? ` ${bot.description}` : ''}${bot.is_primary ? ` You are ${firstName}'s primary Bot and main point of contact.` : ''}
 You are the same ${bot.name} they text with: the same memory, the same computer, the same connected apps. This call is just another way to talk to you.
 
 # How to get things done
@@ -223,7 +224,7 @@ ${recent || '(no messages yet)'}`;
 
 // ---------- calls ----------
 
-interface ActiveCall { id: string; botId: string; userId: string; startedAt: number; startSeq: number; tasks: string[] }
+interface ActiveCall { id: string; botId: string; userId: string; startedAt: number; startSeq: number; tasks: string[]; work: VoiceWork }
 const calls = new Map<string, ActiveCall>();
 
 function callEvent(text: string, call: VoiceCallRecord): EventBody {
@@ -238,6 +239,7 @@ const fmtDuration = (ms: number) => {
 voiceApi.get('/options', async (c) => c.json({ voices: await listVoices(), languages: LANGUAGES, speeds: SPEEDS }));
 
 voiceApi.post('/session', async (c) => {
+  if (!env.xaiKey) return c.json({ error: 'Voice needs an xAI API key configured on the server.' }, 503);
   const user = c.get('user');
   const { botId } = await c.req.json<{ botId: string }>().catch(() => ({ botId: '' }));
   const bot = ownBot(user.id, botId);
@@ -274,7 +276,7 @@ voiceApi.post('/session', async (c) => {
 
   const callId = newId('call');
   const startRow = appendRow(bot.id, 'event', callEvent(`Voice call with ${bot.name} started`, { id: callId, phase: 'started' }));
-  calls.set(callId, { id: callId, botId: bot.id, userId: user.id, startedAt: now(), startSeq: startRow.seq, tasks: [] });
+  calls.set(callId, { id: callId, botId: bot.id, userId: user.id, startedAt: now(), startSeq: startRow.seq, tasks: [], work: new VoiceWork() });
   emitBot(bot.id);
 
   return c.json({
@@ -295,24 +297,32 @@ voiceApi.post('/session', async (c) => {
 
 voiceApi.post('/tool', async (c) => {
   const user = c.get('user');
-  const { botId, callId, name, args } = await c.req.json<{ botId: string; callId?: string; name: string; args?: any }>();
+  const { botId, callId, name, args, toolCallId } = await c.req.json<{ botId: string; callId?: string; name: string; args?: any; toolCallId?: string }>();
   const bot = ownBot(user.id, botId);
   if (!bot) return c.json({ error: 'not found' }, 404);
   const a = args && typeof args === 'object' ? args : {};
   const call = callId ? calls.get(callId) : undefined;
+  if (!call || call.botId !== bot.id || call.userId !== user.id) return c.json({ error: 'Voice call is no longer active.' }, 409);
 
   switch (name) {
     case 'send_task': {
       const request = String(a.request ?? '').trim();
       if (!request) return c.json({ output: 'Error: request is empty. Ask the user what they want done.' });
-      const from: MessageBody['from'] = { kind: 'voice', id: callId ?? 'call', name: 'Voice call' };
-      const row = appendRow(bot.id, 'message', { type: 'message', role: 'user', text: request, from });
-      enqueue(bot.id, {
+      if (request.length > 16000 || typeof toolCallId !== 'string' || !toolCallId || toolCallId.length > 200) return c.json({ error: 'Invalid voice task.' }, 400);
+      const existing = call.work.snapshot().find(job => job.id === toolCallId);
+      if (existing) {
+        if (existing.request !== request) return c.json({ error: 'Tool-call ID already used.' }, 409);
+        return c.json({ output: 'Already handed off; wait for this task result.', taskId: existing.id });
+      }
+      if (call.work.snapshot().length >= 20) return c.json({ error: 'This call has reached its task limit.' }, 429);
+      const from: MessageBody['from'] = { kind: 'voice', id: call.id, name: 'Voice call' };
+      appendRow(bot.id, 'message', { type: 'message', role: 'user', text: request, from });
+      const job = call.work.submit(toolCallId, request, () => enqueue(bot.id, {
         type: 'user',
-        text: `[Voice call: ${String((db.prepare('SELECT name FROM users WHERE id=?').get(user.id) as any)?.name ?? 'the user').split(/\s+/)[0]} asked for this on a live voice call with you. Do the work, then reply in plain, short text with the outcome. Your reply is read aloud on the call, so lead with the answer and skip markdown, links and IDs unless asked.]\n${request}`,
-      });
-      call?.tasks.push(clip(request, 200));
-      return c.json({ output: 'Handed off. You are working on it now; the result will arrive as a [work_landed] note. Tell the user briefly that you are on it (unless you already did), then wait.', taskSeq: row.seq });
+        text: `[Voice call: do this work and reply briefly with the actual outcome. Your reply will be read aloud.]\n${request}`,
+      }));
+      call.tasks.push(clip(request, 200));
+      return c.json({ output: 'Handed off. Wait for the tracked result before reporting completion.', taskId: job.id });
     }
     case 'recall_text_messages': {
       const count = Math.min(30, Math.max(1, Number(a.count) || 10));
@@ -357,10 +367,18 @@ voiceApi.post('/tool', async (c) => {
   }
 });
 
-const xai = new OpenAI({ apiKey: env.xaiKey, baseURL: XAI, timeout: 45_000 });
+voiceApi.get('/work/:callId', (c) => {
+  const call = calls.get(c.req.param('callId'));
+  const user = c.get('user');
+  if (!call || call.userId !== user.id || !ownBot(user.id, call.botId)) return c.json({ error: 'Call not found.' }, 404);
+  return c.json({ jobs: call.work.snapshot(), awaiting: getLive(call.botId).awaiting?.reason }, 200, { 'Cache-Control': 'no-store' });
+});
+
+
 
 async function summarizeCall(botName: string, transcript: { role: string; text: string }[], tasks: string[]): Promise<string | null> {
-  if (!transcript.length && !tasks.length) return null;
+  if (!env.xaiKey || (!transcript.length && !tasks.length)) return null;
+  const xai = new OpenAI({ apiKey: env.xaiKey, baseURL: XAI, timeout: 45_000 });
   const lines = transcript.map((t) => `${t.role === 'user' ? 'User' : botName}: ${t.text}`).join('\n').slice(-12_000);
   const res: any = await xai.responses.create({
     model: env.xaiModel,
