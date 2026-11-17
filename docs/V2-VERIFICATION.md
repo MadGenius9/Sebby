@@ -12,9 +12,9 @@ Drive tests use an injected Google transport, not a live account. The model loop
 
 ## Browser checks
 
-Browser plugin is not available. Regular Playwright/Chromium fails during launch before navigation in this environment; earlier startup logs reported process singleton socket restrictions. No local visual, responsive, gizmo-picking or browser-download pass is claimed. Blender validation does not establish viewport behavior.
+Browser plugin is not available. Regular Playwright/Chromium fails during launch before navigation in this environment; earlier startup logs reported process singleton socket restrictions. Local browser launch remains blocked. Hosted Chromium acceptance passed on GitHub Actions run 44011023185 for commit 4fe1e87 (PR merge checkout), with screenshots reviewed at 1440×1000 and 390×844. It verified source/knowledge edits, extrusion/inset controls, undo/redo, numeric transforms, save/reopen, GLB download, connection controls and mobile page overflow, with no recorded page errors. Direct gizmo dragging, source ZIP file-picker interaction, agent review/apply UI and retained-build preview controls were not covered. Blender validation is a separate independent geometry check.
 
-`npm run test:browser` now contains the real browser acceptance flow: local sign-in → source edit/save → knowledge create/search → editable cube/extrude/inset → undo/redo → transform/save → GLB download → reload/reopen → connection controls → mobile persistence/overflow check. Set `SEBBY_CHROMIUM_BIN` for an installed browser and `SEBBY_QA_DIR` for screenshots/check records outside the source tree. The GitHub workspace workflow runs this on a browser-capable Linux host. A workflow definition is not evidence of a passing run; consult its actual results.
+`npm run test:browser` now contains the real browser acceptance flow: local sign-in → source edit/save → knowledge create/search → editable cube/extrude/inset → undo/redo → transform/save → GLB download → reload/reopen → connection controls → mobile persistence/overflow check. Set `SEBBY_CHROMIUM_BIN` for an installed browser and `SEBBY_QA_DIR` for screenshots/check records outside the source tree. The GitHub workspace workflow runs this on a browser-capable Linux host. Evidence: https://github.com/MadGenius9/Sebby/actions/runs/44011023185 . The first mobile screenshot prompted a further layout fix that collapses project controls after opening a project; subsequent CI must verify that increment.
 
 ## Runtime checks
 
@@ -22,6 +22,6 @@ Docker is absent here. The adapter requires a preloaded digest-pinned image, roo
 
 ## Remaining release gates
 
-Live Google OAuth/Picker consent and a real import/export/revoke; native Windows companion installation, filesystem permissions and reconnect/revoke; a live configured agent editing/testing an imported project; real Docker/dependency-image execution; desktop/mobile browser acceptance. Production hosting/authentication, a separate preview origin, backups and data retention also need deployment review.
+Live Google OAuth/Picker consent and a real import/export/revoke; native Windows companion installation, filesystem permissions and reconnect/revoke; a live configured agent editing/testing an imported project; real Docker/dependency-image execution; further browser coverage of gizmo dragging, proposals and build previews. Production hosting/authentication, a separate preview origin, backups and data retention also need deployment review.
 
 Current product limits are explicit: 40 virtual text files per project, 1 MB saves, source-only imports, a plain-text editor, limited static previews, one-file companion operations and early polygon tools. GitHub URL cloning/PR delivery, working branches, broad framework hosting, parallel task orchestration, voice polish, mesh bevel/UV/material workflows and a packaged desktop installer remain roadmap work. This is a larger working foundation, not a finished autonomous coding OS.

@@ -119,6 +119,7 @@ export function WorkspaceApp() {
     | "connections"
   >("code");
   const [newName, setNewName] = useState("");
+  const [mobileProjectsCollapsed, setMobileProjectsCollapsed] = useState(false);
   const [template, setTemplate] = useState<"blank" | "web">("web");
   const importInput = useRef<HTMLInputElement>(null);
   const [sourceImport, setSourceImport] = useState(false);
@@ -156,6 +157,7 @@ export function WorkspaceApp() {
   }, [dirty]);
   const adopt = (p: Project) => {
     setSourceImport(false);
+    setMobileProjectsCollapsed(true);
     setProject(p);
     setSaved(fingerprint(p));
     setPast([]);
@@ -283,20 +285,34 @@ export function WorkspaceApp() {
   if (!auth.user) return <Login auth={auth} refresh={refreshAuth} />;
   return (
     <div className="workspace-shell">
-      <aside className="workspace-sidebar">
-        <a
-          className="workspace-brand"
-          href="/workspace"
-          onClick={(e) => {
-            if (!canLeave()) e.preventDefault();
-          }}
-        >
-          <img src="/orbit.png" alt="" />
-          <span>
-            Sebby<small>Coding & 3D Studio</small>
-          </span>
-        </a>
-        <div className="workspace-projects">
+      <aside
+        className="workspace-sidebar"
+        data-mobile-collapsed={mobileProjectsCollapsed}
+      >
+        <div className="workspace-brand-row">
+          <a
+            className="workspace-brand"
+            href="/workspace"
+            onClick={(e) => {
+              if (!canLeave()) e.preventDefault();
+            }}
+          >
+            <img src="/orbit.png" alt="" />
+            <span>
+              Sebby<small>Coding & 3D Studio</small>
+            </span>
+          </a>
+          <button
+            type="button"
+            className="btn btn--secondary mobile-project-toggle"
+            aria-expanded={!mobileProjectsCollapsed}
+            aria-controls="workspace-project-controls"
+            onClick={() => setMobileProjectsCollapsed((value) => !value)}
+          >
+            Projects
+          </button>
+        </div>
+        <div className="workspace-projects" id="workspace-project-controls">
           <h2>
             <FolderOpen size={15} /> Projects
           </h2>

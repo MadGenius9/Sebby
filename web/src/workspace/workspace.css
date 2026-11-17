@@ -1159,3 +1159,22 @@
   padding: 12px;
   border: 1px solid var(--color-border-secondary);
 }
+
+.workspace-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.mobile-project-toggle {
+  display: none;
+}
+@media (max-width: 800px) {
+  .mobile-project-toggle {
+    display: inline-flex;
+  }
+  .workspace-sidebar[data-mobile-collapsed="true"] .workspace-projects,
+  .workspace-sidebar[data-mobile-collapsed="true"] .workspace-sidebar-footer {
+    display: none;
+  }
+}

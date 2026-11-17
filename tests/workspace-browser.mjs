@@ -1,3 +1,4 @@
+import {randomUUID} from 'node:crypto';
 // Real browser acceptance on a browser-capable host. Uses disposable local data only.
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
@@ -7,7 +8,7 @@ import path from 'node:path';
 import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'sebby-browser-')),qa=process.env.SEBBY_QA_DIR||path.join(root,'qa'),port=String(25000+Math.floor(Math.random()*25000)),base=`http://127.0.0.1:${port}`;
 await mkdir(qa,{recursive:true});
-const child=spawn(process.execPath,['scripts/workspace-local.mjs'],{stdio:['ignore','pipe','pipe'],env:{...process.env,PORT:port,DB_PATH:path.join(root,'workspace.db'),SEBBY_RUNS_DIR:path.join(root,'runs'),SEBBY_RUNNER_IMAGE:'',SEBBY_GOOGLE_CLIENT_ID:'',SEBBY_CONNECTOR_KEY:''}});
+const child=spawn(process.execPath,['server/dist/workspace-server.js'],{stdio:['ignore','pipe','pipe'],env:{...process.env,SEBBY_WORKSPACE_ONLY:'1',DEV_LOGIN:'1',SESSION_SECRET:randomUUID(),APP_URL:base,PORT:port,DB_PATH:path.join(root,'workspace.db'),SEBBY_RUNS_DIR:path.join(root,'runs'),SEBBY_RUNNER_IMAGE:'',SEBBY_GOOGLE_CLIENT_ID:'',SEBBY_CONNECTOR_KEY:''}});
 const exited=new Promise(resolve=>child.once('exit',resolve));let browser,logs='',timer;const errors=[];
 try{
  await new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(new Error('Workspace did not start: '+logs)),10000);child.stdout.on('data',b=>{logs+=b;if(logs.includes('Sebby workspace:'))resolve();});child.stderr.on('data',b=>logs+=b);child.once('error',reject);child.once('exit',code=>reject(new Error('Workspace exited '+code)));});clearTimeout(timer);

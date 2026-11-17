@@ -61,7 +61,7 @@ npm run build
 npm run test:http
 ```
 
-51 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real container and visual browser validation remain pending. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. Real Docker execution is unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
+51 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real container validation remains pending; core desktop/mobile Chromium acceptance passed on GitHub Actions. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. Real Docker execution is unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
 
 See [the implementation roadmap](docs/V2-ROADMAP.md), [architecture decisions](docs/V2-ARCHITECTURE.md), and [provenance](docs/UPSTREAM.md).
 

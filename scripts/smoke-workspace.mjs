@@ -10,9 +10,9 @@ import assert from 'node:assert/strict';
 const root = await mkdtemp(path.join(tmpdir(), 'sebby-http-'));
 const port = String(20000 + Math.floor(Math.random() * 30000));
 const base = `http://127.0.0.1:${port}`;
-const child = spawn(process.execPath, ['scripts/workspace-local.mjs'], {
+const child = spawn(process.execPath, ['server/dist/workspace-server.js'], {
   stdio: ['ignore', 'pipe', 'pipe'],
-  env: { ...process.env, PORT: port, DB_PATH: path.join(root, 'workspace.db'), SEBBY_RUNS_DIR: path.join(root, 'runs'), SEBBY_RUNNER_IMAGE: '', SEBBY_GOOGLE_CLIENT_ID: '', SEBBY_GOOGLE_CLIENT_SECRET: '', SEBBY_CONNECTOR_KEY: '' },
+  env: { ...process.env, SEBBY_WORKSPACE_ONLY: '1', DEV_LOGIN: '1', SESSION_SECRET: randomUUID(), APP_URL: base, PORT: port, DB_PATH: path.join(root, 'workspace.db'), SEBBY_RUNS_DIR: path.join(root, 'runs'), SEBBY_RUNNER_IMAGE: '', SEBBY_GOOGLE_CLIENT_ID: '', SEBBY_GOOGLE_CLIENT_SECRET: '', SEBBY_CONNECTOR_KEY: '' },
 });
 let companionProcess, companionExited;
 let logs = '';
