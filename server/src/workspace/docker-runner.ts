@@ -140,7 +140,7 @@ export class DockerRunner implements Runner {
         !info.MemoryLimit ||
         !info.SwapLimit ||
         !info.PidsLimit ||
-        !info.CPUCfsQuota
+        !info.CpuCfsQuota
       )
         return {
           available: false,

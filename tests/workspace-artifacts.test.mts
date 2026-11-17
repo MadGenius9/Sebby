@@ -430,8 +430,24 @@ test("saved compiled module previews resolve only retained files and remain unve
     compileBuildPreview(invalid.files),
     /External resources/,
   );
-  const collision = validateArtifacts({version:1,outputDirectory:'dist',files:[rawFile('index.html','<script type="module">import {message} from "./__inline_0.js"; console.log(message);</script>'),rawFile('__inline_0.js','export const message="Inline name collision handled";')]});
-  assert.match((await compileBuildPreview(collision.files)).html,/Inline name collision handled/);
+  const collision = validateArtifacts({
+    version: 1,
+    outputDirectory: "dist",
+    files: [
+      rawFile(
+        "index.html",
+        '<script type="module">import {message} from "./__inline_0.js"; console.log(message);</script>',
+      ),
+      rawFile(
+        "__inline_0.js",
+        'export const message="Inline name collision handled";',
+      ),
+    ],
+  });
+  assert.match(
+    (await compileBuildPreview(collision.files)).html,
+    /Inline name collision handled/,
+  );
   const importMeta = validateArtifacts({
     version: 1,
     outputDirectory: "dist",
@@ -487,13 +503,21 @@ test("Docker attach keeps build transport separate from user-visible logs using 
     payload = fixture();
   await fs.writeFile(
     binary,
-    '#!/usr/bin/env node\nconst command=process.argv[2];if(command==="info")console.log(JSON.stringify({SecurityOptions:["name=rootless"],CgroupVersion:"2",MemoryLimit:true,SwapLimit:true,PidsLimit:true,CPUCfsQuota:true}));else if(command==="create")console.log("fixture-container");else if(command==="start"){process.stdin.resume();process.stdin.on("end",()=>{process.stderr.write("fixture build log\\n");process.stdout.write(' +
+    '#!/usr/bin/env node\nconst command=process.argv[2];if(command==="info")console.log(JSON.stringify({SecurityOptions:["name=rootless"],CgroupVersion:"2",MemoryLimit:true,SwapLimit:true,PidsLimit:true,CpuCfsQuota:true}));else if(command==="create")console.log("fixture-container");else if(command==="start"){process.stdin.resume();process.stdin.on("end",()=>{process.stderr.write("fixture build log\\n");process.stdout.write(' +
       JSON.stringify(JSON.stringify(payload)) +
       ");});}\n",
     { mode: 0o700 },
   );
   const driver = new DockerRunner("node@sha256:" + "a".repeat(64), binary);
+  // Docker's /info JSON uses CpuCfsQuota (the Go field is CPUCfsQuota).
   assert.equal((await driver.readiness()).available, true);
+  const cli = await fs.readFile(binary, "utf8");
+  await fs.writeFile(
+    binary,
+    cli.replace("CpuCfsQuota:true", "CpuCfsQuota:false"),
+  );
+  assert.equal((await driver.readiness()).available, false);
+  await fs.writeFile(binary, cli);
   const p = await create();
   let log = "";
   const result = await driver.execute(
