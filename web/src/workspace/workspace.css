@@ -1064,3 +1064,98 @@
 .source-import-panel details {
   margin: 12px 0;
 }
+
+.knowledge-layout {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px;
+  overflow: auto;
+}
+.knowledge-layout p {
+  color: var(--color-text-secondary);
+}
+.knowledge-editor nav {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.knowledge-editor textarea {
+  width: 100%;
+  min-height: 360px;
+  padding: 12px;
+  font: 14px/1.5 monospace;
+  resize: vertical;
+}
+.knowledge-layout label {
+  display: block;
+  margin: 10px 0;
+}
+.knowledge-search form {
+  display: grid;
+  gap: 8px;
+}
+.knowledge-search pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.knowledge-search article {
+  border-top: 1px solid var(--color-border-secondary);
+  padding: 12px 0;
+}
+.knowledge-search h3,
+.knowledge-search code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 800px) {
+  .knowledge-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.connections-panel {
+  flex: 1;
+  overflow: auto;
+  padding: 24px;
+}
+.drive-panel {
+  max-width: 960px;
+  border-top: 1px solid var(--color-border-secondary);
+  margin-top: 24px;
+  padding-top: 16px;
+}
+.drive-panel p {
+  color: var(--color-text-secondary);
+}
+.drive-file-list {
+  list-style: none;
+  padding: 0;
+}
+.drive-file-list li {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+.drive-reference pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 320px;
+  overflow: auto;
+}
+.mesh-tools {
+  border-top: 1px solid var(--color-border-secondary);
+  padding-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.companion-command {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 12px;
+  border: 1px solid var(--color-border-secondary);
+}

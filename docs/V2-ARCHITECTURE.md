@@ -18,7 +18,7 @@ The local workspace entry point imports no provider/desktop services and binds t
 
 ## 3D documents
 
-Scenes are explicit bounded JSON: UUID, primitive kind, name, position, degree rotation, positive scale and hex color. The viewport and GLB exporter interpret that schema. Session undo/redo retains project snapshots; save history is not yet durable undo. Mesh tools should evolve this versioned scene format rather than store arbitrary executable scripts.
+Scenes are explicit bounded JSON: UUID, primitive/mesh kind, name, position, degree rotation, positive scale and hex color. Meshes add validated finite vertices and convex planar face indices. The viewport and GLB exporter interpret that schema. Session undo/redo retains project snapshots; save history is not yet durable undo. Mesh tools should evolve this versioned scene format rather than store arbitrary executable scripts.
 
 ## Research: shared project brain
 
@@ -49,3 +49,7 @@ This is project MCP authorization, not a sandbox for every native Hermes tool. F
 ## Build output increment
 
 Child stdout/stderr are routed to logs; guest stdout carries one bounded build-output payload. The server validates it without archive extraction and commits BLOBs/manifest with terminal success. Each artifact set retains run/revision/source/image/lock provenance. Raw files are downloaded as attachments. Sandbox preview compilation uses an esbuild plugin that resolves only saved artifact bytes, not host files or packages, and returns HTML as authenticated JSON for an opaque-origin iframe. A preview candidate is never automatically marked verified.
+
+## Knowledge and connection increment
+
+Source-backed knowledge stays in ordinary project files with saved-revision/hash/line retrieval. The Drive adapter uses selected-file scope, session-bound PKCE state, encrypted owner-bound tokens and revocation-safe refresh. The companion exposes outbound-only, owner-scoped source-file tasks with hashed device credentials, local opt-in writes and backups; it is not a shell, GUI-control agent or hostile-filesystem sandbox. See V2-KNOWLEDGE.md, V2-MODELING.md and V2-CONNECTIONS.md for exact limits and evidence.

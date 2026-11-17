@@ -1,3 +1,6 @@
+import { CompanionPanel } from "./CompanionPanel";
+import { DrivePanel } from "./DrivePanel";
+import { KnowledgePanel } from "./KnowledgePanel";
 import { SourceImportPanel } from "./SourceImportPanel";
 import {
   lazy,
@@ -111,6 +114,7 @@ export function WorkspaceApp() {
     | "preview"
     | "runs"
     | "changes"
+    | "knowledge"
     | "agents"
     | "connections"
   >("code");
@@ -523,6 +527,13 @@ export function WorkspaceApp() {
           >
             <Bot size={17} /> Agents
           </button>
+          <button
+            type="button"
+            aria-current={tab === "knowledge" ? "page" : undefined}
+            onClick={() => setTab("knowledge")}
+          >
+            Project brain
+          </button>
         </nav>
         {sourceImport ? (
           <SourceImportPanel
@@ -544,20 +555,17 @@ export function WorkspaceApp() {
             }}
           />
         ) : tab === "connections" ? (
-          <section className="workspace-empty">
+          <section className="connections-panel">
             <Settings2 size={32} />
             <h1>Connected tools</h1>
             <p>
-              These integrations are planned. No account or computer is
-              connected by opening this workspace.
+              Connect tools explicitly. Opening this workspace does not
+              authorize account or computer access.
             </p>
             <dl>
               <dt>GitHub</dt>
               <dd>GitHub URL import and pull requests — planned</dd>
-              <dt>Google Drive</dt>
-              <dd>Project references and deliverables — planned</dd>
-              <dt>My computer</dt>
-              <dd>Companion app with selected-folder access — planned</dd>
+
               <dt>AI execution</dt>
               <dd>
                 {auth.workspaceOnly
@@ -565,10 +573,29 @@ export function WorkspaceApp() {
                   : "Assign a configured agent in the project Agents panel; live engines require full service mode"}
               </dd>
             </dl>
+            <CompanionPanel
+              key={"companion-" + (project?.id || "no-project")}
+              project={project}
+              dirty={dirty}
+              update={update}
+            />
+            <DrivePanel
+              key={project?.id || "no-project"}
+              project={project}
+              dirty={dirty}
+              update={update}
+            />
           </section>
         ) : project ? (
           <fieldset className="workspace-content" disabled={busy}>
-            {tab === "agents" ? (
+            {tab === "knowledge" ? (
+              <KnowledgePanel
+                key={project.id}
+                project={project}
+                dirty={dirty}
+                update={update}
+              />
+            ) : tab === "agents" ? (
               <AgentsPanel
                 key={project.id}
                 project={project}

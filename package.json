@@ -13,7 +13,9 @@
     "typecheck": "npm run typecheck -w server && npm run typecheck -w web",
     "workspace": "npm run build && node scripts/workspace-local.mjs",
     "test:workspace": "node --import tsx --test tests/workspace*.test.mts",
-    "test:http": "npm run build && node scripts/smoke-workspace.mjs"
+    "test:http": "npm run build && node scripts/smoke-workspace.mjs",
+    "test:browser": "npm run build && node tests/workspace-browser.mjs",
+    "test:docker": "node --import tsx tests/docker-live.mts"
   },
   "engines": {
     "node": ">=22"

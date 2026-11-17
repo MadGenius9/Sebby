@@ -1,3 +1,4 @@
+import { validateMesh } from "./mesh.js";
 import { z } from "zod";
 
 const vector = z.tuple([
@@ -10,7 +11,7 @@ const scale = z.tuple([
   z.number().min(0.01).max(1000),
   z.number().min(0.01).max(1000),
 ]);
-export const objectSchema = z
+const baseObjectSchema = z
   .object({
     id: z.string().uuid(),
     name: z.string().trim().min(1).max(80),
@@ -21,6 +22,25 @@ export const objectSchema = z
     color: z.string().regex(/^#[0-9a-fA-F]{6}$/),
   })
   .strict();
+export const meshSchema = z
+  .object({
+    vertices: z.array(vector).min(1).max(2048),
+    faces: z
+      .array(z.array(z.number().int().min(0).max(2047)).min(3).max(16))
+      .min(1)
+      .max(2048),
+  })
+  .strict()
+  .superRefine((mesh, ctx) => {
+    const error = validateMesh(mesh);
+    if (error) ctx.addIssue({ code: "custom", message: error });
+  });
+export const objectSchema = z.discriminatedUnion("kind", [
+  baseObjectSchema,
+  baseObjectSchema
+    .extend({ kind: z.literal("mesh"), mesh: meshSchema })
+    .strict(),
+]);
 const fileSchema = z
   .object({
     path: z
@@ -182,4 +202,13 @@ export type SourceImportReview = {
   totalBytes: number;
   skipped: { path: string; reason: string }[];
   warnings: string[];
+};
+
+export type KnowledgeHit = {
+  path: string;
+  startLine: number;
+  endLine: number;
+  snippet: string;
+  sha256: string;
+  score: number;
 };

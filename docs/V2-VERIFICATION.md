@@ -1,43 +1,27 @@
-# Foundation verification
+# Current verification
 
-## Passed in this workspace
+## Passed locally
 
-- `npm ci` installed the locked dependency tree before adding Three.js and its types.
-- `npm run typecheck`: server and web TypeScript checks passed.
-- `npm run test:workspace`: 36 tests passed, covering real SQLite CRUD, cross-user isolation, stale revision rejection, cross-origin writes, invalid paths, duplicate files, invalid primitive kinds/scales, malformed JSON, payload size limits, and a separate-process read of saved scene data.
-- `npm run build`: Vite production bundle and server TypeScript build passed.
-- Local workspace process reached startup and reported the loopback URL without external service credentials.
+- Server and web TypeScript checks.
+- 51 workspace tests covering persistence, ownership/revisions, Git snapshots/diffs, source ZIP review, scoped agents/proposals, dependency selection, runner lifecycle fixtures, retained build outputs, knowledge search, mesh operations, Drive protocol fixtures and the companion broker/filesystem implementation.
+- Production Vite/server builds and real HTTP smoke. The smoke checks source import/preview, knowledge, agent/proposal routes, retained-output delivery fixtures, unavailable-worker refusal and session isolation.
+- The actual companion CLI paired over HTTP in a separate process, read a disposable source file, wrote a reviewed replacement with a local backup and was revoked. No host commands were dispatched through it.
+- Three.js GLTFExporter output independently imported by Blender 4.3.2: one mesh, 108 vertices, 36 polygons and expected dimensions. Run with `SEBBY_BLENDER_BIN=/usr/bin/blender npm run test:workspace` to repeat this optional native check.
 
-## Browser acceptance remains blocked
+Drive tests use an injected Google transport, not a live account. The model loop uses a scripted localhost Hermes gateway, not a live provider. Docker transport tests use fixtures, not real containers. Those distinctions remain release gates.
 
-Browser plugin was not available. Regular Playwright attempted a Chromium launch; it failed before navigation with `socket() failed: Operation not permitted` in Chromium's process singleton startup. The separate CUA cloud browser could not reach the loopback preview (`ERR_CONNECTION_REFUSED`). No visual, responsive, interaction, console-health or GLB download pass is claimed.
+## Browser checks
 
-The intended browser acceptance flow is: local sign-in → create project → add/edit source → save → add primitive → edit transforms → duplicate → undo/redo → save → export GLB → reload/reopen → confirm code and transforms → inspect Connections → verify desktop and phone layouts.
+Browser plugin is not available. Regular Playwright/Chromium fails during launch before navigation in this environment; earlier startup logs reported process singleton socket restrictions. No local visual, responsive, gizmo-picking or browser-download pass is claimed. Blender validation does not establish viewport behavior.
 
-Before release, run this flow in a supported browser, inspect screenshots, confirm no console errors, and parse the exported GLB or import it into an independent viewer. Test Windows separately for the local companion when implemented. No live model, OAuth, Google Drive, Orgo or desktop calls have been performed.
+`npm run test:browser` now contains the real browser acceptance flow: local sign-in → source edit/save → knowledge create/search → editable cube/extrude/inset → undo/redo → transform/save → GLB download → reload/reopen → connection controls → mobile persistence/overflow check. Set `SEBBY_CHROMIUM_BIN` for an installed browser and `SEBBY_QA_DIR` for screenshots/check records outside the source tree. The GitHub workspace workflow runs this on a browser-capable Linux host. A workflow definition is not evidence of a passing run; consult its actual results.
 
-## Known scope limits
+## Runtime checks
 
-The current coding editor is plain text. There is no interactive terminal, package installation, GitHub URL cloning, general framework preview hosting, cloud deployment. A configured Docker adapter implements build/test dispatch; its live container behavior remains unverified. Saved HTML/CSS/classic JavaScript preview and Git revision diffs are implemented. The 3D Studio is primitive scene composition, not Blender-equivalent mesh modeling. Project JSON export/import round trips create separate projects. Undo/redo is session-local. Data lives in the configured server SQLite database; this branch does not implement backup automation.
+Docker is absent here. The adapter requires a preloaded digest-pinned image, rootless Docker, cgroup v2 and resource controls; it refuses direct host execution. `npm run test:docker` performs a real build with output transfer, syntax test, failing test and cancellation on an operator-configured worker. It provisions nothing. Run this on a real worker before calling the runtime verified.
 
-## Runtime increment checks
+## Remaining release gates
 
-`npm run test:workspace` now runs 29 passing tests, including real Git snapshot commits/diffs, saved revision transactions, JSON import, reserved/case/prefix collision rejection, preview compilation/CSP placement, and the authored Web starter's syntax/build commands in a trusted test fixture. Runner lifecycle coverage uses an explicit test double (success/nonzero exit, owner checks, revision conflicts, SSE output, cancellation, timeout, output limits, cleanup failure and restart recovery). These are not real container tests.
+Live Google OAuth/Picker consent and a real import/export/revoke; native Windows companion installation, filesystem permissions and reconnect/revoke; a live configured agent editing/testing an imported project; real Docker/dependency-image execution; desktop/mobile browser acceptance. Production hosting/authentication, a separate preview origin, backups and data retention also need deployment review.
 
-Docker is absent. A bwrap isolation probe failed with `NETLINK_ROUTE socket: Operation not permitted`. The adapter refuses to run code directly on the application host. Visible Preview/Runs/Changes interactions, GLB export and mobile layout remain unverified until browser access is available.
-
-A real HTTP smoke test of the built local server also passed: `/workspace` and its JavaScript bundle, local session creation, Web starter project creation, preview compilation, revision history, unavailable-worker refusal (503), and unauthenticated access rejection (401). Run `npm run test:http` to rebuild and repeat with disposable data. This checks server assembly and routing, not browser rendering.
-
-## Agent/dependency increment checks
-
-Thirty-six tests now pass. New tests use the actual MCP handler and a scripted localhost Hermes-compatible gateway to exercise the real turn queue, scope instructions, SSE tool row updates and project tool dispatch. No live model/provider calls or paid services are used. The headless fixture creates no desktop lease. Tests verify file/scene proposal review/apply, owner isolation, stale/no-op/revoked rejection, mid-preparation authorization revocation, exact lockfile/image catalog matching and minimal dependency-context preparation. Dependency catalog fixtures test the contract, not real npm resolution or a real React build.
-
-The real HTTP smoke includes agent/proposal routes and project-specific runtime readiness. Browser review interactions, live Hermes behavior and actual dependency container builds remain unverified.
-
-## Build output increment checks
-
-Thirty-six tests pass. Real filesystem collector fixtures cover regular files, links, hardlinks, traversal and size limits. Runner fixtures exercise retained provenance, owner-only ZIP/file access, hash checks and suppression after failure/cancellation/invalid output/unverified cleanup. A Docker CLI fixture checks stream separation; it does not run containers. A trusted authored React/Vite fixture builds and is prepared for sandbox preview; a minimal trusted DOM fixture executes a rebundled module. None of these claims visual UI correctness or real Docker execution. The real HTTP smoke now checks disposable seeded build manifest/download/preview routes. See V2-BUILD-OUTPUTS.md.
-
-## Source import increment checks
-
-Seven new tests bring the suite to 36 passing tests. ZIP inspection checks included/skipped files, optional outer-folder removal, bounded decompression, actual size/CRC, UTF-8, traversal/links, collisions and malformed archives. Authenticated inspection creates no project until the candidate is imported. Imported source supports owner isolation, saved preview, edit/save, Git diff and snapshot creation. A real Git source archive fixture imports. The HTTP smoke also exercises the ZIP review/create/preview routes. Browser file-picker and visual behavior remain unverified. See V2-SOURCE-IMPORT.md.
+Current product limits are explicit: 40 virtual text files per project, 1 MB saves, source-only imports, a plain-text editor, limited static previews, one-file companion operations and early polygon tools. GitHub URL cloning/PR delivery, working branches, broad framework hosting, parallel task orchestration, voice polish, mesh bevel/UV/material workflows and a packaged desktop installer remain roadmap work. This is a larger working foundation, not a finished autonomous coding OS.

@@ -17,7 +17,8 @@ Assignment applies to the agent's turns until unassigned, including any existing
 |---|---|
 | `project_overview` | Assigned project/grant IDs, saved revision, file metadata, scene count and run permission |
 | `project_read_file` | One exact-revision text file |
-| `project_read_scene` | The exact-revision primitive scene |
+| `project_read_scene` | The exact-revision scene, including validated polygon meshes |
+| `project_search` | Keyword matches with saved revision, path, line range and source hash |
 | `project_propose_changes` | Persistent pending proposal of up to ten file changes and/or a replacement scene |
 | `project_proposal_status` | Pending/applied/rejected/revoked status, staleness and applied revision |
 | `project_start_run` | An isolated build/test request, only under explicit run permission |

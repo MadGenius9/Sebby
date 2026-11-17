@@ -21,13 +21,17 @@ Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH`
 
 - Create and reopen projects with persisted files and scenes.
 - Add and edit bounded text files in a plain-text editor.
-- Create boxes, spheres and cylinders in a Three.js viewport.
-- Select objects; change name, position, rotation, scale and material color.
+- Create primitives and editable polygon meshes in a Three.js viewport.
+- Select objects; use transform gizmos/snapping, numeric transforms and material color.
+- Extrude/inset faces, triangulate and edit vertices with validated polygon topology.
 - Duplicate/remove objects, undo/redo changes within the open session, and export scenes as GLB.
 - Save with revision checks; a stale tab cannot overwrite a newer save.
 - Import project JSON or inspect a small source ZIP before creating a new project.
 - Create a working Web starter and preview saved HTML/CSS/classic JavaScript.
 - Compare saved source revisions through Git diffs.
+- Keep a project brief/requirements/decisions with source-backed search and scoped agent retrieval.
+- Connect Google Drive for selected-file references and new project exports after configuring OAuth.
+- Pair a selected-folder companion for source reads and opt-in reviewed writes with local backups.
 - Capture private Git snapshots and persist/stream build/test run records through a configured isolated Docker adapter.
 - Cancel runs and track timeouts, output limits, interruptions and cleanup failures.
 - Retain validated successful build files with revision/source/image/lock provenance.
@@ -38,9 +42,9 @@ Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH`
 - User-scoped project API, schema validation, request limits and cross-origin write checks.
 - Light/dark token support inherited from Bot HQ and responsive workspace layout.
 
-**Not connected yet:** an interactive terminal, GitHub URL cloning, Google Drive, the PC companion, Blender, mesh/vertex editing, advanced automatic modeling, deployment, GBrain and cloud hosting. The Connections screen reports these as planned.
+**Not connected yet:** an interactive terminal, GitHub URL cloning, Blender automation, advanced modeling, deployment, GBrain and cloud hosting. Connection controls report actual setup/connection state. Live Google and native Windows validation are still pending.
 
-Projects currently contain up to 40 virtual text files (100,000 characters each), 100 primitive objects and a 1 MB save request. Files are stored as project data; build/test runs materialize a private Git snapshot and transfer source to an ephemeral container. Docker readiness and native worker verification are required; no host execution fallback exists. See [runtime setup and limits](docs/V2-RUNTIME.md) and [build outputs/previews](docs/V2-BUILD-OUTPUTS.md).
+Projects currently contain up to 40 virtual text files (100,000 characters each), 100 scene objects and a 1 MB save request. Files are stored as project data; build/test runs materialize a private Git snapshot and transfer source to an ephemeral container. Docker readiness and native worker verification are required; no host execution fallback exists. See [connection setup](docs/V2-CONNECTIONS.md), [modeling](docs/V2-MODELING.md), [project knowledge](docs/V2-KNOWLEDGE.md), [runtime setup and limits](docs/V2-RUNTIME.md) and [build outputs/previews](docs/V2-BUILD-OUTPUTS.md).
 
 ## Existing Bot HQ services
 
@@ -57,7 +61,7 @@ npm run build
 npm run test:http
 ```
 
-Thirty-six tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real container and visual browser validation remain pending. A separate real HTTP smoke test passes for the built server. Real Docker execution is unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
+51 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real container and visual browser validation remain pending. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. Real Docker execution is unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
 
 See [the implementation roadmap](docs/V2-ROADMAP.md), [architecture decisions](docs/V2-ARCHITECTURE.md), and [provenance](docs/UPSTREAM.md).
 

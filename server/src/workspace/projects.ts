@@ -1,3 +1,4 @@
+import { searchProject } from "./knowledge.js";
 import { reviewSourceZip } from "./source-import.js";
 import { z } from "zod";
 import { starter } from "./templates.js";
@@ -266,4 +267,13 @@ projectsApi.get("/:id/preview", (c) => {
   } catch (e) {
     return c.json({ error: (e as Error).message }, 400);
   }
+});
+
+projectsApi.get("/:id/search", (c) => {
+  const project = ownedProject(c.get("user").id, c.req.param("id"));
+  if (!project) return c.json({ error: "Project not found" }, 404);
+  const query = c.req.query("q") || "";
+  if (query.length > 200)
+    return c.json({ error: "Search query must be under 200 characters" }, 400);
+  return c.json(searchProject(project, query));
 });

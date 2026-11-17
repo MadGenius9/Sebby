@@ -21,6 +21,84 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return result as T;
 }
 export const workspaceApi = {
+  companions: () =>
+    request<{
+      companions: {
+        id: string;
+        label: string;
+        rootName: string;
+        writable: number;
+        active: number;
+        lastSeen: number;
+        createdAt: number;
+      }[];
+    }>("/companions"),
+  companionPair: () =>
+    request<{ code: string; expiresAt: number }>("/companions/pairing", {
+      method: "POST",
+      body: "{}",
+    }),
+  revokeCompanion: (id: string) =>
+    request<{ ok: boolean }>(`/companions/${id}/revoke`, {
+      method: "POST",
+      body: "{}",
+    }),
+  companionTask: (id: string, payload: unknown) =>
+    request<{ id: string }>(`/companions/${id}/jobs`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
+  companionJob: (id: string, jobId: string) =>
+    request<{ id: string; state: string; result: any }>(
+      `/companions/${id}/jobs/${jobId}`,
+    ),
+  driveStatus: () =>
+    request<{
+      configured: boolean;
+      connected: boolean;
+      scope: string;
+      pickerConfigured: boolean;
+    }>("/drive/status"),
+  driveConnect: () =>
+    request<{ url: string }>("/drive/connect", { method: "POST", body: "{}" }),
+  driveDisconnect: () =>
+    request<{ connected: boolean; revoked: boolean }>("/drive/disconnect", {
+      method: "POST",
+      body: "{}",
+    }),
+  drivePicker: () =>
+    request<{ accessToken: string; apiKey: string; appId: string }>(
+      "/drive/picker-session",
+      { method: "POST", body: "{}" },
+    ),
+  driveFiles: (pageToken?: string) =>
+    request<{
+      files: {
+        id: string;
+        name: string;
+        mimeType: string;
+        modifiedTime?: string;
+      }[];
+      nextPageToken: string | null;
+    }>(
+      `/drive/files${pageToken ? "?pageToken=" + encodeURIComponent(pageToken) : ""}`,
+    ),
+  driveReference: (id: string) =>
+    request<{
+      path: string;
+      content: string;
+      source: { name: string; fileId: string };
+    }>(`/drive/files/${encodeURIComponent(id)}/reference`),
+  driveExport: (projectId: string, revision: number) =>
+    request<{ file: { id: string; name: string }; revision: number }>(
+      "/drive/export",
+      { method: "POST", body: JSON.stringify({ projectId, revision }) },
+    ),
+  search: (id: string, query: string) =>
+    request<{
+      revision: number;
+      hits: import("@shared/workspace/schema").KnowledgeHit[];
+    }>(`/projects/${id}/search?q=${encodeURIComponent(query)}`),
   reviewSourceZip: async (file: File, name: string, stripRoot: boolean) => {
     if (file.size > 4_000_000) throw new Error("Source ZIP must be under 4 MB");
     const response = await fetch(

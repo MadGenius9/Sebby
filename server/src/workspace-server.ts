@@ -1,3 +1,5 @@
+import { companionApi } from './workspace/companion.js';
+import { driveApi } from './workspace/drive.js';
 import { artifactsApi } from './workspace/artifact-api.js';
 import { collaborationApi } from './workspace/collaboration-api.js';
 import { runsApi, runService } from './workspace/runs.js';
@@ -37,6 +39,8 @@ app.route('/api/workspace', artifactsApi);
 app.route('/api/workspace', collaborationApi);
 app.route('/api/workspace', runsApi);
 app.route('/api/projects', projectsApi);
+app.route('/api/drive', driveApi);
+app.route('/api/companions', companionApi);
 app.all('/api/*', c => c.json({ error: 'This feature is not connected in workspace mode' }, 404));
 const webDist = fileURLToPath(new URL('../../web/dist/', import.meta.url));
 app.use('/*', serveStatic({ root: path.relative(process.cwd(), webDist) }));

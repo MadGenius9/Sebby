@@ -12,7 +12,7 @@ Acceptance: API tests and build pass; visible create/edit/save/reopen/export wor
 
 ## Milestone 2 — Complete coding task (in progress)
 
-Implemented increment: private Git snapshots, saved revision diffs, a dependency-free Web starter, JSON import, saved browser-code preview, and a Docker build/test adapter with persisted/SSE logs, cancellation, limits and recovery. Agent assignments, file/scene proposals, user review/apply, actual MCP routing and a scripted headless gateway round trip are implemented. Dependency image selection matches exact npm lock hashes, with a minimal build-context helper. Build output retention, ZIP/file downloads and limited sandbox preview preparation are implemented. A reviewed source-only ZIP importer accepts small source archives without executing them. A trusted React/Vite fixture build passes. Thirty-six tests pass; live model, container and browser validation remain pending. See V2-RUNTIME.md.
+Implemented increment: private Git snapshots, saved revision diffs, a dependency-free Web starter, JSON import, saved browser-code preview, and a Docker build/test adapter with persisted/SSE logs, cancellation, limits and recovery. Agent assignments, file/scene proposals, user review/apply, actual MCP routing and a scripted headless gateway round trip are implemented. Dependency image selection matches exact npm lock hashes, with a minimal build-context helper. Build output retention, ZIP/file downloads and limited sandbox preview preparation are implemented. A reviewed source-only ZIP importer accepts small source archives without executing them. A trusted React/Vite fixture build passes. 51 tests pass; live model, container and browser validation remain pending. See V2-RUNTIME.md.
 
 Remaining: validate the isolated worker on a real Docker host, validate real dependency-image builds, clone GitHub repositories and handle binary assets/larger projects, add working branches and review/apply diffs, validate real container output transfer and host general framework previews on a separate authenticated origin. Project tools are now registered in the Hermes MCP adapter and bound turns skip desktop preparation; validate that workflow on a real engine. Expand task/run provenance before broader release.
 
@@ -20,21 +20,21 @@ Acceptance: import one small repository, request a change, inspect edits, execut
 
 ## Milestone 3 — Project brain and Drive
 
-Add source-backed project knowledge: requirements, dated decisions, file/reference provenance, and resumable task context. Start with keyword retrieval. Evaluate GBrain behind a memory adapter; do not replace Sebby's identity or agent engine. See V2-ARCHITECTURE.md for research sources.
+Implemented initial source-backed project knowledge: requirements, dated decisions, file/reference provenance, and resumable task context. Keyword retrieval and scoped project_search are implemented. Live model acceptance remains pending. See V2-KNOWLEDGE.md. Evaluate GBrain behind a memory adapter; do not replace Sebby's identity or agent engine. See V2-ARCHITECTURE.md for research sources.
 
-Connect Google Drive with explicit OAuth scope selection and authorized-file handling. Import references and save deliverables. Account connection and sharing/deletion policies must be visible. A public repository is never a place for personal memory, Drive documents, credentials or live account data.
+Google Drive selected-file OAuth, encrypted credentials, Picker/import/export/disconnect are implemented with fixture coverage. Live authorization requires configured Google credentials and user consent; see V2-CONNECTIONS.md. Import references and save deliverables. Account connection and sharing/deletion policies must be visible. A public repository is never a place for personal memory, Drive documents, credentials or live account data.
 
 Acceptance: a new agent session recovers the right project requirements and cites its source; an authorized Drive file is imported and a report exported without mixing project scopes.
 
 ## Milestone 4 — Computer companion
 
-Review the archived Electron file/credential services before reuse. Pair a local companion to the cloud with selected roots, scoped tools, connection status, revoke/disconnect controls and a visible action log. Secure command execution and process-tree cancellation need native Windows testing.
+A Node selected-folder companion now pairs outbound, lists/reads source and optionally writes reviewed existing files with backups. Its actual CLI passed a local HTTP round trip. Windows certification and native packaging remain pending; see V2-CONNECTIONS.md. Review the archived Electron services before reuse. Pair a local companion to the cloud with selected roots, scoped tools, connection status, revoke/disconnect controls and a visible action log. Secure command execution and process-tree cancellation need native Windows testing.
 
 Acceptance: cloud AI edits and tests one selected local project. Disconnection prevents new commands. No unrelated folder becomes accessible.
 
 ## Milestone 5 — Modeling
 
-Grow from primitive scenes to transform gizmos, snapping, grouping, mesh data, vertex/edge/face selection, extrusion, inset and bevel. Add validated AI scene-operation tools with preview/checkpoints; evaluate Blender import/export and automation separately.
+Transform gizmos/snapping, bounded mesh data, face selection, vertex edits, triangulation, extrusion and inset are implemented. The exported fixture passes independent Blender import. Grouping, edge editing, bevel and larger modeling workflows remain. See V2-MODELING.md. Add validated AI scene-operation tools with preview/checkpoints; evaluate Blender import/export and automation separately.
 
 Acceptance: build an editable prop, modify it manually and through a real agent tool call, save/reopen, export and load in a game project. Current object transforms are not mesh editing.
 
