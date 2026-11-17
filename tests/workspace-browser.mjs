@@ -75,6 +75,12 @@ try{
    };
  });
  await voicePage.route('**/api/local-voice/status',route=>route.fulfill({json:{configured:true}}));
+ let voicePreviews=0;
+ await voicePage.route('**/api/local-voice/preview',route=>{
+   assert.deepEqual(route.request().postDataJSON(),{voice:'rex',speed:1.15});
+   voicePreviews++;
+   return route.fulfill({contentType:'audio/pcm;rate=24000',body:Buffer.alloc(144000)});
+ });
  await voicePage.route('**/api/local-voice/session',route=>{
    const {voice,speed}=route.request().postDataJSON();
    assert.deepEqual({voice,speed},{voice:'rex',speed:1.15});
@@ -120,7 +126,14 @@ try{
  await voiceSettingsButton.click();
  await voiceSettings.getByLabel('Voice',{exact:true}).selectOption('rex');
  await voiceSettings.getByLabel('Speaking speed',{exact:true}).selectOption('1.15');
+ const previewResponse=voicePage.waitForResponse(response=>response.url().endsWith('/api/local-voice/preview'));
+ await voiceSettings.getByRole('button',{name:'Preview voice',exact:true}).click();
+ await previewResponse;
+ await voiceSettings.getByRole('button',{name:'Stop preview',exact:true}).waitFor();
+ assert.equal(voicePreviews,1);
  await voicePage.screenshot({path:path.join(qa,'desktop-workspace-voice-settings.png')});
+ await voiceSettings.getByRole('button',{name:'Stop preview',exact:true}).click();
+ await voiceSettings.getByRole('button',{name:'Preview voice',exact:true}).waitFor();
  await voiceSettings.getByRole('button',{name:'Save voice settings',exact:true}).click();
  await voicePage.reload();
  await voiceSettingsButton.click();

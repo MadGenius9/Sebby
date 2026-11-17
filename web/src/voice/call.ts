@@ -486,14 +486,25 @@ function landedNote(request: string, replies: Row[], after: Row[]): string {
 
 /** Play a short TTS sample through the same PCM path the call uses. */
 export async function previewVoice(p: { botId: string; voice?: string; speed?: number; language?: string }): Promise<void> {
+  return playVoiceSample(() => voiceApi.preview(p));
+}
+
+export function previewWorkspaceVoice(preferences: WorkspaceVoicePreferences, signal: AbortSignal): Promise<void> {
+  return playVoiceSample(() => voiceApi.localPreview(preferences, signal), signal);
+}
+
+async function playVoiceSample(load: () => Promise<Int16Array>, signal?: AbortSignal) {
   const ctx = createAudioContext();
   const player = new PcmPlayer(ctx);
+  const stop = () => player.clear();
+  signal?.addEventListener('abort', stop, { once: true });
   try {
-    const pcm = await voiceApi.preview(p);
-    // Feed it in 100 ms chunks, like realtime deltas.
+    const pcm = await load();
+    if (signal?.aborted) return;
     for (let i = 0; i < pcm.length; i += 2400) player.push(pcm.subarray(i, i + 2400));
     await player.whenIdle(30000);
   } finally {
+    signal?.removeEventListener('abort', stop);
     player.dispose();
     void ctx.close().catch(() => {});
   }

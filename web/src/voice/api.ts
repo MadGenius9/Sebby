@@ -43,6 +43,19 @@ export const voiceApi = {
   endBeacon: (botId: string, callId: string, transcript: { role: 'user' | 'assistant'; text: string }[]) => {
     try { navigator.sendBeacon('/api/voice/end', new Blob([JSON.stringify({ botId, callId, transcript })], { type: 'application/json' })); } catch { /* ignore */ }
   },
+  async localPreview(preferences: WorkspaceVoicePreferences, signal: AbortSignal): Promise<Int16Array> {
+    const response = await fetch('/api/local-voice/preview', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(preferences), signal,
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => null);
+      throw new Error(detail?.error ?? 'Voice preview unavailable');
+    }
+    const bytes = await response.arrayBuffer();
+    if (!bytes.byteLength || bytes.byteLength % 2) throw new Error('Voice preview returned incomplete audio');
+    return new Int16Array(bytes);
+  },
   async preview(p: { botId: string; voice?: string; speed?: number; language?: string; text?: string }): Promise<Int16Array> {
     const res = await fetch('/api/voice/preview', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...p, codec: 'pcm' }) });
     if (!res.ok) throw new Error('Preview unavailable');

@@ -80,3 +80,28 @@ test('workspace voice validates preferences before minting and applies them to r
   assert.equal(payload.session.voice, 'rex');
   assert.equal(payload.session.audio.output.speed, 1.15);
 });
+
+test('voice previews synthesize only the fixed sample for valid authenticated settings', async () => {
+  let requests = 0;
+  const api = createLocalVoiceApi(config, async (url, init) => {
+    requests++;
+    assert.equal(String(url), 'https://api.x.ai/v1/tts');
+    assert.equal(new Headers(init?.headers).get('authorization'), 'Bearer ' + config.apiKey);
+    const request = JSON.parse(String(init?.body));
+    assert.match(request.text, /I’m Sebby/);
+    assert.equal(request.voice_id, 'rex');
+    assert.equal(request.speed, 1.15);
+    assert.deepEqual(request.output_format, { codec: 'pcm', sample_rate: 24000 });
+    return new Response(new Uint8Array([0, 0, 1, 0]));
+  });
+  const body = JSON.stringify({ voice: 'rex', speed: 1.15, text: 'Untrusted caller-supplied text' });
+  assert.equal((await api.request('/preview', { method: 'POST', body })).status, 401);
+  assert.equal((await api.request('/preview', { method: 'POST', headers: { ...headers, origin: 'http://another.test' }, body })).status, 403);
+  assert.equal((await api.request('/preview', { method: 'POST', headers, body: '{"voice":"other","speed":1}' })).status, 400);
+  assert.equal(requests, 0);
+  const response = await api.request('/preview', { method: 'POST', headers, body });
+  assert.equal(requests, 1);
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [0, 0, 1, 0]);
+});

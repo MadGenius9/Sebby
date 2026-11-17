@@ -1,3 +1,4 @@
+import { requestVoiceSample } from './lib/voice-sample.js';
 import { VOICE_SPEEDS } from './lib/voice-preferences.js';
 // Voice calls, the way Grok Bot does them: a second, lightweight voice agent runs in the browser against
 // the xAI realtime API, speaks as the bot, and relays real work to the bot's main text agent loop.
@@ -445,11 +446,8 @@ voiceApi.post('/preview', async (c) => {
   const language = p.language && langName(p.language) ? p.language : s.language;
   const text = String(p.text || `Hi, I'm ${bot?.name ?? 'your Bot'}. This is how I'll sound when we talk.`).slice(0, 400);
   const codec = p.codec === 'pcm' ? 'pcm' : 'mp3';
-  const r = await fetch(`${XAI}/tts`, {
-    method: 'POST',
-    headers: { ...xaiHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text, voice_id: voice, language, speed: clampSpeed(p.speed ?? s.speed), output_format: { codec, sample_rate: SAMPLE_RATE } }),
-    signal: AbortSignal.timeout(30_000),
+  const r = await requestVoiceSample(env.xaiKey, {
+    text, voice, language, speed: clampSpeed(p.speed ?? s.speed), codec,
   }).catch(() => null);
   if (!r?.ok) {
     console.warn('[voice] tts failed', r?.status, (await r?.text().catch(() => ''))?.slice(0, 200));

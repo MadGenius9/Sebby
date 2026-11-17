@@ -1,7 +1,7 @@
 import { DEFAULT_WORKSPACE_VOICE, VOICE_SPEEDS, WORKSPACE_VOICES, isWorkspaceVoicePreferences, type WorkspaceVoicePreferences } from '@shared/lib/voice-preferences';
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MessageSquare, SlidersHorizontal } from 'lucide-react';
-import { endCall, startWorkspaceCall, useVoice, type WorkspaceVoiceBrief } from '../voice/call';
+import { endCall, previewWorkspaceVoice, startWorkspaceCall, useVoice, type WorkspaceVoiceBrief } from '../voice/call';
 import type { Project } from './api';
 
 const BRIEF_LIMIT = 4000;
@@ -25,8 +25,40 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
   const [draft, setDraft] = useState(preferences);
   const [preview, setPreview] = useState<WorkspaceVoiceBrief | null>(null);
   const [truncated, setTruncated] = useState(false);
+  const sample = useRef<AbortController | null>(null);
+  const [samplePlaying, setSamplePlaying] = useState(false);
+  const [sampleError, setSampleError] = useState('');
+
+  function stopSample() {
+    sample.current?.abort();
+    sample.current = null;
+    setSamplePlaying(false);
+    setSampleError('');
+  }
+
+  async function toggleSample() {
+    if (sample.current) {
+      stopSample();
+      return;
+    }
+    const request = new AbortController();
+    sample.current = request;
+    setSampleError('');
+    setSamplePlaying(true);
+    try {
+      await previewWorkspaceVoice(draft, request.signal);
+    } catch (error) {
+      if (!request.signal.aborted) setSampleError(error instanceof Error ? error.message : 'Voice preview unavailable');
+    } finally {
+      if (sample.current === request) {
+        sample.current = null;
+        setSamplePlaying(false);
+      }
+    }
+  }
 
   useEffect(() => () => {
+    sample.current?.abort();
     if (useVoice.getState().workspaceCall) endCall();
     useVoice.setState({ lastWorkspaceCall: null });
   }, []);
@@ -60,7 +92,7 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
           <SlidersHorizontal size={16} /> Voice settings
         </button>
       )}
-      <dialog ref={settingsDialog} className="workspace-voice-dialog" aria-labelledby="workspace-voice-settings-title">
+      <dialog ref={settingsDialog} className="workspace-voice-dialog" aria-labelledby="workspace-voice-settings-title" onClose={stopSample}>
         <form method="dialog" onSubmit={() => {
           setPreferences(draft);
           try {
@@ -73,21 +105,31 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
           <label htmlFor="workspace-voice">Voice</label>
           <select id="workspace-voice" value={draft.voice} onChange={event => {
             const voice = WORKSPACE_VOICES.find(option => option === event.target.value);
-            if (voice) setDraft({ ...draft, voice });
+            if (voice) {
+              stopSample();
+              setDraft({ ...draft, voice });
+            }
           }}>
             {WORKSPACE_VOICES.map(voice => <option key={voice} value={voice}>{voice[0].toUpperCase() + voice.slice(1)}</option>)}
           </select>
           <label htmlFor="workspace-voice-speed">Speaking speed</label>
           <select id="workspace-voice-speed" value={draft.speed} onChange={event => {
             const speed = VOICE_SPEEDS.find(option => String(option) === event.target.value);
-            if (speed !== undefined) setDraft({ ...draft, speed });
+            if (speed !== undefined) {
+              stopSample();
+              setDraft({ ...draft, speed });
+            }
           }}>
             {VOICE_SPEEDS.map(speed => <option key={speed} value={speed}>{speed}×</option>)}
           </select>
           <div className="source-import-actions">
+            <button className="btn btn--secondary" type="button" onClick={() => void toggleSample()}>
+              {samplePlaying ? 'Stop preview' : 'Preview voice'}
+            </button>
             <button className="btn btn--primary" type="submit">Save voice settings</button>
             <button className="btn btn--secondary" type="button" onClick={() => settingsDialog.current?.close()}>Cancel</button>
           </div>
+          {sampleError && <p role="alert">{sampleError}</p>}
         </form>
       </dialog>
       <dialog ref={dialog} className="workspace-voice-dialog" aria-labelledby="voice-brief-title" onClose={() => setPreview(null)}>

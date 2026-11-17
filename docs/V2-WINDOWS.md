@@ -34,3 +34,5 @@ After hanging up, open **Last voice transcript** to review the available caption
 To discuss a project, open it and select **Talk about this project**. Review or edit the preview before choosing **Share brief and start**. The call sends the project name and up to 4,000 characters of the text you approve to Grok. The preview starts with the project brief in `SEBBY.md`, including any edits currently in the workspace. Choose **Start live voice** for a general conversation.
 
 Open **Voice settings** in the Projects sidebar to choose Sebby’s voice and speaking speed for future calls. The setting is remembered in that browser and applies to both general and project calls.
+
+Use **Preview voice** to hear a short Grok sample of the current settings. Stop the sample or close the dialog to cancel playback. The preview does not ask for microphone access.
