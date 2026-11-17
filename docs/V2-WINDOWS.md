@@ -28,3 +28,5 @@ Move your stopped data and necessary private configuration to the new host, rein
 ## Live voice
 
 Create a plain-text file named `.env.local` in the Sebby folder. Add `XAI_API_KEY=your_key_here` on its own line. Make sure Windows did not add `.txt` to the filename. Restart Sebby, sign in to the local workspace, then select **Start live voice** under **Projects** and allow microphone access. Speak normally and interrupt when you want to jump in. Sebby streams the conversation audio to xAI during the call. The Windows workspace call supports conversation and brainstorming. Project actions through voice require the full agent service.
+
+After hanging up, open **Last voice transcript** to review the available captions, download a text file, or add it to the open project. Use **Save** to keep an attached transcript in project history. The workspace keeps the last transcript in the current tab until you clear it, reload, or finish a newer call with captions.

@@ -1,3 +1,4 @@
+import { LocalVoiceTranscript } from "./LocalVoiceTranscript";
 import { LocalVoiceButton } from "./LocalVoiceButton";
 import { VoiceCallBar } from "../components/VoiceCallBar";
 import { CompanionPanel } from "./CompanionPanel";
@@ -534,6 +535,16 @@ export function WorkspaceApp() {
           )}
         </header>
         {auth.workspaceOnly && <VoiceCallBar workspace />}
+        {auth.workspaceOnly && (
+          <LocalVoiceTranscript
+            project={project}
+            busy={busy}
+            addToProject={(next, filename) => {
+              update(next);
+              setNotice(`Added ${filename} to ${next.name}. Use Save to keep it.`);
+            }}
+          />
+        )}
         {error && (
           <div className="workspace-message is-error" role="alert">
             {error}

@@ -7,6 +7,7 @@ export function LocalVoiceButton() {
 
   useEffect(() => () => {
     if (useVoice.getState().workspaceCall) endCall();
+    useVoice.setState({ lastWorkspaceCall: null });
   }, []);
 
   return (

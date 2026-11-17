@@ -11,10 +11,16 @@ export interface Caption { id: string; role: 'user' | 'assistant'; text: string;
 
 export type CallStatus = 'idle' | 'connecting' | 'live' | 'ending' | 'error';
 
+export interface WorkspaceCallTranscript {
+  endedAt: number;
+  lines: Pick<Caption, 'role' | 'text' | 'final'>[];
+}
+
 interface VoiceState {
   status: CallStatus;
   botId: string | null;
   workspaceCall: boolean;
+  lastWorkspaceCall: WorkspaceCallTranscript | null;
   callId: string | null;
   muted: boolean;
   /** Bot audio is playing. */
@@ -31,7 +37,7 @@ interface VoiceState {
 }
 
 export const useVoice = create<VoiceState>(() => ({
-  status: 'idle', botId: null, workspaceCall: false, callId: null, muted: false, speaking: false, listening: false, thinking: false,
+  status: 'idle', botId: null, workspaceCall: false, lastWorkspaceCall: null, callId: null, muted: false, speaking: false, listening: false, thinking: false,
   working: [], captions: [], error: null, startedAt: null,
 }));
 
@@ -433,6 +439,12 @@ class VoiceCall {
     this.player.dispose();
     void this.ctx.close().catch(() => {});
     const transcript = this.transcript();
+    if (this.workspaceCall && this.ready) {
+      const lines = useVoice.getState().captions.flatMap(({ role, text, final }) =>
+        text.trim() ? [{ role, text: text.trim(), final }] : [],
+      );
+      if (lines.length) setV({ lastWorkspaceCall: { endedAt: Date.now(), lines } });
+    }
     if (!this.workspaceCall && this.sess) void voiceApi.end(this.botId, this.sess.callId, transcript, error).catch((e) => console.warn('[voice] end failed', e));
     if (current === this) current = null;
     if (error) {
