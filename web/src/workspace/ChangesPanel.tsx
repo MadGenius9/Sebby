@@ -67,6 +67,7 @@ export function ChangesPanel({
         <label>
           Compare from
           <select
+            aria-label="Compare from"
             value={from}
             onChange={(e) => setFrom(Number(e.target.value))}
           >
