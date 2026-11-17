@@ -9,6 +9,7 @@ import { Icon } from './Icon';
 import { Menu } from './Menu';
 import { Transcript } from './Transcript';
 import { VoiceCallBar } from './VoiceCallBar';
+import { SpokenReplyControl } from './SpokenReplyControl';
 
 export function ChatView() {
   const bot = useSelectedBot();
@@ -60,6 +61,7 @@ export function ChatView() {
               <Icon name="sidebar" opacity={0.66} style={{ transform: 'scaleX(-1)' }} />
             </button>
           )}
+          <SpokenReplyControl key={bot.id + ":" + bot.generation} rows={rows} loaded={!!transcript?.loaded} />
           <button type="button" className="share-btn" onClick={() => flash('Sharing isn’t available in Grokbot yet')}>Share</button>
         </div>
       </header>

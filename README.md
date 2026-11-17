@@ -51,7 +51,7 @@ Projects currently contain up to 40 virtual text files (100,000 characters each)
 
 ## Existing Bot HQ services
 
-Bot HQ's agent chat, Hermes adapter, Orgo viewer, voice and Composio service code are retained. The original service mode requires its own configured services, described in [.env.example](.env.example) and the [upstream architecture](docs/ARCHITECTURE.md). Copy `.env.example` to `.env`, configure your own deployment, then use `npm run build && npm start`. Agent chat links to `/workspace`; the workspace links back to chat in this mode.
+Bot HQ's agent chat, Hermes adapter, Orgo viewer, voice and Composio service code are retained. The original service mode requires its own configured services, described in [.env.example](.env.example) and the [upstream architecture](docs/ARCHITECTURE.md). Copy `.env.example` to `.env`, configure your own deployment, then use `npm run build && npm start`. Agent chat links to `/workspace`; the workspace links back to chat in this mode. In agent chat, click **Voice off** to enable brief spoken excerpts of new replies in the current chat. It uses the selected agent voice and the server-side `XAI_API_KEY`, and stays quiet during calls or when the tab loses focus.
 
 The project API and scoped agent tools are integrated with existing sessions/MCP. Use the project Agents panel to assign a configured engine, review proposals and optionally enable runs. A pending proposal does not change source or scenes. See [project agents](docs/V2-AGENTS.md). We have not run live provider, OAuth, desktop or paid-service tests. The upstream shell/browser approval limitations still apply to that service mode. Do not treat this branch as a production deployment.
 

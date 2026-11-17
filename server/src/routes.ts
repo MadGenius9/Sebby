@@ -263,7 +263,7 @@ api.post('/bots/:id/messages', async (c) => {
   // Group chats dispatch to their member Bots instead of running their own loop.
   if (b.kind === 'room') dispatchRoomMessage(b.id, text.trim(), enqueue);
   // Any pending question card is answered by a free-text message.
-  else enqueue(b.id, { type: 'user', text: text.trim() });
+  else enqueue(b.id, { type: 'user', text: text.trim(), spokenReply: true });
   return c.json({ row });
 });
 
@@ -297,7 +297,7 @@ api.post('/bots/:id/cards/:seq/answer', async (c) => {
   if (!row || row.body.type !== 'card' || row.body.card !== 'question') return c.json({ error: 'not a question' }, 400);
   updateRow(b.id, row.seq, { ...row.body, status: 'answered', answer });
   appendRow(b.id, 'message', { type: 'message', role: 'user', text: answer });
-  enqueue(b.id, { type: 'user', text: `[Answer to "${row.body.question}"] ${answer}` });
+  enqueue(b.id, { type: 'user', spokenReply: true, text: `[Answer to "${row.body.question}"] ${answer}` });
   return c.json({ ok: true });
 });
 

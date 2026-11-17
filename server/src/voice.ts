@@ -2,13 +2,16 @@
 // the xAI realtime API, speaks as the bot, and relays real work to the bot's main text agent loop.
 // This module mints the ephemeral secret, builds the voice agent's prompt and tools, serves the relay
 // tools, records call start/end rows, and proxies TTS (voice preview) and STT (composer dictation).
+import { bodyLimit } from 'hono/body-limit';
+import { spokenSummary } from './lib/spoken-summary.js';
+import { streamSpeech } from './lib/stream-speech.js';
 import { Hono } from 'hono';
 import OpenAI from 'openai';
 import { db, now } from './db.js';
 import { env } from './env.js';
 import { newId } from './lib/ids.js';
 import type { AuthVars } from './lib/auth.js';
-import { appendRow, emitBot, getBotRow, getLive, listRoutines, listTasks, updateRow } from './store.js';
+import { appendRow, emitBot, getBotRow, getLive, getRow, listRoutines, listTasks, updateRow } from './store.js';
 import { enqueue } from './agent/loop.js';
 import { computerState } from './computer.js';
 import type { ActivityKind, EventBody, MessageBody, RowBody, VoiceCallRecord, VoiceOption } from './types.js';
@@ -411,6 +414,26 @@ setInterval(() => {
 }, 10 * 60_000).unref();
 
 // ---------- TTS preview & STT dictation ----------
+
+voiceApi.post('/reply', bodyLimit({ maxSize: 2048 }), async (c) => {
+  const origin = c.req.header('origin');
+  if (origin && origin !== new URL(env.appUrl).origin) return c.json({ error: 'Cross-origin speech request refused' }, 403);
+  const input = await c.req.json().catch(() => null);
+  if (typeof input?.botId !== 'string' || !Number.isSafeInteger(input.seq) || !Number.isSafeInteger(input.generation))
+    return c.json({ error: 'Choose a completed chat reply' }, 400);
+  const bot = ownBot(c.get('user').id, input.botId);
+  const row = bot?.generation === input.generation ? getRow(input.botId, input.seq) : null;
+  if (row?.body.type !== 'message' || row.body.role !== 'assistant' || !row.body.spokenReply || row.body.streaming)
+    return c.json({ error: 'Spoken reply unavailable' }, 404);
+  const text = spokenSummary(row.body.text);
+  if (!text) return c.json({ error: 'This reply has no prose to read aloud' }, 422);
+  if (!env.xaiKey) return c.json({ error: 'Configure XAI_API_KEY to enable spoken replies' }, 503);
+  const signal = AbortSignal.any([c.req.raw.signal, AbortSignal.timeout(30_000)]);
+  return c.body(streamSpeech(text, settingsOf(bot), env.xaiKey, signal), 200, {
+    'Content-Type': 'audio/pcm;rate=24000',
+    'Cache-Control': 'no-store',
+  });
+});
 
 voiceApi.post('/preview', async (c) => {
   const user = c.get('user');

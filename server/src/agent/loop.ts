@@ -23,7 +23,7 @@ import { activityFor, appToolName, humanizeSlug, policyFor } from './tools.js';
  */
 
 export type Trigger =
-  | { type: 'user'; text: string }
+  | { type: 'user'; text: string; spokenReply?: boolean }
   | { type: 'routine'; routineId: string; name: string; prompt: string }
   | { type: 'bot'; fromBotId: string; fromName: string; text: string; depth: number }
   | { type: 'system'; text: string };
@@ -319,25 +319,28 @@ async function runTurn(botId: string, trigger: Trigger) {
   let text = '';
   let lastFlush = 0;
   let wroteText = false;
+  let finalReplySeq: number | null = null;
   const flush = (streaming: boolean) => {
     const b: MessageBody = { type: 'message', role: 'assistant', text, streaming };
     if (msgSeq === null) msgSeq = appendRow(botId, 'message', b).seq;
     else updateRow(botId, msgSeq, b);
     lastFlush = Date.now();
   };
-  const closeMessage = () => {
+  const closeMessage = (finalReply = false) => {
     if (msgSeq === null) return;
     if (text.trim()) {
       flush(false);
+      if (finalReply) finalReplySeq = msgSeq;
       db.prepare('UPDATE bots SET unread = unread + 1 WHERE id=?').run(botId);
     } else updateRow(botId, msgSeq, { type: 'message', role: 'assistant', text: '', streaming: false });
     msgSeq = null;
     text = '';
   };
-  const say = (t: string) => {
+  const say = (t: string, finalReply = false) => {
     if (turn.silent || !t.trim()) return;
     closeMessage();
-    appendRow(botId, 'message', { type: 'message', role: 'assistant', text: t.trim(), streaming: false });
+    const row = appendRow(botId, 'message', { type: 'message', role: 'assistant', text: t.trim(), streaming: false });
+    if (finalReply) finalReplySeq = row.seq;
     db.prepare('UPDATE bots SET unread = unread + 1 WHERE id=?').run(botId);
     wroteText = true;
   };
@@ -458,8 +461,8 @@ async function runTurn(botId: string, trigger: Trigger) {
           if (item?.type === 'message') {
             const full = (item.content ?? []).map((c: any) => c?.text ?? '').join('');
             if (item.phase === 'commentary') say(full);
-            else if (msgSeq !== null) closeMessage();
-            else if (!wroteText) say(full);
+            else if (msgSeq !== null) closeMessage(true);
+            else if (!wroteText) say(full, true);
           }
           break;
         }
@@ -490,7 +493,11 @@ async function runTurn(botId: string, trigger: Trigger) {
     appendRow(botId, 'notice', { type: 'notice', text: stopped ? 'Stopped.' : `Something went wrong: ${e?.message ?? e}`, tone: stopped ? 'info' : 'error' });
     if (!stopped) console.error('[agent]', botId, e);
   } finally {
-    closeMessage();
+    closeMessage(true);
+    if (!failed && !ctrl.signal.aborted && trigger.type === 'user' && trigger.spokenReply && finalReplySeq !== null) {
+      const reply = getRow(botId, finalReplySeq);
+      if (reply && reply.generation === bot.generation && reply.body.type === 'message') updateRow(botId, finalReplySeq, { ...reply.body, spokenReply: true });
+    }
     for (const ref of turn.tools) {
       if (ref.done) continue;
       const row = getRow(botId, ref.seq);

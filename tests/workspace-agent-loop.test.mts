@@ -102,11 +102,15 @@ test("a scripted Hermes gateway exercises a headless project turn and real MCP t
       `event: response.output_item.added\ndata: ${JSON.stringify({ item: { type: "function_call_output", call_id: "fixture-call", output: reply.result.content } })}\n\n`,
     );
     res.write(
+      `event: response.output_item.done\ndata: ${JSON.stringify({ item: { type: "message", phase: "commentary", content: [{ text: "Fixture progress update." }] } })}\n\n`,
+    );
+    res.write(
       `event: response.output_text.delta\ndata: ${JSON.stringify({ delta: "Scripted gateway fixture finished reading the assigned project." })}\n\n`,
     );
   };
   enqueue("bot-alice", {
     type: "user",
+    spokenReply: true,
     text: "Fixture request: inspect the assigned project.",
   });
   const limit = Date.now() + 10000;
@@ -121,13 +125,10 @@ test("a scripted Hermes gateway exercises a headless project turn and real MCP t
   const rows = db
     .prepare("SELECT body FROM rows WHERE bot_id=? ORDER BY seq")
     .all("bot-alice") as { body: string }[];
-  assert.ok(
-    rows.some(
-      (r) =>
-        JSON.parse(r.body).text ===
-        "Scripted gateway fixture finished reading the assigned project.",
-    ),
-  );
+  const spoken = rows.map(row => JSON.parse(row.body)).filter(body => body.spokenReply);
+  assert.deepEqual(spoken.map(body => body.text), [
+    "Scripted gateway fixture finished reading the assigned project.",
+  ]);
   assert.ok(
     rows.some((r) => {
       const b = JSON.parse(r.body);
