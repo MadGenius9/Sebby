@@ -43,7 +43,7 @@ Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH`
 - User-scoped project API, schema validation, request limits and cross-origin write checks.
 - Light/dark token support inherited from Bot HQ and responsive workspace layout.
 
-**Not connected yet:** an interactive terminal, private GitHub access/sync, Blender automation, advanced modeling, deployment, GBrain and cloud hosting. Connection controls report actual setup/connection state. Live Google and native Windows validation are still pending.
+**Not connected yet:** an interactive terminal, private GitHub access/sync, Blender automation, advanced modeling, deployment, GBrain and cloud hosting. Connection controls report actual setup/connection state. Live Google authorization and native Windows installation/permissions validation are still pending. The real companion HTTP flow passes on hosted Windows.
 
 Projects currently contain up to 40 virtual text files (100,000 characters each), 100 scene objects and a 1 MB save request. Files are stored as project data; build/test runs materialize a private Git snapshot and transfer source to an ephemeral container. Docker readiness and native worker verification are required; no host execution fallback exists. See [connection setup](docs/V2-CONNECTIONS.md), [modeling](docs/V2-MODELING.md), [project knowledge](docs/V2-KNOWLEDGE.md), [runtime setup and limits](docs/V2-RUNTIME.md) and [build outputs/previews](docs/V2-BUILD-OUTPUTS.md).
 
@@ -62,7 +62,7 @@ npm run build
 npm run test:http
 ```
 
-71 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real base-image Docker and core desktop/mobile Chromium acceptance passed on GitHub Actions. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. Real dependency-image builds and live provider/Drive setup remain unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
+71 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real base-image Docker and core desktop/mobile Chromium acceptance passed on GitHub Actions. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. A real React/Vite dependency-image build/test also passed on the hosted rootless worker. Live provider/Drive setup remains unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
 
 See [the implementation roadmap](docs/V2-ROADMAP.md), [architecture decisions](docs/V2-ARCHITECTURE.md), and [provenance](docs/UPSTREAM.md).
 
