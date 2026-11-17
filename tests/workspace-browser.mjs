@@ -63,5 +63,57 @@ try{
  assert.equal(await page.locator('iframe[title="Saved build preview"]').getAttribute('sandbox'),'allow-scripts');await page.screenshot({path:path.join(qa,'desktop-compiled-preview.png')});
  const zipDownload=page.waitForEvent('download');await page.getByRole('link',{name:'Download build ZIP',exact:true}).click();const zipFile=await zipDownload,zipPath=path.join(qa,'browser-build.zip');await zipFile.saveAs(zipPath);assert.deepEqual(Object.keys(unzipSync(await readFile(zipPath))).sort(),built.files.sort());
  await phone.reload();await phone.getByRole('navigation',{name:'Projects',exact:true}).getByRole('button',{name:'Browser reviewed project',exact:true}).click();await phone.getByRole('button',{name:'Runs',exact:true}).click();await phone.getByRole('button',{name:'Preview saved build',exact:true}).click();await phone.frameLocator('iframe[title="Saved build preview"]').getByRole('button',{name:'Compiled clicks: 0',exact:true}).click();await phone.frameLocator('iframe[title="Saved build preview"]').getByRole('button',{name:'Compiled clicks: 1',exact:true}).waitFor();assert.equal(await phone.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await phone.screenshot({path:path.join(qa,'mobile-build-preview.png')});
- assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
+ const voiceContext=await browser.newContext({storageState:await context.storageState()});
+ const voicePage=await voiceContext.newPage();voicePage.on('pageerror',error=>errors.push(error.message));
+ await voicePage.addInitScript(()=>{
+   navigator.mediaDevices.getUserMedia=async()=>{
+     const audio=new AudioContext(),destination=audio.createMediaStreamDestination();
+     const track=destination.stream.getAudioTracks()[0];
+     const stop=track.stop.bind(track);
+     track.stop=()=>{stop();void audio.close();};
+     return destination.stream;
+   };
+ });
+ await voicePage.route('**/api/local-voice/status',route=>route.fulfill({json:{configured:true}}));
+ await voicePage.route('**/api/local-voice/session',route=>route.fulfill({json:{
+   callId:'local-voice-fixture',clientSecret:'fixture',sampleRate:24000,
+   websocketUrl:base.replace('http:','ws:')+'/fixture-voice',session:{tools:[],turn_detection:{type:'server_vad'}},
+ }}));
+ let microphoneFrame=false, interrupted=false, closed=false;
+ await voicePage.routeWebSocket('**/fixture-voice',socket=>{
+   socket.onClose(()=>{closed=true;});
+   socket.onMessage(message=>{
+     const event=JSON.parse(String(message));
+     const send=(data)=>socket.send(JSON.stringify(data));
+     if(event.type==='session.update'){
+       assert.deepEqual(event.session.tools,[]);
+       send({type:'session.updated'});
+     }
+     if(event.type==='response.create'){
+       send({type:'response.created',response:{id:'fixture-reply'}});
+       send({type:'response.output_audio_transcript.delta',item_id:'reply',delta:'Hello from Sebby'});
+       send({type:'response.output_audio.delta',response_id:'fixture-reply',delta:Buffer.alloc(48000).toString('base64')});
+     }
+     if(event.type==='input_audio_buffer.append'&&!microphoneFrame){
+       microphoneFrame=true;
+       send({type:'input_audio_buffer.speech_started'});
+     }
+     if(event.type==='response.cancel'){
+       interrupted=true;
+       send({type:'input_audio_buffer.speech_stopped'});
+       send({type:'conversation.item.input_audio_transcription.completed',item_id:'user',transcript:'Tell me about my idea'});
+       send({type:'response.done',response:{output:[]}});
+     }
+   });
+ });
+ await voicePage.goto(base+'/workspace');await voicePage.getByRole('button',{name:'Start live voice',exact:true}).click();
+ const call=voicePage.getByRole('region',{name:'Voice call with Sebby',exact:true});
+ await call.getByText('Tell me about my idea',{exact:true}).waitFor();
+ assert.equal(microphoneFrame,true);assert.equal(interrupted,true);
+ await voicePage.screenshot({path:path.join(qa,'desktop-local-voice.png')});
+ await call.getByRole('button',{name:'End call',exact:true}).click();
+ await call.waitFor({state:'hidden'});
+ for(let attempt=0;attempt<30&&!closed;attempt++)await new Promise(resolve=>setTimeout(resolve,100));
+ assert.equal(closed,true);await voiceContext.close();
+ assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow','local voice handshake, audio, interruption, captions and hang-up (simulated xAI)'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
 }catch(error){try{await browser?.contexts()[0]?.pages()[0]?.screenshot({path:path.join(qa,'failure.png')});}catch{}throw error;}finally{fixtures?.close();clearTimeout(timer);await browser?.close();child.kill('SIGTERM');const force=setTimeout(()=>child.kill('SIGKILL'),5000);await exited;clearTimeout(force);await rm(root,{recursive:true,force:true});}

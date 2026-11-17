@@ -28,7 +28,7 @@ const fmt = (ms: number) => {
 };
 
 /** In-call bar shown above the composer while a voice call is connecting, live, or just failed. */
-export function VoiceCallBar() {
+export function VoiceCallBar({ workspace = false }: { workspace?: boolean }) {
   const v = useVoice();
   const bot = useStore((s) => s.bots.find((b) => b.id === v.botId));
   const [now, setNow] = useState(Date.now());
@@ -65,7 +65,8 @@ export function VoiceCallBar() {
     if (expanded && logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight;
   }, [expanded, v.captions]);
 
-  if (v.status === 'idle' || v.status === 'ending' || !bot) return null;
+  if (v.status === 'idle' || v.status === 'ending' || v.workspaceCall !== workspace || (!bot && !workspace)) return null;
+  const name = workspace ? 'Sebby' : bot!.name;
 
   const working = v.working.length > 0;
   const status =
@@ -84,18 +85,18 @@ export function VoiceCallBar() {
   return (
     <div
       className={`vcall is-${v.status}${v.speaking ? ' is-speaking' : ''}${v.listening ? ' is-listening' : ''}${working ? ' is-working' : ''}`}
-      style={botVars(bot.avatarColor)}
+      style={bot ? botVars(bot.avatarColor) : undefined}
       role="region"
-      aria-label={`Voice call with ${bot.name}`}
+      aria-label={`Voice call with ${name}`}
     >
       <div className="vcall__main">
         <span className="vcall__avatar" ref={avatarRef}>
           <span className="vcall__halo" aria-hidden />
-          <BotAvatarFor bot={bot} size={36} />
+          {bot ? <BotAvatarFor bot={bot} size={36} /> : <MicGlyph />}
         </span>
         <div className="vcall__info">
           <div className="vcall__title">
-            <span className="vcall__name">{bot.name}</span>
+            <span className="vcall__name">{name}</span>
             {v.status === 'live' && v.startedAt && <span className="vcall__time">{fmt(now - v.startedAt)}</span>}
           </div>
           <div className={`vcall__status${working && !v.speaking && !v.listening ? ' vcall__shimmer' : ''}`} aria-live="polite">
@@ -122,7 +123,7 @@ export function VoiceCallBar() {
         expanded ? (
           <div className="vcall__log" ref={logRef}>
             {lines.length ? lines.map((c) => (
-              <div key={c.id} className={`vcall__line is-${c.role}`}><b>{c.role === 'user' ? 'You' : bot.name}</b> {c.text}</div>
+              <div key={c.id} className={`vcall__line is-${c.role}`}><b>{c.role === 'user' ? 'You' : name}</b> {c.text}</div>
             )) : <div className="vcall__line is-empty">Nothing said yet.</div>}
             <button type="button" className="vcall__toggle" onClick={() => setExpanded(false)}>Hide transcript</button>
           </div>
@@ -130,7 +131,7 @@ export function VoiceCallBar() {
           <button type="button" className="vcall__captions" onClick={() => setExpanded(true)} title="Show full transcript">
             {last.length ? last.map((c) => (
               <span key={c.id} className={`vcall__caption is-${c.role}${c.final ? '' : ' is-partial'}`}>{c.text}</span>
-            )) : <span className="vcall__caption is-empty">{v.muted ? 'You’re muted.' : `Say hi to ${bot.name}.`}</span>}
+            )) : <span className="vcall__caption is-empty">{v.muted ? 'You’re muted.' : `Say hi to ${name}.`}</span>}
           </button>
         )
       )}

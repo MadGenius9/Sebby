@@ -1,3 +1,5 @@
+import { LocalVoiceButton } from "./LocalVoiceButton";
+import { VoiceCallBar } from "../components/VoiceCallBar";
 import { CompanionPanel } from "./CompanionPanel";
 import { DrivePanel } from "./DrivePanel";
 import { KnowledgePanel } from "./KnowledgePanel";
@@ -426,6 +428,7 @@ export function WorkspaceApp() {
           />
         </div>
         <div className="workspace-sidebar-footer">
+          {auth.workspaceOnly && <LocalVoiceButton />}
           {!auth.workspaceOnly && (
             <a
               href="/"
@@ -530,6 +533,7 @@ export function WorkspaceApp() {
             </div>
           )}
         </header>
+        {auth.workspaceOnly && <VoiceCallBar workspace />}
         {error && (
           <div className="workspace-message is-error" role="alert">
             {error}

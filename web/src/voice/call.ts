@@ -14,6 +14,7 @@ export type CallStatus = 'idle' | 'connecting' | 'live' | 'ending' | 'error';
 interface VoiceState {
   status: CallStatus;
   botId: string | null;
+  workspaceCall: boolean;
   callId: string | null;
   muted: boolean;
   /** Bot audio is playing. */
@@ -30,7 +31,7 @@ interface VoiceState {
 }
 
 export const useVoice = create<VoiceState>(() => ({
-  status: 'idle', botId: null, callId: null, muted: false, speaking: false, listening: false, thinking: false,
+  status: 'idle', botId: null, workspaceCall: false, callId: null, muted: false, speaking: false, listening: false, thinking: false,
   working: [], captions: [], error: null, startedAt: null,
 }));
 
@@ -39,15 +40,16 @@ const setV = (p: Partial<VoiceState>) => useVoice.setState(p);
 let current: VoiceCall | null = null;
 
 /** Start a call with a bot. Must be called from a user gesture (click) so audio can start. */
-export function startCall(botId: string) {
+export function startCall(botId: string, workspaceCall = false) {
   if (current && !current.ended) {
-    if (current.botId === botId) return;
+    if (current.botId === botId && current.workspaceCall === workspaceCall) return;
     current.end();
   }
-  current = new VoiceCall(botId);
+  current = new VoiceCall(botId, workspaceCall);
   void current.start();
 }
 
+export function startWorkspaceCall() { startCall('', true); }
 export function endCall() { current?.end(); }
 export function toggleMute() { current?.setMuted(!useVoice.getState().muted); }
 export function callLevels(): { out: number; mic: number } {
@@ -81,9 +83,12 @@ class VoiceCall {
   private unsubStore: (() => void) | null = null;
   private checkTimer: ReturnType<typeof setTimeout> | null = null;
   private connectTimer: ReturnType<typeof setTimeout> | null = null;
-  private onUnload = () => { if (this.sess && !this.ended) voiceApi.endBeacon(this.botId, this.sess.callId, this.transcript()); };
+  private onUnload = () => {
+    if (this.workspaceCall) this.end();
+    else if (this.sess && !this.ended) voiceApi.endBeacon(this.botId, this.sess.callId, this.transcript());
+  };
 
-  constructor(readonly botId: string) {
+  constructor(readonly botId: string, readonly workspaceCall: boolean) {
     // Created synchronously inside the click so autoplay policy lets it run.
     this.ctx = createAudioContext();
     this.player = new PcmPlayer(this.ctx);
@@ -94,10 +99,16 @@ class VoiceCall {
   micLevel() { return useVoice.getState().muted ? 0 : this.mic?.level ?? 0; }
 
   async start() {
-    setV({ status: 'connecting', botId: this.botId, callId: null, muted: false, speaking: false, listening: false, thinking: false, working: [], captions: [], error: null, startedAt: null });
+    setV({ status: 'connecting', botId: this.botId, workspaceCall: this.workspaceCall, callId: null, muted: false, speaking: false, listening: false, thinking: false, working: [], captions: [], error: null, startedAt: null });
     window.addEventListener('pagehide', this.onUnload);
     let stream: MediaStream;
     try {
+      if (this.workspaceCall) {
+        const status = await fetch('/api/local-voice/status', { cache: 'no-store' });
+        if (!status.ok) throw new Error('Could not check live voice setup');
+        if (!(await status.json()).configured) throw new Error('Set XAI_API_KEY in .env.local and restart Sebby to start a live call');
+        if (this.ended) return;
+      }
       stream = await openMic();
     } catch (e) {
       this.end(micErrorMessage(e));
@@ -107,8 +118,12 @@ class VoiceCall {
     try {
       this.mic = new MicCapture(this.ctx, stream, (pcm) => this.sendAudio(pcm));
       await this.mic.start();
-      this.sess = await voiceApi.session(this.botId);
-      if (this.ended) { void voiceApi.end(this.botId, this.sess.callId, [], 'Cancelled'); return; }
+      if (this.ended) return;
+      this.sess = await (this.workspaceCall ? voiceApi.localSession() : voiceApi.session(this.botId));
+      if (this.ended) {
+        if (!this.workspaceCall) void voiceApi.end(this.botId, this.sess.callId, [], 'Cancelled').catch(() => {});
+        return;
+      }
       setV({ callId: this.sess.callId });
       this.connect(this.sess);
     } catch (e) {
@@ -155,7 +170,7 @@ class VoiceCall {
           this.ready = true;
           if (this.connectTimer) clearTimeout(this.connectTimer);
           setV({ status: 'live', startedAt: Date.now() });
-          this.watchTranscript();
+          if (!this.workspaceCall) this.watchTranscript();
           this.send({ type: 'response.create' }); // the bot greets first
         }
         return;
@@ -226,11 +241,12 @@ class VoiceCall {
         return;
 
       case 'response.function_call_arguments.done':
-        this.startTool(ev.call_id, ev.name, ev.arguments);
+        if (!this.workspaceCall) this.startTool(ev.call_id, ev.name, ev.arguments);
         return;
       case 'response.done': {
         this.responseActive = false;
         setV({ thinking: false });
+        if (this.workspaceCall) return;
         for (const o of (ev.response?.output ?? []) as Json[]) if (o?.type === 'function_call') this.startTool(o.call_id, o.name, o.arguments);
         if (this.inflight.size) void this.finishTools(this.responseSpoke);
         else this.flushNotes();
@@ -417,7 +433,7 @@ class VoiceCall {
     this.player.dispose();
     void this.ctx.close().catch(() => {});
     const transcript = this.transcript();
-    if (this.sess) void voiceApi.end(this.botId, this.sess.callId, transcript, error).catch((e) => console.warn('[voice] end failed', e));
+    if (!this.workspaceCall && this.sess) void voiceApi.end(this.botId, this.sess.callId, transcript, error).catch((e) => console.warn('[voice] end failed', e));
     if (current === this) current = null;
     if (error) {
       setV({ status: 'error', error, speaking: false, listening: false, thinking: false, working: [] });

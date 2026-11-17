@@ -55,7 +55,7 @@ async function main() {
   if (!existsSync(path.join(root, 'server/dist/workspace-server.js')) || !existsSync(path.join(root, 'web/dist/index.html'))) throw new Error('Build files are missing. Run npm run local without --no-build.');
   const base = `http://127.0.0.1:${port}`;
   console.log('Starting the local workspace. Live AI engines and Google authorization require separate configuration.');
-  const finished = run(['server/dist/workspace-server.js'], { ...process.env, PORT: String(port), APP_URL: base, SEBBY_WORKSPACE_ONLY: '1', DEV_LOGIN: '1', SESSION_SECRET: process.env.SESSION_SECRET || randomBytes(32).toString('hex') });
+  const finished = run(['--env-file-if-exists=.env.local', 'server/dist/workspace-server.js'], { ...process.env, PORT: String(port), APP_URL: base, SEBBY_WORKSPACE_ONLY: '1', DEV_LOGIN: '1', SESSION_SECRET: process.env.SESSION_SECRET || randomBytes(32).toString('hex') });
   let startupError; void finished.catch(error => { startupError = error; });
   let ready = false;
   for (let attempt = 0; attempt < 150 && !stopping && !startupError && active; attempt++) {

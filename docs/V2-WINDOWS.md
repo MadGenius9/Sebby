@@ -23,3 +23,8 @@ Move your stopped data and necessary private configuration to the new host, rein
 `Start-Sebby.cmd --check` (or `npm.cmd run local -- --check`) prints a read-only prerequisite report without opening a browser, starting the server or creating a database. `npm.cmd run local -- --no-open` leaves browser opening to you. A failed install/build remains visible in the console; a failed install is not marked successful.
 
 `npm run test:local` builds the app and tests prerequisite diagnostics, occupied-port refusal, real loopback startup, saved-project persistence across restarts, and supervised child shutdown. On Windows, it also invokes the actual CMD wrapper from a junction path containing spaces. These are hosted Windows runner checks, not proof of installation on Chuck's Windows 11 machine. Native Windows package/ACL/antivirus behavior and the full WSL/provider/worker setup remain to be validated.
+
+
+## Live voice
+
+Create a plain-text file named `.env.local` in the Sebby folder. Add `XAI_API_KEY=your_key_here` on its own line. Make sure Windows did not add `.txt` to the filename. Restart Sebby, sign in to the local workspace, then select **Start live voice** under **Projects** and allow microphone access. Speak normally and interrupt when you want to jump in. Sebby streams the conversation audio to xAI during the call. The Windows workspace call supports conversation and brainstorming. Project actions through voice require the full agent service.
