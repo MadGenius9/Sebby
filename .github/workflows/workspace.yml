@@ -1,7 +1,7 @@
 name: Sebby workspace checks
 on:
   push:
-    branches: [sebby-v2]
+    branches: [main]
   pull_request:
     branches: [main]
 permissions:
@@ -23,6 +23,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:workspace
       - run: npm run test:http
+      - run: npm run test:local
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
         env:
@@ -45,6 +46,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run test:http
+      - run: npm run test:local
 
   isolated-worker:
     runs-on: ubuntu-24.04

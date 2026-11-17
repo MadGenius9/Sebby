@@ -17,7 +17,9 @@
     "test:browser": "npm run build && node tests/workspace-browser.mjs",
     "test:docker": "node --import tsx tests/docker-live.mts",
     "test:github": "node --import tsx tests/github-live.mts",
-    "test:docker-dependencies": "node --import tsx tests/docker-dependencies-live.mts"
+    "test:docker-dependencies": "node --import tsx tests/docker-dependencies-live.mts",
+    "local": "node scripts/start-local.mjs",
+    "test:local": "npm run build && node --test tests/local-launcher.test.mjs"
   },
   "engines": {
     "node": ">=22"

@@ -6,7 +6,9 @@ This is the **v2 foundation**, not a finished autonomous coding OS. The previous
 
 ## Try the workspace locally
 
-Requires Node.js 22 or newer, npm and Git. From the repository root:
+On Windows 11, extract this branch and double-click **Start-Sebby.cmd**. It checks prerequisites, installs dependencies as needed, builds and opens the local workspace. See [Windows setup](docs/V2-WINDOWS.md) for limits, diagnostics and migration.
+
+Requires Node.js 22.12 or newer, npm and Git. From the repository root:
 
 ```bash
 npm ci

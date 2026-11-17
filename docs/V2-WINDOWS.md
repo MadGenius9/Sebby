@@ -1,0 +1,25 @@
+# Windows 11 local workspace
+
+Download the `sebby-v2` source ZIP from GitHub, extract it to a normal folder you control, then double-click **Start-Sebby.cmd**. Do not run inside the ZIP viewer. If prerequisites are missing, the launcher points to the official Node.js and Git installers; install them and reopen the launcher. Use Node.js 22.12 or newer; Node 22 is the CI-tested version. No administrator elevation, registry changes or global PowerShell policy changes are performed by this launcher.
+
+The launcher checks prerequisites, runs `npm ci` when its dependency/Node-ABI marker changes, builds the app and starts it on **http://127.0.0.1:8787/workspace**. It opens the browser after the health endpoint confirms readiness. Keep the console open; press Ctrl+C there to stop. A port already in use is refused before installation or browser opening. To use a different port, run `Start-Sebby.cmd --port=8788` in Command Prompt.
+
+The email form selects a local development identity; it is not verified authentication or Google sign-in. Use the same email to reopen your projects. Save explicitly before closing. This mode starts no live AI engines and makes no model calls, so adding OpenAI, Claude, Grok and Gemini still requires full-service configuration. Drive requires its own OAuth configuration and consent. The launcher does not claim these accounts are connected.
+
+## What is available now
+
+The local workspace includes coding, project notes/search, saved revisions and reviewed recovery, source ZIP/public GitHub snapshot import, early polygon modeling and GLB export. The companion can be paired separately with a selected folder. Live agents, voice and an isolated worker have separate prerequisites. An ordinary Docker Desktop installation is not certified as this runner: it requires rootless Docker, cgroup v2 and verified resource limits, and fails closed if those are missing.
+
+For the complete AI/build service on Windows 11, WSL 2/Ubuntu is the intended Linux environment to validate next. Install it using Microsoft's documented `wsl --install` flow if needed; a restart and Linux-user initialization may be required. WSL, Hermes/provider authentication and the rootless worker are not installed automatically by this launcher. A WSL workspace should have its own clone and Linux `node_modules`; do not reuse native Windows dependency files inside Linux.
+
+## Data and later migration
+
+By default, projects and history are in `data/grokbot.db`, with private run data under `data/runs`. A custom `DB_PATH` or `SEBBY_RUNS_DIR` changes those locations. Before moving hosts, stop Sebby and preserve the whole data directory, not only a live SQLite file. Keep a separate backup. Current-project JSON exports are useful portable copies but do not include full revision/run history.
+
+Move your stopped data and necessary private configuration to the new host, reinstall dependencies for its operating system, and configure real authentication/HTTPS before exposing it. Drive refresh credentials require the same private encryption key or reconnection; OAuth callback URLs and companion pairing may need updating. Do not include personal data, keys or tokens in the public repository.
+
+## Diagnostics and verification
+
+`Start-Sebby.cmd --check` (or `npm.cmd run local -- --check`) prints a read-only prerequisite report without opening a browser, starting the server or creating a database. `npm.cmd run local -- --no-open` leaves browser opening to you. A failed install/build remains visible in the console; a failed install is not marked successful.
+
+`npm run test:local` builds the app and tests prerequisite diagnostics, occupied-port refusal, real loopback startup, saved-project persistence across restarts, and supervised child shutdown. On Windows, it also invokes the actual CMD wrapper from a junction path containing spaces. These are hosted Windows runner checks, not proof of installation on Chuck's Windows 11 machine. Native Windows package/ACL/antivirus behavior and the full WSL/provider/worker setup remain to be validated.
