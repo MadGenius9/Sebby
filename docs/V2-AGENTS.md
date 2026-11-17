@@ -19,6 +19,7 @@ Assignment applies to the agent's turns until unassigned, including any existing
 | `project_read_file` | One exact-revision text file |
 | `project_read_scene` | The exact-revision scene, including validated polygon meshes |
 | `project_search` | Keyword matches with saved revision, path, line range and source hash |
+| `project_propose_scene_operations` | Validated, ordered modeling operations producing a pending full-scene proposal |
 | `project_propose_changes` | Persistent pending proposal of up to ten file changes and/or a replacement scene |
 | `project_proposal_status` | Pending/applied/rejected/revoked status, staleness and applied revision |
 | `project_start_run` | An isolated build/test request, only under explicit run permission |
@@ -37,4 +38,10 @@ The project MCP layer enforces these grants. Hermes' existing native shell/brows
 
 ## Verification
 
-Tests exercise real proposal persistence, Git diffs, HTTP handlers, exact-review application, stale/revoked grants, ownership, and actual MCP tool dispatch. A scripted local Hermes-compatible gateway drives one real turn queue/SSE/MCP round trip and confirms no desktop lease is created. That gateway is a test fixture, not a live model. Live Hermes/provider calls and visible review interactions are still unverified.
+Tests exercise real proposal persistence, Git diffs, HTTP handlers, exact-review application, stale/revoked grants, ownership, and actual MCP tool dispatch. A scripted local Hermes-compatible gateway drives one real turn queue/SSE/MCP round trip and confirms no desktop lease is created. That gateway is a test fixture, not a live model. Live Hermes/provider calls remain unverified. Browser acceptance exercises assignment and the real modeling tool candidate, review/apply, rejection and stale-proposal refusal using a disposable fixture agent; this is not a live model. See the draft PR for hosted results.
+
+## Validated modeling operations
+
+Read `project_read_scene` before choosing IDs and zero-based face/vertex indices. `project_propose_scene_operations` accepts an exact project/grant/revision, a summary and 1–24 operations. `add` creates a box, sphere, cylinder or editable cube under a new UUID; `update` changes its name, transforms or color; `duplicate` requires a new UUID and name; `remove` requires an existing ID. Mesh operations are `extrude` (face/distance), `inset` (face/ratio), `triangulate` and `vertex` (index/position). Operations run in order, so a newly created object can be edited later in the same batch.
+
+All changes are built on a copy and checked against the existing scene, geometry and save limits. A failure creates no proposal and leaves saved data unchanged. Successful batches enter the same owner-reviewed proposal workflow as source changes; agents cannot apply them. Transform coordinates use meters, rotation degrees, positive scale; vertex edits use local coordinates. Inset is a centroid ratio, not an architectural offset. The pure operation builder and MCP integration are tested; autonomous modeling through a live provider remains a separate acceptance step.

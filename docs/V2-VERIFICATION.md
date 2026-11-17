@@ -3,7 +3,7 @@
 ## Passed locally
 
 - Server and web TypeScript checks.
-- 66 workspace tests covering persistence, ownership/revisions, Git snapshots/diffs, source ZIP review, scoped agents/proposals, dependency selection, runner lifecycle fixtures, retained build outputs, knowledge search, mesh operations, Drive protocol fixtures and the companion broker/filesystem implementation.
+- 71 workspace tests covering persistence, ownership/revisions, Git snapshots/diffs, source ZIP review, scoped agents/proposals, dependency selection, runner lifecycle fixtures, retained build outputs, knowledge search, mesh operations, Drive protocol fixtures and the companion broker/filesystem implementation.
 - Production Vite/server builds and real HTTP smoke. The smoke checks source import/preview, knowledge, agent/proposal routes, retained-output delivery fixtures, unavailable-worker refusal and session isolation.
 - The actual companion CLI paired over HTTP in a separate process, read a disposable source file, wrote a reviewed replacement with a local backup and was revoked. No host commands were dispatched through it.
 - Three.js GLTFExporter output independently imported by Blender 4.3.2: one mesh, 108 vertices, 36 polygons and expected dimensions. Run with `SEBBY_BLENDER_BIN=/usr/bin/blender npm run test:workspace` to repeat this optional native check.
@@ -29,3 +29,8 @@ Current product limits are explicit: 40 virtual text files per project, 1 MB sav
 ## Public GitHub increment
 
 Six tests bring the deterministic workspace suite to 57. The real public-network `npm run test:github` check passed against octocat/Hello-World at commit 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d. GitHub inspection is read-only, retains commit/archive provenance in the reviewed document and creates no project until the separate import step. The browser increment mocks network review only and uses real project creation/edit/save/reopen. The hosted browser flow and all three platform jobs passed in run 44023098239. See V2-GITHUB-IMPORT.md.
+
+
+## Modeling and coding-loop acceptance increment
+
+Five additional deterministic tests cover modeling operations, candidate immutability, operation limits and the actual project tool proposal/apply authorization. The MCP routing test also dispatches the new modeling tool. Browser acceptance now includes the real source ZIP file picker, assignment, modeling proposal review/apply/reject/stale checks, retained Vite/React output preview with a working click handler, build ZIP download and mobile preview overflow. Its output run is explicitly seeded from a trusted authored Vite build, so that browser flow does not claim Docker execution. The separate `test:docker-dependencies` command provisions and exercises a real rootless dependency image. Latest hosted results and screenshots are linked from the draft PR.

@@ -16,7 +16,8 @@
     "test:http": "npm run build && node scripts/smoke-workspace.mjs",
     "test:browser": "npm run build && node tests/workspace-browser.mjs",
     "test:docker": "node --import tsx tests/docker-live.mts",
-    "test:github": "node --import tsx tests/github-live.mts"
+    "test:github": "node --import tsx tests/github-live.mts",
+    "test:docker-dependencies": "node --import tsx tests/docker-dependencies-live.mts"
   },
   "engines": {
     "node": ">=22"

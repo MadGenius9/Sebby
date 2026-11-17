@@ -1,3 +1,7 @@
+import {
+  applySceneOperations,
+  sceneOperationsSchema,
+} from "./scene-operations.js";
 import { searchProject, projectKnowledge } from "./knowledge.js";
 import { buildManifest } from "./artifacts.js";
 import { createHash } from "node:crypto";
@@ -201,7 +205,7 @@ export const WORKSPACE_TOOLS = [
   {
     name: "project_read_scene",
     description:
-      "Read the saved scene, including polygon meshes in the assigned project at an exact revision. Use project_propose_changes with scene to propose a new scene; never claim it is applied while pending.",
+      "Read the saved scene, including polygon meshes in the assigned project at an exact revision. Use project_propose_scene_operations for validated modeling operations, or project_propose_changes with scene to propose a replacement; never claim it is applied while pending.",
     parameters: object(
       { ...scopeProperties, revision: { type: "integer", minimum: 1 } },
       ["projectId", "grantId", "revision"],
@@ -214,6 +218,57 @@ export const WORKSPACE_TOOLS = [
       return result(
         { projectId: doc.id, revision: doc.revision, scene: doc.scene },
         "Read scene",
+      );
+    },
+  },
+  {
+    name: "project_propose_scene_operations",
+    description:
+      "Propose 1–24 validated modeling operations on the exact saved scene: add primitives/editable cubes, update transforms/color/name, duplicate/remove, extrude/inset faces, triangulate or edit a vertex. Read project_read_scene first for UUIDs and zero-based face/vertex indices. New object IDs must be unique UUIDs. Coordinates are local meters, rotations degrees, scales positive. Operations run in order on a copy; any failure creates no proposal. Returns a complete scene proposal for user review, never applies it. Source files remain unchanged.",
+    parameters: object(
+      {
+        ...scopeProperties,
+        revision: { type: "integer", minimum: 1 },
+        summary: { type: "string", maxLength: 4000 },
+        operations: z.toJSONSchema(sceneOperationsSchema),
+      },
+      ["projectId", "grantId", "revision", "summary", "operations"],
+    ),
+    activity: "drafting_file" as const,
+    label: "Proposing modeling operations",
+    impl: async (a: unknown, ctx: WorkspaceToolContext) => {
+      const args = parse(
+        revisionScope.extend({
+          summary: z.string().trim().min(1).max(4000),
+          operations: sceneOperationsSchema,
+        }),
+        a,
+      );
+      const saved = project(ctx, args);
+      let scene;
+      try {
+        scene = applySceneOperations(saved.scene, args.operations);
+      } catch (error) {
+        throw new WorkspaceError(400, (error as Error).message);
+      }
+      return result(
+        {
+          proposal: propose(
+            ctx.userId,
+            ctx.botId,
+            {
+              projectId: args.projectId,
+              grantId: args.grantId,
+              revision: args.revision,
+              summary: args.summary,
+              scene,
+            },
+            ctx.workspaceGrantId,
+          ),
+          applied: false,
+          next: "Review the exact scene in the project's Agents panel before applying.",
+        },
+        "Created a modeling proposal for review",
       );
     },
   },

@@ -332,7 +332,12 @@ test("the MCP gateway routes authenticated project tools without model calls", a
     binding = bindAgent("alice", p.id, "bot-alice", false);
   const { mcpApi } = await import("../server/src/mcp.js");
   const { mcpToken } = await import("../server/src/engine.js");
-  const call = (slug: string, token: string, args: unknown) =>
+  const call = (
+    slug: string,
+    token: string,
+    args: unknown,
+    name = "project_read_file",
+  ) =>
     mcpApi.request(`http://localhost/${slug}`, {
       method: "POST",
       headers: {
@@ -343,7 +348,7 @@ test("the MCP gateway routes authenticated project tools without model calls", a
         jsonrpc: "2.0",
         id: 1,
         method: "tools/call",
-        params: { name: "project_read_file", arguments: args },
+        params: { name, arguments: args },
       }),
     });
   const args = {
@@ -366,4 +371,115 @@ test("the MCP gateway routes authenticated project tools without model calls", a
   ).json();
   assert.equal(foreign.result.isError, true);
   assert.match(foreign.result.content[0].text, /not authorized/);
+  const modeling = await (
+    await call(
+      "bot-alice",
+      mcpToken("bot-alice"),
+      {
+        projectId: p.id,
+        grantId: binding.grantId,
+        revision: 1,
+        summary: "MCP modeling proposal",
+        operations: [
+          {
+            op: "add",
+            id: randomUUID(),
+            name: "MCP cube",
+            kind: "editable-cube",
+          },
+        ],
+      },
+      "project_propose_scene_operations",
+    )
+  ).json();
+  assert.equal(modeling.result.isError, undefined);
+  assert.equal(JSON.parse(modeling.result.content[0].text).applied, false);
+});
+
+test("modeling tool creates an unapplied reviewable scene proposal and preserves source on apply", async () => {
+  const p = await create(),
+    b = bindAgent("alice", p.id, "bot-alice", false),
+    id = randomUUID();
+  const answer = await invoke(
+    "project_propose_scene_operations",
+    {
+      projectId: p.id,
+      grantId: b.grantId,
+      revision: p.revision,
+      summary: "Build an editable prop",
+      operations: [
+        { op: "add", id, name: "Agent prop", kind: "editable-cube" },
+        { op: "extrude", id, face: 3, distance: 0.25 },
+        { op: "inset", id, face: 3, ratio: 0.2 },
+      ],
+    },
+    { userId: "alice", botId: "bot-alice", workspaceGrantId: b.grantId },
+  );
+  assert.equal(answer.applied, false);
+  assert.equal(answer.proposal.state, "pending");
+  const before = await (await request(projectsApi, "GET", `/${p.id}`)).json();
+  assert.equal(before.project.scene.objects.length, 0);
+  assert.equal(before.project.revision, 1);
+  const reviewed = await reviewProposal("alice", answer.proposal.id);
+  assert.equal(reviewed.sceneChanged, true);
+  assert.equal(reviewed.afterScene.objects[0].mesh.vertices.length, 16);
+  const applied = applyProposal(
+    "alice",
+    answer.proposal.id,
+    reviewed.proposal.reviewHash,
+  );
+  assert.deepEqual(applied.files, p.files);
+  assert.equal(applied.revision, 2);
+  assert.equal(applied.scene.objects[0].mesh.faces.length, 14);
+});
+
+test("modeling tool refuses failed batches, stale revisions and changed assignments without creating proposals", async () => {
+  const p = await create(),
+    b = bindAgent("alice", p.id, "bot-alice", false),
+    id = randomUUID();
+  const args = {
+    projectId: p.id,
+    grantId: b.grantId,
+    revision: 1,
+    summary: "Invalid modeling",
+    operations: [
+      { op: "add", id, name: "Candidate", kind: "editable-cube" },
+      { op: "extrude", id, face: 999, distance: 1 },
+    ],
+  };
+  await assert.rejects(
+    invoke("project_propose_scene_operations", args),
+    /valid polygon face/,
+  );
+  assert.equal(
+    (
+      db
+        .prepare(
+          "SELECT count(*) AS n FROM workspace_proposals WHERE project_id=?",
+        )
+        .get(p.id) as any
+    ).n,
+    0,
+  );
+  const valid = { ...args, operations: args.operations.slice(0, 1) };
+  await assert.rejects(
+    invoke("project_propose_scene_operations", { ...valid, revision: 99 }),
+    /revision changed/,
+  );
+  await assert.rejects(
+    invoke("project_propose_scene_operations", valid, {
+      userId: "bob",
+      botId: "bot-bob",
+    }),
+    /not authorized/,
+  );
+  bindAgent("alice", p.id, "bot-alice", false);
+  await assert.rejects(
+    invoke("project_propose_scene_operations", valid, {
+      userId: "alice",
+      botId: "bot-alice",
+      workspaceGrantId: b.grantId,
+    }),
+    /assignment changed/,
+  );
 });
