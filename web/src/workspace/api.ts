@@ -21,6 +21,11 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return result as T;
 }
 export const workspaceApi = {
+  reviewGithub: (url: string, name: string, ref: string) =>
+    request<import("@shared/workspace/schema").SourceImportReview>(
+      "/projects/import-github/review",
+      { method: "POST", body: JSON.stringify({ url, name, ref }) },
+    ),
   companions: () =>
     request<{
       companions: {

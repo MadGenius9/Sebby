@@ -2,7 +2,7 @@
 
 Choose **Import source ZIP**, select an archive and inspect it. The review shows the proposed project name, included paths, total source bytes, skipped paths/reasons and original archive SHA-256. The optional shared outer-folder removal is enabled in the UI and reported explicitly; disable it when a common directory such as `src/` should remain part of the project. Inspection creates no project. **Create project from reviewed files** uses the existing authenticated project importer to create revision 1; it never overwrites an existing project. The editor can then save revisions, show Git diffs, prepare source previews and request configured isolated builds.
 
-This is a small source-only importer, including ZIP downloads and Git source archives. It does not clone a GitHub URL, access private repositories or preserve history, remotes, branches or archive provenance in the project database. The displayed checksum identifies the inspected archive; it is not an authenticity signature. Code does not run and dependencies are not installed during inspection or import.
+This is a small source-only importer, including ZIP downloads and Git source archives. A separate public GitHub URL snapshot importer is now available (V2-GITHUB-IMPORT.md). ZIP import does not clone a GitHub URL, access private repositories or preserve history, remotes, branches or archive provenance in the project database. The displayed checksum identifies the inspected archive; it is not an authenticity signature. Code does not run and dependencies are not installed during inspection or import.
 
 ## Limits and exclusions
 

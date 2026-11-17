@@ -5,10 +5,15 @@ import { workspaceApi } from "./api";
 export function SourceImportPanel({
   create,
   close,
+  initialMode = "zip",
 }: {
   create: (document: SourceImportReview["document"]) => Promise<void>;
   close: () => void;
+  initialMode?: "zip" | "github";
 }) {
+  const [mode, setMode] = useState(initialMode);
+  const [url, setUrl] = useState(""),
+    [ref, setRef] = useState("");
   const [file, setFile] = useState<File | null>(null),
     [name, setName] = useState("Imported project");
   const [stripRoot, setStripRoot] = useState(true),
@@ -26,7 +31,9 @@ export function SourceImportPanel({
       className="source-import-panel"
       aria-labelledby="source-import-title"
     >
-      <h1 id="source-import-title">Import source ZIP</h1>
+      <h1 id="source-import-title">
+        {mode === "zip" ? "Import source ZIP" : "Import GitHub source"}
+      </h1>
       <p>
         Open a small source project as a new workspace. Review the file list
         before creating it.
@@ -34,16 +41,15 @@ export function SourceImportPanel({
       <form
         onSubmit={async (e) => {
           e.preventDefault();
-          if (!file || busy) return;
+          if ((mode === "zip" && !file) || busy) return;
           setBusy(true);
           setError("");
           const request = generation.current;
           try {
-            const result = await workspaceApi.reviewSourceZip(
-              file,
-              name,
-              stripRoot,
-            );
+            const result =
+              mode === "zip"
+                ? await workspaceApi.reviewSourceZip(file!, name, stripRoot)
+                : await workspaceApi.reviewGithub(url, name, ref);
             if (request === generation.current) setReview(result);
           } catch (e) {
             if (request === generation.current) setError((e as Error).message);
@@ -52,24 +58,76 @@ export function SourceImportPanel({
           }
         }}
       >
-        <label htmlFor="source-zip">Source ZIP (up to 4 MB)</label>
-        <input
-          id="source-zip"
-          type="file"
-          accept=".zip,application/zip"
-          required
+        <label htmlFor="import-source-kind">Source</label>
+        <select
+          id="import-source-kind"
+          value={mode}
           disabled={busy}
           onChange={(e) => {
             invalidate();
-            const selected = e.target.files?.[0] || null;
-            setFile(selected);
-            if (selected)
-              setName(
-                selected.name.replace(/\.zip$/i, "").slice(0, 80) ||
-                  "Imported project",
-              );
+            setMode(e.target.value as "zip" | "github");
           }}
-        />
+        >
+          <option value="zip">ZIP file</option>
+          <option value="github">Public GitHub repository</option>
+        </select>
+        {mode === "github" ? (
+          <>
+            <label htmlFor="github-source-url">GitHub repository URL</label>
+            <input
+              id="github-source-url"
+              type="url"
+              required
+              value={url}
+              placeholder="https://github.com/owner/repository"
+              disabled={busy}
+              onChange={(e) => {
+                invalidate();
+                setUrl(e.target.value);
+              }}
+            />
+            <label htmlFor="github-source-ref">
+              Branch, tag or commit (optional)
+            </label>
+            <input
+              id="github-source-ref"
+              value={ref}
+              maxLength={160}
+              placeholder="Default HEAD"
+              disabled={busy}
+              onChange={(e) => {
+                invalidate();
+                setRef(e.target.value);
+              }}
+            />
+            <p>
+              Public repositories only. The selected revision is resolved to a
+              commit and downloaded as a source snapshot. No GitHub sign-in or
+              repository write access is used.
+            </p>
+          </>
+        ) : (
+          <>
+            <label htmlFor="source-zip">Source ZIP (up to 4 MB)</label>
+            <input
+              id="source-zip"
+              type="file"
+              accept=".zip,application/zip"
+              required
+              disabled={busy}
+              onChange={(e) => {
+                invalidate();
+                const selected = e.target.files?.[0] || null;
+                setFile(selected);
+                if (selected)
+                  setName(
+                    selected.name.replace(/\.zip$/i, "").slice(0, 80) ||
+                      "Imported project",
+                  );
+              }}
+            />
+          </>
+        )}
         <label htmlFor="source-name">Project name</label>
         <input
           id="source-name"
@@ -82,22 +140,28 @@ export function SourceImportPanel({
             setName(e.target.value);
           }}
         />
-        <label className="source-import-check">
-          <input
-            type="checkbox"
-            checked={stripRoot}
-            disabled={busy}
-            onChange={(e) => {
-              invalidate();
-              setStripRoot(e.target.checked);
-            }}
-          />{" "}
-          Remove a shared outer folder
-        </label>
+        {mode === "zip" && (
+          <label className="source-import-check">
+            <input
+              type="checkbox"
+              checked={stripRoot}
+              disabled={busy}
+              onChange={(e) => {
+                invalidate();
+                setStripRoot(e.target.checked);
+              }}
+            />{" "}
+            Remove a shared outer folder
+          </label>
+        )}
         <p>
-          Up to 40 UTF-8 source files, 100 KB each and 600 KB total. Binary
-          assets, dependencies, generated folders and common credential
-          filenames are excluded.
+          Up to{" "}
+          {mode === "github"
+            ? "39 source files plus the origin record"
+            : "40 UTF-8 source files"}
+          , 100 KB per source file and 600 KB total. Binary assets,
+          dependencies, generated folders and common credential filenames are
+          excluded.
         </p>
         <div className="source-import-actions">
           <button
@@ -111,9 +175,15 @@ export function SourceImportPanel({
           <button
             className="btn btn--primary"
             type="submit"
-            disabled={busy || !file || !name.trim()}
+            disabled={
+              busy || (mode === "zip" ? !file : !url.trim()) || !name.trim()
+            }
           >
-            {busy ? "Working…" : "Inspect ZIP"}
+            {busy
+              ? "Working…"
+              : mode === "zip"
+                ? "Inspect ZIP"
+                : "Inspect GitHub repository"}
           </button>
         </div>
       </form>
@@ -128,6 +198,22 @@ export function SourceImportPanel({
               ? `Removed folder: ${review.sourceRoot}`
               : "Folder paths preserved"}
           </p>
+          {review.source && (
+            <section className="github-source-origin">
+              <h3>Snapshot origin</h3>
+              <p>{review.source.repository}</p>
+              <p>
+                Requested revision: <code>{review.source.requestedRef}</code>
+              </p>
+              <p>
+                Commit: <code>{review.source.commit}</code>
+              </p>
+              <p>
+                SEBBY-GITHUB-SOURCE.json records this origin. Later project
+                edits can diverge from it.
+              </p>
+            </section>
+          )}
           {review.warnings.map((w) => (
             <p key={w}>{w}</p>
           ))}

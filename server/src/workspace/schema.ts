@@ -196,6 +196,13 @@ export type BuildPreview = {
 };
 
 export type SourceImportReview = {
+  source?: {
+    provider: "github";
+    repository: string;
+    requestedRef: string;
+    commit: string;
+    archiveSha256: string;
+  };
   document: ProjectDocument;
   archiveSha256: string;
   sourceRoot: string;

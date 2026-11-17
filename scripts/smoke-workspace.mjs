@@ -62,6 +62,9 @@ try {
   await computerTask({operation:'write',path:'app.js',content:'updated companion fixture',expectedHash:remote.sha256});assert.equal(await readFile(path.join(sourceRoot,'app.js'),'utf8'),'updated companion fixture');
   assert.equal((await fetch(`${base}/api/companions/${computer.id}/revoke`,{method:'POST',headers,body:'{}'})).status,200);
   const knowledge=await fetch(`${base}/api/projects/${project.id}/search?q=Sebby`,{headers});assert.equal(knowledge.status,200);assert.ok((await knowledge.json()).hits.length>0);
+  const githubRequest={url:'https://example.invalid/owner/repo',name:'Invalid source'};
+  const invalidGithub=await fetch(`${base}/api/projects/import-github/review`,{method:'POST',headers,body:JSON.stringify(githubRequest)});assert.equal(invalidGithub.status,400);
+  assert.equal((await fetch(`${base}/api/projects/import-github/review`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(githubRequest)})).status,401);
   // Seed disposable output records to check HTTP delivery; this is not a Docker build.
   const {validateArtifacts}=await import('../server/dist/workspace/artifact-protocol.js');
   const {createHash}=await import('node:crypto');

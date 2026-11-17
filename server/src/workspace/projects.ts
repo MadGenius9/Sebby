@@ -1,3 +1,4 @@
+import { createGithubImportApi } from "./github-import.js";
 import { searchProject } from "./knowledge.js";
 import { reviewSourceZip } from "./source-import.js";
 import { z } from "zod";
@@ -92,6 +93,7 @@ projectsApi.post("/import-source/review", async (c) => {
     );
   }
 });
+projectsApi.route("/import-github", createGithubImportApi());
 projectsApi.get("/", (c) => {
   const rows = db
     .prepare(

@@ -122,7 +122,9 @@ export function WorkspaceApp() {
   const [mobileProjectsCollapsed, setMobileProjectsCollapsed] = useState(false);
   const [template, setTemplate] = useState<"blank" | "web">("web");
   const importInput = useRef<HTMLInputElement>(null);
-  const [sourceImport, setSourceImport] = useState(false);
+  const [sourceImport, setSourceImport] = useState<"zip" | "github" | null>(
+    null,
+  );
   const [past, setPast] = useState<Project[]>([]);
   const [future, setFuture] = useState<Project[]>([]);
   const projectRef = useRef(project);
@@ -156,7 +158,7 @@ export function WorkspaceApp() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   const adopt = (p: Project) => {
-    setSourceImport(false);
+    setSourceImport(null);
     setMobileProjectsCollapsed(true);
     setProject(p);
     setSaved(fingerprint(p));
@@ -372,9 +374,23 @@ export function WorkspaceApp() {
             type="button"
             className="btn btn--secondary import-project"
             disabled={busy}
-            onClick={() => setSourceImport(true)}
+            onClick={() => {
+              setSourceImport("zip");
+              setMobileProjectsCollapsed(true);
+            }}
           >
             Import source ZIP
+          </button>
+          <button
+            type="button"
+            className="btn btn--secondary import-project"
+            disabled={busy}
+            onClick={() => {
+              setSourceImport("github");
+              setMobileProjectsCollapsed(true);
+            }}
+          >
+            Import GitHub repository
           </button>
           <input
             ref={importInput}
@@ -553,7 +569,9 @@ export function WorkspaceApp() {
         </nav>
         {sourceImport ? (
           <SourceImportPanel
-            close={() => setSourceImport(false)}
+            key={sourceImport}
+            initialMode={sourceImport}
+            close={() => setSourceImport(null)}
             create={async (document) => {
               if (busy)
                 throw new Error("Wait for the current operation to finish");
@@ -580,7 +598,10 @@ export function WorkspaceApp() {
             </p>
             <dl>
               <dt>GitHub</dt>
-              <dd>GitHub URL import and pull requests — planned</dd>
+              <dd>
+                Public repository snapshot import available; private access and
+                pull requests planned
+              </dd>
 
               <dt>AI execution</dt>
               <dd>

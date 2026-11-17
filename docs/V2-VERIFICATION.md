@@ -3,7 +3,7 @@
 ## Passed locally
 
 - Server and web TypeScript checks.
-- 51 workspace tests covering persistence, ownership/revisions, Git snapshots/diffs, source ZIP review, scoped agents/proposals, dependency selection, runner lifecycle fixtures, retained build outputs, knowledge search, mesh operations, Drive protocol fixtures and the companion broker/filesystem implementation.
+- 57 workspace tests covering persistence, ownership/revisions, Git snapshots/diffs, source ZIP review, scoped agents/proposals, dependency selection, runner lifecycle fixtures, retained build outputs, knowledge search, mesh operations, Drive protocol fixtures and the companion broker/filesystem implementation.
 - Production Vite/server builds and real HTTP smoke. The smoke checks source import/preview, knowledge, agent/proposal routes, retained-output delivery fixtures, unavailable-worker refusal and session isolation.
 - The actual companion CLI paired over HTTP in a separate process, read a disposable source file, wrote a reviewed replacement with a local backup and was revoked. No host commands were dispatched through it.
 - Three.js GLTFExporter output independently imported by Blender 4.3.2: one mesh, 108 vertices, 36 polygons and expected dimensions. Run with `SEBBY_BLENDER_BIN=/usr/bin/blender npm run test:workspace` to repeat this optional native check.
@@ -24,4 +24,8 @@ Docker is absent in this local container, but the separate hosted isolated-worke
 
 Live Google OAuth/Picker consent and a real import/export/revoke; native Windows companion installation, filesystem permissions and reconnect/revoke; a live configured agent editing/testing an imported project; real dependency-image execution; further browser coverage of gizmo dragging, proposals and build previews. Production hosting/authentication, a separate preview origin, backups and data retention also need deployment review.
 
-Current product limits are explicit: 40 virtual text files per project, 1 MB saves, source-only imports, a plain-text editor, limited static previews, one-file companion operations and early polygon tools. GitHub URL cloning/PR delivery, working branches, broad framework hosting, parallel task orchestration, voice polish, mesh bevel/UV/material workflows and a packaged desktop installer remain roadmap work. This is a larger working foundation, not a finished autonomous coding OS.
+Current product limits are explicit: 40 virtual text files per project, 1 MB saves, source-only imports, a plain-text editor, limited static previews, one-file companion operations and early polygon tools. Full GitHub cloning/private sync/PR delivery, working branches, broad framework hosting, parallel task orchestration, voice polish, mesh bevel/UV/material workflows and a packaged desktop installer remain roadmap work. This is a larger working foundation, not a finished autonomous coding OS.
+
+## Public GitHub increment
+
+Six tests bring the deterministic workspace suite to 57. The real public-network `npm run test:github` check passed against octocat/Hello-World at commit 7fd1a60b01f91b314f59955a4e4d4e80d8edf11d. GitHub inspection is read-only, retains commit/archive provenance in the reviewed document and creates no project until the separate import step. The browser increment mocks network review only and uses real project creation/edit/save/reopen. See V2-GITHUB-IMPORT.md and the latest CI result.
