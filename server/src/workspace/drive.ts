@@ -299,7 +299,7 @@ export function createDriveApi(
       response_type: "code",
       scope: SCOPE,
       access_type: "offline",
-      prompt: "consent",
+      prompt: "consent select_account",
       include_granted_scopes: "false",
       state,
       code_challenge: createHash("sha256").update(verifier).digest("base64url"),
