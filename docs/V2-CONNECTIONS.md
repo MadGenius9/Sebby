@@ -28,9 +28,9 @@ Access/refresh tokens are encrypted with AES-256-GCM using owner-bound additiona
 
 The Node companion runs on the computer containing your project folder. It makes outbound requests to Sebby and opens no inbound port. This is a source-file bridge, not a desktop-control service or native installer.
 
-1. Install Node 22+ and obtain the Sebby source on that computer.
+1. Extract the Sebby Windows test ZIP on that computer, or obtain the Sebby source and install Node 22+.
 2. Open **Connections → My computer → Create pairing code**.
-3. From the Sebby source directory, run the displayed command, replacing the folder path:
+3. On Windows, open **Connect-Folder.cmd** from the extracted ZIP. Enter the displayed address, the folder path, and the pairing code. On a source checkout, expand **Pair from the command line** and run the displayed command, replacing the folder path:
 
 ```bash
 node scripts/companion.mjs --server https://YOUR_SEBBY --root "YOUR_PROJECT_FOLDER" --code YOUR_ONE_TIME_CODE
@@ -38,11 +38,11 @@ node scripts/companion.mjs --server https://YOUR_SEBBY --root "YOUR_PROJECT_FOLD
 
 The code is single-use and expires after five minutes. Select a project subfolder; the CLI refuses your home folder or filesystem root. The selected folder name, computer label and read/write capability are displayed in Sebby. The server never receives the absolute root path.
 
-Read-only mode is the default. Choose **Browse source**, read a listed file and **Add to project** to edit it in Sebby. Save edits. To permit writing reviewed changes back, revoke and re-pair with `--allow-write` appended to the command. Read the computer file again, review the replacement content, then choose **Write saved project file to computer**. Writes require the expected content hash and an unchanged regular file, and save a local backup first. This increment does not create files, delete files, install packages, run commands, control applications or allow agents to operate the companion automatically.
+Read-only mode is the default. Choose **Browse source**, read a listed file and **Add to project** to edit it in Sebby. Save edits. To permit writing reviewed changes back, revoke and re-pair, then enter `WRITE` in the Windows setup or append `--allow-write` to the manual command. Read the computer file again, review the replacement content, then choose **Write saved project file to computer**. Writes require the expected content hash and an unchanged regular file, and save a local backup first. This increment does not create files, delete files, install packages, run commands, control applications or allow agents to operate the companion automatically.
 
 Allowed files are bounded UTF-8 source text under 100 KB. Environment files, common credentials, generated/dependency folders, links, hardlinks, device names and traversal paths are refused. Binary assets are unsupported. Filename filtering does not detect every secret embedded in source. Limits are 200 listed files, depth 8 and 2,000 visited entries. New directories are not created by writes.
 
-The companion stores its token, selected root, backups and action log under your local `~/.config/sebby` directory. Logs record operation/path/outcome, never source contents; backups contain the previous file content. File permissions are requested as private on supported systems. `SEBBY_COMPANION_CONFIG_DIR` can select another local configuration directory outside the selected source folder. Tokens are stored hashed on the server, expire after 30 days and are revocable. Restart without `--code` using the same server/root/write mode. Stop with Ctrl+C; revoke in Sebby to disable the token permanently.
+The companion stores its token, selected root, backups and action log under your local `~/.config/sebby` directory. Logs record operation/path/outcome, never source contents; backups contain the previous file content. File permissions are requested as private on supported systems. `SEBBY_COMPANION_CONFIG_DIR` can select another local configuration directory outside the selected source folder. Tokens are stored hashed on the server, expire after 30 days and are revocable. To reconnect in the Windows setup, leave the code blank and enter the same server, folder and write mode. In the manual command, omit `--code`. Stop with Ctrl+C; revoke in Sebby to disable the token permanently.
 
 Queued work expires after a minute; transient source payloads are cleared after ten minutes when the broker is used again. Disconnect/revocation blocks new dispatches; a file operation already executing on the computer can finish. A lost acknowledgement can leave a successful local write reported as expired: inspect the computer file before retrying. Backups have no automatic retention limit yet.
 

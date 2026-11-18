@@ -2,12 +2,33 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
+import { createInterface } from "node:readline/promises";
 import { localTask } from "./companion-files.mjs";
-const args = process.argv.slice(2),
-  value = (key) => args[args.indexOf(key) + 1];
+async function setupArguments() {
+  const prompts = createInterface({ input: process.stdin, output: process.stdout });
+  try {
+    const server = (await prompts.question("Sebby address [http://127.0.0.1:8787]: ")).trim() || "http://127.0.0.1:8787";
+    const folder = (await prompts.question("Path to the project folder: ")).trim().replace(/^"(.+)"$/, "$1");
+    if (!path.isAbsolute(folder)) throw new Error("Enter the full path to a project folder.");
+    const code = (await prompts.question("Pairing code (Enter to reconnect): ")).trim();
+    if (code && !/^[A-Za-z0-9_-]{43}$/.test(code)) throw new Error("Paste the pairing code shown in Sebby.");
+    const permission = (await prompts.question("Type WRITE to allow reviewed writes, or press Enter for read-only: ")).trim();
+    const options = ["--server", server, "--root", folder];
+    if (code) options.push("--code", code);
+    if (permission === "WRITE") options.push("--allow-write");
+    else if (permission) throw new Error("Enter WRITE or press Enter for read-only.");
+    return options;
+  } finally {
+    prompts.close();
+  }
+}
+
+const input = process.argv.slice(2);
+const args = input.length === 1 && input[0] === "--setup" ? await setupArguments() : input;
+const value = (key) => args[args.indexOf(key) + 1];
 if (args.includes("--help")) {
   console.log(
-    "node scripts/companion.mjs --server https://your-sebby --root /selected/project [--code ONE_TIME_CODE] [--allow-write]\nRead-only by default. Writes update existing reviewed files with local backups. No commands, deletes, or new files.",
+    "node scripts/companion.mjs --server https://your-sebby --root /selected/project [--code ONE_TIME_CODE] [--allow-write]\nRun with --setup for interactive pairing.\nRead-only by default. Writes update existing reviewed files with local backups. No commands, deletes, or new files.",
   );
   process.exit(0);
 }

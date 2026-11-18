@@ -1,4 +1,4 @@
-Sebby | Windows 11 x64 test 2
+Sebby | Windows 11 x64 test 3
 
 1. Extract this whole ZIP to a writable folder, such as Documents.
 2. Open the extracted Sebby folder and double-click Start-Sebby.cmd.
@@ -19,13 +19,19 @@ Windows if you want to use revision comparisons or Git-backed tools.
 The local profile is independent of your Google account.
 Blender automation, cloud agents and Drive setup are outside this test.
 
+Connect a project folder: in Sebby, open Connections → My computer and
+choose Create pairing code. Double-click Connect-Folder.cmd and enter
+the displayed Sebby address, your project folder path, and the code.
+Press Enter for read-only, or type WRITE to allow reviewed edits with
+backups. Keep the console open and select Refresh computers in Sebby.
+
 Optional live voice: open Voice settings under Projects, paste your
 xAI API key, and select Save key. You can preview a voice or start a
 call immediately. Allow microphone access when starting a call.
 Calls send audio to xAI. Sebby saves the key in the local data folder,
 so keep that folder and any backups private.
 
-Updating from Test 1? Stop both copies of Sebby, then copy the old
+Updating from an earlier test? Stop both copies of Sebby, then copy the old
 data folder into the newly extracted Sebby folder. Use the same email
 when opening your projects.
 

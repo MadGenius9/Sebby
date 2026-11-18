@@ -83,10 +83,9 @@ export function CompanionPanel({
     <section className="drive-panel">
       <h2>My computer</h2>
       <p>
-        Pair the companion running on your computer with one selected project
-        folder. It starts read-only. Writes require the companion’s
-        --allow-write option, an exact content check, and local backups. It does
-        not run commands, delete files or create new files.
+        Connect one project folder from your computer. You can browse and read
+        source files. If you enable reviewed writes during setup, Sebby can
+        update existing files and make a local backup.
       </p>
       <div className="source-import-actions">
         <button
@@ -112,18 +111,22 @@ export function CompanionPanel({
       </div>
       {pair && (
         <section>
-          <p>
-            Pair within five minutes. Run from the Sebby repository on your
-            computer, replacing the folder path:
-          </p>
-          <pre className="companion-command">
-            node scripts/companion.mjs --server {location.origin} --root
-            &quot;YOUR_PROJECT_FOLDER&quot; --code {pair.code}
-          </pre>
-          <p>
-            Keep this one-time code private. Stop the companion with Ctrl+C, or
-            revoke it below.
-          </p>
+          <p>Pair within five minutes. Keep the one-time code private.</p>
+          <p><strong>Pairing code</strong> <code className="companion-command">{pair.code}</code></p>
+          <ol>
+            <li>Open <strong>Connect-Folder.cmd</strong> in the extracted Sebby Windows folder.</li>
+            <li>Enter <code>{location.origin}</code>, your project folder path, and the pairing code.</li>
+            <li>Choose read-only or reviewed writes. Once the console says connected, select <strong>Refresh computers</strong>.</li>
+          </ol>
+          <details>
+            <summary>Pair from the command line</summary>
+            <p>From the Sebby source folder, replace the example folder path:</p>
+            <pre className="companion-command">
+              node scripts/companion.mjs --server {location.origin} --root
+              &quot;YOUR_PROJECT_FOLDER&quot; --code {pair.code}
+            </pre>
+          </details>
+          <p>Leave the companion window open. Press Ctrl+C there to stop it.</p>
         </section>
       )}
       <ul className="drive-file-list">

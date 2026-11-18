@@ -52,17 +52,19 @@ jobs:
         run: ./scripts/package-windows.ps1 -OutputDirectory "${{ runner.temp }}/sebby-package"
       - name: Test the extracted Windows ZIP
         run: |
-          $archive = "${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-2.zip"
+          $archive = "${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-3.zip"
           $directory = "${{ runner.temp }}/Sebby Windows Test"
           Expand-Archive -LiteralPath $archive -DestinationPath $directory
           $env:SEBBY_WINDOWS_TEST_ROOT = Join-Path $directory 'Sebby'
           node --test tests/local-launcher.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/smoke-workspace.mjs
       - uses: actions/upload-artifact@v4
         with:
-          name: Sebby-Windows-x64-Test-2
+          name: Sebby-Windows-x64-Test-3
           path: |
-            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-2.zip
-            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-2.zip.sha256
+            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-3.zip
+            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-3.zip.sha256
           compression-level: 0
           if-no-files-found: error
 

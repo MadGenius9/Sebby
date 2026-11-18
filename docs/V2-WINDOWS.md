@@ -1,6 +1,6 @@
 # Windows 11 local workspace
 
-For the current portable test, use the **Sebby-Windows-x64-Test-2.zip** artifact from the Windows job in [workspace checks](https://github.com/MadGenius9/Sebby/actions/workflows/workspace.yml). Extract the whole ZIP, read **READ-ME-FIRST.txt**, then double-click **Start-Sebby.cmd**. It uses the included x64 Node runtime. Git is optional for startup and is required for revision comparisons and Git-backed tools. The test job checks the extracted archive from a path containing spaces.
+For the current portable test, use the **Sebby-Windows-x64-Test-3.zip** artifact from the Windows job in [workspace checks](https://github.com/MadGenius9/Sebby/actions/workflows/workspace.yml). Extract the whole ZIP, read **READ-ME-FIRST.txt**, then double-click **Start-Sebby.cmd**. It uses the included x64 Node runtime. Git is optional for startup and is required for revision comparisons and Git-backed tools. The test job checks the extracted archive from a path containing spaces.
 
 ## Running from source
 
@@ -28,6 +28,10 @@ Move your stopped data and necessary private configuration to the new host, rein
 
 `npm run test:local` builds the app and tests prerequisite diagnostics, occupied-port refusal, real loopback startup, saved-project persistence across restarts, and supervised child shutdown. On Windows, it also invokes the actual CMD wrapper from a junction path containing spaces. These are hosted Windows runner checks, not proof of installation on Chuck's Windows 11 machine. Windows 11 desktop and antivirus behavior and the full WSL/provider/worker setup still need a PC test.
 
+
+## Connect a project folder
+
+Start Sebby and open **Connections → My computer → Create pairing code**. Double-click **Connect-Folder.cmd** beside the launcher. Enter the Sebby address shown on the screen, the folder path, and the code. Choose read-only or type `WRITE` to allow reviewed edits with backups. Keep the companion console open and select **Refresh computers** in Sebby. See [Connections](V2-CONNECTIONS.md#selected-folder-computer-companion) for reconnection and file limits.
 
 ## Live voice
 
