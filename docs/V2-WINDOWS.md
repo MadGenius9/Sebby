@@ -1,6 +1,6 @@
 # Windows 11 local workspace
 
-For the first portable test, use the **Sebby-Windows-x64-Test-1.zip** artifact from the Windows job in [workspace checks](https://github.com/MadGenius9/Sebby/actions/workflows/workspace.yml). Extract the whole ZIP, read **READ-ME-FIRST.txt**, then double-click **Start-Sebby.cmd**. It uses the included x64 Node runtime. Git is optional for startup and is required for revision comparisons and Git-backed tools. The test job checks the extracted archive from a path containing spaces.
+For the current portable test, use the **Sebby-Windows-x64-Test-2.zip** artifact from the Windows job in [workspace checks](https://github.com/MadGenius9/Sebby/actions/workflows/workspace.yml). Extract the whole ZIP, read **READ-ME-FIRST.txt**, then double-click **Start-Sebby.cmd**. It uses the included x64 Node runtime. Git is optional for startup and is required for revision comparisons and Git-backed tools. The test job checks the extracted archive from a path containing spaces.
 
 ## Running from source
 
@@ -31,7 +31,9 @@ Move your stopped data and necessary private configuration to the new host, rein
 
 ## Live voice
 
-Create a plain-text file named `.env.local` in the Sebby folder. Add `XAI_API_KEY=your_key_here` on its own line. Make sure Windows did not add `.txt` to the filename. Restart Sebby, sign in to the local workspace, then select **Start live voice** under **Projects** and allow microphone access. Speak normally and interrupt when you want to jump in. Sebby streams the conversation audio to xAI during the call. The Windows workspace call supports conversation and brainstorming. Project actions through voice require the full agent service.
+After saving, the key is ready to use in the current session. Sebby keeps it in `data/voice-credentials` beside the workspace database for the current local profile. The key file is readable by software with access to that folder, so treat data backups as private. The settings screen shows whether a key is saved and lets you replace or remove it. If you already set `XAI_API_KEY` in `.env.local` or the process environment, Sebby uses that key when the profile has no saved key.
+
+Sign in to the local workspace and open **Voice settings** under **Projects**. Paste your xAI API key and select **Save key**. Use **Preview voice** to check it, then start a call and allow microphone access. Speak normally and interrupt when you want to jump in. Sebby streams the conversation audio to xAI during the call. The Windows workspace call supports conversation and brainstorming. Project actions through voice require the full agent service.
 
 After hanging up, open **Last voice transcript** to review the available captions, download a text file, or add it to the open project. Use **Save** to keep an attached transcript in project history. The workspace keeps the last transcript in the current tab until you clear it, reload, or finish a newer call with captions.
 

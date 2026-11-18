@@ -28,6 +28,11 @@ async function post<T>(path: string, body: unknown, prefix = "/api/voice"): Prom
   return res.json() as Promise<T>;
 }
 
+export interface LocalVoiceStatus {
+  configured: boolean;
+  source: 'saved' | 'environment' | 'none';
+}
+
 let optionsPromise: Promise<VoiceOptions> | null = null;
 
 export const voiceApi = {
@@ -35,6 +40,13 @@ export const voiceApi = {
     if (!r.ok) throw new Error(`HTTP ${r.status}`);
     return r.json() as Promise<VoiceOptions>;
   }).catch((e) => { optionsPromise = null; throw e; })),
+  async localStatus(signal?: AbortSignal): Promise<LocalVoiceStatus> {
+    const response = await fetch('/api/local-voice/status', { cache: 'no-store', signal });
+    if (!response.ok) throw new Error('Could not check live voice setup');
+    return response.json() as Promise<LocalVoiceStatus>;
+  },
+  saveLocalKey: (key: string) => post<LocalVoiceStatus>('/key', { key }, '/api/local-voice'),
+  removeLocalKey: () => post<LocalVoiceStatus>('/key/remove', {}, '/api/local-voice'),
   localSession: (preferences?: WorkspaceVoicePreferences) => post<VoiceSession>('/session', preferences ?? {}, '/api/local-voice'),
   session: (botId: string) => post<VoiceSession>('/session', { botId }),
   tool: (botId: string, callId: string, name: string, args: unknown) => post<{ output: string; taskSeq?: number }>('/tool', { botId, callId, name, args }),

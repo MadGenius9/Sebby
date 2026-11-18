@@ -16,7 +16,7 @@ after(() => { db.close(); rmSync(root, { recursive: true, force: true }); });
 db.prepare('INSERT INTO users(id,email,name,created_at) VALUES (?,?,?,?)').run('voice-user', 'voice@example.test', 'Voice user', Date.now());
 db.prepare('INSERT INTO auth_sessions(token,user_id,created_at,expires_at) VALUES (?,?,?,?)').run('fixture-session', 'voice-user', Date.now(), Date.now() + 60000);
 const origin = 'http://127.0.0.1:8787';
-const config = { apiKey: 'server-only-fixture-key', origin, model: 'grok-voice-latest' };
+const config = { apiKey: 'server-only-fixture-key', origin, model: 'grok-voice-latest', credentialDirectory: path.join(root, 'credentials') };
 const headers = { origin, cookie: 'grokbot_session=fixture-session' };
 
 test('local voice only mints a temporary browser token for authenticated same-origin calls', async () => {
@@ -51,7 +51,7 @@ test('local voice only mints a temporary browser token for authenticated same-or
 
 test('missing keys and upstream errors give actionable responses without exposing provider details', async () => {
   const unconfigured = createLocalVoiceApi({ ...config, apiKey: '' }, async () => { throw new Error('Unexpected request'); });
-  assert.deepEqual(await (await unconfigured.request('/status', { headers })).json(), { configured: false });
+  assert.deepEqual(await (await unconfigured.request('/status', { headers })).json(), { configured: false, source: 'none' });
   assert.equal((await unconfigured.request('/session', { method: 'POST', headers })).status, 503);
   const failing = createLocalVoiceApi(config, async () => Response.json({ message: config.apiKey }, { status: 401 }));
   const failure = await failing.request('/session', { method: 'POST', headers });
@@ -104,4 +104,41 @@ test('voice previews synthesize only the fixed sample for valid authenticated se
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.deepEqual([...new Uint8Array(await response.arrayBuffer())], [0, 0, 1, 0]);
+});
+
+test('a saved key overrides the environment for its profile and stays server-side', async () => {
+  db.prepare('INSERT INTO users(id,email,name,created_at) VALUES (?,?,?,?)').run('other-voice-user', 'other@example.test', 'Other user', Date.now());
+  db.prepare('INSERT INTO auth_sessions(token,user_id,created_at,expires_at) VALUES (?,?,?,?)').run('other-fixture-session', 'other-voice-user', Date.now(), Date.now() + 60000);
+  const used = [];
+  const upstream: typeof fetch = async (url, init) => {
+    used.push(new Headers(init?.headers).get('authorization'));
+    return String(url).endsWith('/tts')
+      ? new Response(new Uint8Array([0, 0]))
+      : Response.json({ value: 'temporary-token', expires_at: 1795000000 });
+  };
+  const localConfig = { ...config, credentialDirectory: path.join(root, 'profile-credentials') };
+  const api = createLocalVoiceApi(localConfig, upstream);
+  const change = (body: unknown, requestHeaders = headers) => api.request('/key', {
+    method: 'POST', headers: requestHeaders, body: JSON.stringify(body),
+  });
+  assert.equal((await change({ key: 'should-not-save' }, { origin, cookie: '' })).status, 401);
+  assert.equal((await change({ key: 'should-not-save' }, { ...headers, origin: 'http://other.test' })).status, 403);
+  assert.equal((await change({ key: 'multiple\nlines' })).status, 400);
+  const saved = await change({ key: ' first-fixture-key ' });
+  assert.equal(saved.status, 200);
+  assert.equal(saved.headers.get('cache-control'), 'no-store');
+  assert.deepEqual(await saved.json(), { configured: true, source: 'saved' });
+  assert.equal((await api.request('/session', { method: 'POST', headers })).status, 200);
+
+  const other = { ...headers, cookie: 'grokbot_session=other-fixture-session' };
+  assert.deepEqual(await (await api.request('/status', { headers: other })).json(), { configured: true, source: 'environment' });
+  assert.equal((await change({ key: 'replacement-fixture-key' })).status, 200);
+  const restarted = createLocalVoiceApi(localConfig, upstream);
+  assert.deepEqual(await (await restarted.request('/status', { headers })).json(), { configured: true, source: 'saved' });
+  assert.equal((await restarted.request('/preview', { method: 'POST', headers, body: '{"voice":"rex","speed":1}' })).status, 200);
+  assert.deepEqual(used, ['Bearer first-fixture-key', 'Bearer replacement-fixture-key']);
+  assert.equal((await restarted.request('/key/remove', { method: 'POST', headers: other })).status, 200);
+  assert.deepEqual(await (await restarted.request('/status', { headers })).json(), { configured: true, source: 'saved' });
+  const removed = await restarted.request('/key/remove', { method: 'POST', headers });
+  assert.deepEqual(await removed.json(), { configured: true, source: 'environment' });
 });

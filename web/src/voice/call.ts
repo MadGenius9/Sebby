@@ -118,9 +118,7 @@ class VoiceCall {
     let stream: MediaStream;
     try {
       if (this.workspaceCall) {
-        const status = await fetch('/api/local-voice/status', { cache: 'no-store' });
-        if (!status.ok) throw new Error('Could not check live voice setup');
-        if (!(await status.json()).configured) throw new Error('Set XAI_API_KEY in .env.local and restart Sebby to start a live call');
+        if (!(await voiceApi.localStatus()).configured) throw new Error('Add your xAI API key in Voice settings to start a live call.');
         if (this.ended) return;
       }
       stream = await openMic();

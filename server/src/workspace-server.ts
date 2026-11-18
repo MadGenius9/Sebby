@@ -41,7 +41,12 @@ app.route('/api/workspace', collaborationApi);
 app.route('/api/workspace', runsApi);
 app.route('/api/projects', projectsApi);
 app.route('/api/drive', driveApi);
-app.route('/api/local-voice', createLocalVoiceApi({ apiKey: env.xaiKey, origin: env.appUrl, model: process.env.XAI_VOICE_MODEL || 'grok-voice-latest' }));
+app.route('/api/local-voice', createLocalVoiceApi({
+  apiKey: env.xaiKey,
+  origin: env.appUrl,
+  model: process.env.XAI_VOICE_MODEL || 'grok-voice-latest',
+  credentialDirectory: path.join(path.dirname(env.dbPath), 'voice-credentials'),
+}));
 app.route('/api/companions', companionApi);
 app.all('/api/*', c => c.json({ error: 'This feature is not connected in workspace mode' }, 404));
 const webDist = fileURLToPath(new URL('../../web/dist/', import.meta.url));

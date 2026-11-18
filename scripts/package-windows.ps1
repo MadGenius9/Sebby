@@ -9,7 +9,7 @@ if ($LASTEXITCODE -ne 0 -or $platform -ne 'win32 x64') {
 
 $stage = Join-Path $OutputDirectory 'staging'
 $package = Join-Path $stage 'Sebby'
-$zip = Join-Path $OutputDirectory 'Sebby-Windows-x64-Test-1.zip'
+$zip = Join-Path $OutputDirectory 'Sebby-Windows-x64-Test-2.zip'
 New-Item -ItemType Directory -Path "$package/runtime", "$package/scripts", "$package/server", "$package/web" | Out-Null
 Copy-Item LICENSE, THIRD_PARTY_NOTICES.md, package.json, package-lock.json $package
 Copy-Item docs/READ-ME-FIRST.txt "$package/READ-ME-FIRST.txt"

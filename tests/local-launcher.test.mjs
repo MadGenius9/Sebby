@@ -43,7 +43,7 @@ test('real launcher starts on loopback, preserves saved projects across restarts
   async function start() {
     const child = fork(serverLauncher, [...startFlags, '--no-open', '--port=' + port], {
       execPath: runtime, cwd: os.tmpdir(), silent: true,
-      env: { ...testEnv, DB_PATH: packageRoot ? undefined : path.join(directory, 'workspace.db'), SEBBY_RUNS_DIR: path.join(directory, 'runs') },
+      env: { ...testEnv, XAI_API_KEY: '', DB_PATH: packageRoot ? undefined : path.join(directory, 'workspace.db'), SEBBY_RUNS_DIR: path.join(directory, 'runs') },
     });
     let output = ''; child.stdout.on('data', b => output += b); child.stderr.on('data', b => output += b);
     const closed = once(child, 'exit');
@@ -74,10 +74,17 @@ test('real launcher starts on loopback, preserves saved projects across restarts
     const login = await fetch(base + '/api/auth/dev', { method: 'POST', headers: { 'content-type': 'application/json', origin: base }, body: JSON.stringify({ email: 'launcher@example.test' }) });
     assert.equal(login.status, 200); const cookie = login.headers.get('set-cookie').split(';')[0], headers = { cookie, origin: base, 'content-type': 'application/json' };
     const created = await fetch(base + '/api/projects', { method: 'POST', headers, body: JSON.stringify({ name: 'Launcher persistence', template: 'web' }) }); assert.equal(created.status, 201); const { project } = await created.json();
+    const saveKey = await fetch(base + '/api/local-voice/key', { method: 'POST', headers, body: JSON.stringify({ key: 'local-launcher-voice-fixture' }) });
+    assert.equal(saveKey.status, 200);
+    assert.deepEqual(await saveKey.json(), { configured: true, source: 'saved' });
     await running.stop(); running = undefined;
     if (packageRoot) await access(path.join(packageRoot, 'data', 'grokbot.db'));
     await assert.rejects(fetch(base + '/api/health', { signal: AbortSignal.timeout(1000) }));
     running = await start();
+    const voiceStatus = await fetch(base + '/api/local-voice/status', { headers });
+    assert.deepEqual(await voiceStatus.json(), { configured: true, source: 'saved' });
+    const removed = await fetch(base + '/api/local-voice/key/remove', { method: 'POST', headers });
+    assert.deepEqual(await removed.json(), { configured: false, source: 'none' });
     const reopened = await fetch(base + '/api/projects/' + project.id, { headers }); assert.equal(reopened.status, 200); assert.equal((await reopened.json()).project.name, 'Launcher persistence');
   } finally { if (running) await running.stop(); await rm(directory, { recursive: true, force: true }); }
 });

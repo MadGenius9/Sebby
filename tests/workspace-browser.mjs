@@ -10,7 +10,7 @@ import path from 'node:path';
 import os from 'node:os';
 const root=await mkdtemp(path.join(os.tmpdir(),'sebby-browser-')),qa=process.env.SEBBY_QA_DIR||path.join(root,'qa'),port=String(25000+Math.floor(Math.random()*25000)),base=`http://127.0.0.1:${port}`;
 await mkdir(qa,{recursive:true});
-const child=spawn(process.execPath,['server/dist/workspace-server.js'],{stdio:['ignore','pipe','pipe'],env:{...process.env,SEBBY_WORKSPACE_ONLY:'1',DEV_LOGIN:'1',SESSION_SECRET:randomUUID(),APP_URL:base,PORT:port,DB_PATH:path.join(root,'workspace.db'),SEBBY_RUNS_DIR:path.join(root,'runs'),SEBBY_RUNNER_IMAGE:'',SEBBY_GOOGLE_CLIENT_ID:'',SEBBY_CONNECTOR_KEY:''}});
+const child=spawn(process.execPath,['server/dist/workspace-server.js'],{stdio:['ignore','pipe','pipe'],env:{...process.env,SEBBY_WORKSPACE_ONLY:'1',DEV_LOGIN:'1',SESSION_SECRET:randomUUID(),APP_URL:base,PORT:port,DB_PATH:path.join(root,'workspace.db'),SEBBY_RUNS_DIR:path.join(root,'runs'),SEBBY_RUNNER_IMAGE:'',SEBBY_GOOGLE_CLIENT_ID:'',SEBBY_CONNECTOR_KEY:'',XAI_API_KEY:''}});
 const exited=new Promise(resolve=>child.once('exit',resolve));let browser,fixtures,logs='',timer;const errors=[];
 try{
  await new Promise((resolve,reject)=>{timer=setTimeout(()=>reject(new Error('Workspace did not start: '+logs)),10000);child.stdout.on('data',b=>{logs+=b;if(logs.includes('Sebby workspace:'))resolve();});child.stderr.on('data',b=>logs+=b);child.once('error',reject);child.once('exit',code=>reject(new Error('Workspace exited '+code)));});clearTimeout(timer);
@@ -74,7 +74,6 @@ try{
      return destination.stream;
    };
  });
- await voicePage.route('**/api/local-voice/status',route=>route.fulfill({json:{configured:true}}));
  let voicePreviews=0;
  await voicePage.route('**/api/local-voice/preview',route=>{
    assert.deepEqual(route.request().postDataJSON(),{voice:'rex',speed:1.15});
@@ -124,6 +123,12 @@ try{
  const voiceSettingsButton=voicePage.getByRole('button',{name:'Voice settings',exact:true});
  const voiceSettings=voicePage.getByRole('dialog',{name:'Voice settings',exact:true});
  await voiceSettingsButton.click();
+ await voiceSettings.getByText('Add a key to use live Grok voice.',{exact:true}).waitFor();
+ const keyField=voiceSettings.getByLabel('xAI API key',{exact:true});
+ await keyField.fill('sebby-browser-voice-fixture');
+ await voiceSettings.getByRole('button',{name:'Save key',exact:true}).click();
+ await voiceSettings.getByText('Key saved on this computer.',{exact:true}).waitFor();
+ assert.equal(await keyField.inputValue(),'');
  await voiceSettings.getByLabel('Voice',{exact:true}).selectOption('rex');
  await voiceSettings.getByLabel('Speaking speed',{exact:true}).selectOption('1.15');
  const previewResponse=voicePage.waitForResponse(response=>response.url().endsWith('/api/local-voice/preview'));
@@ -137,6 +142,8 @@ try{
  await voiceSettings.getByRole('button',{name:'Save voice settings',exact:true}).click();
  await voicePage.reload();
  await voiceSettingsButton.click();
+ await voiceSettings.getByText('Key saved on this computer.',{exact:true}).waitFor();
+ assert.equal(await keyField.inputValue(),'');
  assert.equal(await voiceSettings.getByLabel('Voice',{exact:true}).inputValue(),'rex');
  assert.equal(await voiceSettings.getByLabel('Speaking speed',{exact:true}).inputValue(),'1.15');
  await voiceSettings.getByLabel('Voice',{exact:true}).selectOption('eve');
@@ -192,6 +199,10 @@ try{
  assert.doesNotMatch(voiceInstructions[1],/requires editable meshes|Persistent source/);
  await call.getByRole('button',{name:'End call',exact:true}).click();
  await call.waitFor({state:'hidden'});
+ await voiceSettingsButton.click();
+ await voiceSettings.getByRole('button',{name:'Remove saved key',exact:true}).click();
+ await voiceSettings.getByText('Saved key removed.',{exact:true}).waitFor();
+ await voiceSettings.getByText('Add a key to use live Grok voice.',{exact:true}).waitFor();
  await voiceContext.close();
  assert.deepEqual(errors,[]);await writeFile(path.join(qa,'checks.json'),JSON.stringify({page:base+'/workspace',title:'Sebby',desktop:[1440,1000],mobile:[390,844],checks:['login','create/edit/save','knowledge persistence/search','mesh extrude/inset','gizmo drag','undo/redo','GLB header/download','reload/reopen','connection controls','mobile no horizontal page overflow','GitHub source review/create/edit/reopen (network fixture)','reviewed source restoration','reviewed mesh restoration and reversal','source ZIP file-picker/import','real modeling tool candidate with browser apply/reject/stale checks','trusted Vite/React retained preview and click interaction (seeded run)','build ZIP download','mobile build preview overflow','local voice handshake, audio, interruption, captions, hang-up, transcript download and draft attachment, explicit brief sharing and persistent voice settings (simulated xAI)'],consoleErrors:errors},null,2));console.log('Browser acceptance passed; evidence:',qa);
 }catch(error){try{await browser?.contexts()[0]?.pages()[0]?.screenshot({path:path.join(qa,'failure.png')});}catch{}throw error;}finally{fixtures?.close();clearTimeout(timer);await browser?.close();child.kill('SIGTERM');const force=setTimeout(()=>child.kill('SIGKILL'),5000);await exited;clearTimeout(force);await rm(root,{recursive:true,force:true});}

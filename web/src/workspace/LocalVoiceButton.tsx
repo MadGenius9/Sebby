@@ -1,6 +1,7 @@
 import { DEFAULT_WORKSPACE_VOICE, VOICE_SPEEDS, WORKSPACE_VOICES, isWorkspaceVoicePreferences, type WorkspaceVoicePreferences } from '@shared/lib/voice-preferences';
 import { useEffect, useRef, useState } from 'react';
 import { Mic, MessageSquare, SlidersHorizontal } from 'lucide-react';
+import { voiceApi, type LocalVoiceStatus } from '../voice/api';
 import { endCall, previewWorkspaceVoice, startWorkspaceCall, useVoice, type WorkspaceVoiceBrief } from '../voice/call';
 import type { Project } from './api';
 
@@ -17,10 +18,78 @@ function readPreferences(): WorkspaceVoicePreferences {
   return DEFAULT_WORKSPACE_VOICE;
 }
 
+function VoiceKeySettings() {
+  const [status, setStatus] = useState<LocalVoiceStatus | null>(null);
+  const [key, setKey] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const request = new AbortController();
+    void voiceApi.localStatus(request.signal).then(next => {
+      if (!request.signal.aborted) setStatus(next);
+    }).catch(() => {
+      if (!request.signal.aborted) setError('Could not check the saved key.');
+    }).finally(() => {
+      if (!request.signal.aborted) setLoading(false);
+    });
+    return () => request.abort();
+  }, []);
+
+  async function updateKey(remove: boolean) {
+    setSaving(true);
+    setError('');
+    setMessage('');
+    try {
+      const next = remove ? await voiceApi.removeLocalKey() : await voiceApi.saveLocalKey(key.trim());
+      setStatus(next);
+      setKey('');
+      setMessage(remove ? 'Saved key removed.' : 'Key saved. Try Preview voice to check it.');
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not update the key.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form className="workspace-voice-key" onSubmit={event => {
+      event.preventDefault();
+      if (!loading && !saving && key.trim()) void updateKey(false);
+    }}>
+      <label htmlFor="workspace-xai-key">xAI API key</label>
+      <input id="workspace-xai-key" type="password" autoComplete="new-password" spellCheck={false}
+        maxLength={512} value={key} disabled={saving}
+        placeholder={status?.source === 'saved' ? 'Paste a new key to replace it' : 'Paste your xAI API key'}
+        onChange={event => setKey(event.target.value)} />
+      <p className="workspace-voice-key-status">
+        {status?.source === 'saved' ? 'Key saved on this computer.'
+          : status?.source === 'environment' ? 'Using the key from your environment or .env.local.'
+          : status ? 'Add a key to use live Grok voice.' : loading ? 'Checking voice setup…' : 'Key status unavailable.'}
+      </p>
+      <div className="source-import-actions">
+        <button className="btn btn--secondary" type="submit" disabled={loading || saving || !key.trim()}>
+          {status?.source === 'saved' ? 'Replace key' : 'Save key'}
+        </button>
+        {status?.source === 'saved' && (
+          <button className="btn btn--secondary" type="button" disabled={saving} onClick={() => void updateKey(true)}>
+            Remove saved key
+          </button>
+        )}
+      </div>
+      {message && <p role="status">{message}</p>}
+      {error && <p role="alert">{error}</p>}
+    </form>
+  );
+}
+
 export function LocalVoiceButton({ project }: { project: Project | null }) {
   const active = useVoice(state => state.workspaceCall && (state.status === 'live' || state.status === 'connecting'));
   const dialog = useRef<HTMLDialogElement>(null);
   const settingsDialog = useRef<HTMLDialogElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [preferences, setPreferences] = useState(readPreferences);
   const [draft, setDraft] = useState(preferences);
   const [preview, setPreview] = useState<WorkspaceVoiceBrief | null>(null);
@@ -87,12 +156,18 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
       {!active && (
         <button type="button" onClick={() => {
           setDraft(preferences);
+          setSettingsOpen(true);
           settingsDialog.current?.showModal();
         }}>
           <SlidersHorizontal size={16} /> Voice settings
         </button>
       )}
-      <dialog ref={settingsDialog} className="workspace-voice-dialog" aria-labelledby="workspace-voice-settings-title" onClose={stopSample}>
+      <dialog ref={settingsDialog} className="workspace-voice-dialog" aria-labelledby="workspace-voice-settings-title" onClose={() => {
+        setSettingsOpen(false);
+        stopSample();
+      }}>
+        <h2 id="workspace-voice-settings-title">Voice settings</h2>
+        {settingsOpen && <VoiceKeySettings />}
         <form method="dialog" onSubmit={() => {
           setPreferences(draft);
           try {
@@ -101,7 +176,6 @@ export function LocalVoiceButton({ project }: { project: Project | null }) {
             // Keep the selection for this tab if persistence is unavailable.
           }
         }}>
-          <h2 id="workspace-voice-settings-title">Voice settings</h2>
           <label htmlFor="workspace-voice">Voice</label>
           <select id="workspace-voice" value={draft.voice} onChange={event => {
             const voice = WORKSPACE_VOICES.find(option => option === event.target.value);
