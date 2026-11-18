@@ -1,0 +1,40 @@
+Sebby | Windows 11 x64 test 3
+
+1. Extract this whole ZIP to a writable folder, such as Documents.
+2. Open the extracted Sebby folder and double-click Start-Sebby.cmd.
+3. In the browser, enter an email to select your local profile.
+4. Create a Web project, edit a file, and click Save. Open 3D Studio
+   and export a GLB. Close and reopen Sebby with the same email to
+   verify that your projects are still there.
+
+Keep the console open while using Sebby. Press Ctrl+C there to quit.
+If the browser does not open, visit http://127.0.0.1:8787/workspace.
+If that port is occupied, run Start-Sebby.cmd --port=8788 in Command Prompt.
+Your local data stays in the extracted folder under data. Stop Sebby
+before copying this directory for a backup.
+
+The included Windows x64 runtime starts the local coding and 3D
+workspace without a separate Node.js installation. Install Git for
+Windows if you want to use revision comparisons or Git-backed tools.
+The local profile is independent of your Google account.
+Blender automation, cloud agents and Drive setup are outside this test.
+
+Connect a project folder: in Sebby, open Connections → My computer and
+choose Create pairing code. Double-click Connect-Folder.cmd and enter
+the displayed Sebby address, your project folder path, and the code.
+Press Enter for read-only, or type WRITE to allow reviewed edits with
+backups. Keep the console open and select Refresh computers in Sebby.
+
+Optional live voice: open Voice settings under Projects, paste your
+xAI API key, and select Save key. You can preview a voice or start a
+call immediately. Allow microphone access when starting a call.
+Calls send audio to xAI. Sebby saves the key in the local data folder,
+so keep that folder and any backups private.
+
+Updating from an earlier test? Stop both copies of Sebby, then copy the old
+data folder into the newly extracted Sebby folder. Use the same email
+when opening your projects.
+
+If startup fails, copy the console error. For a quick setup report,
+run Start-Sebby.cmd --check in Command Prompt.
+Source and documentation: https://github.com/MadGenius9/Sebby/tree/sebby-v2

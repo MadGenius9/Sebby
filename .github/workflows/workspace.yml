@@ -1,0 +1,103 @@
+name: Sebby workspace checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: workspace-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  workspace:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:workspace
+      - run: npm run test:http
+      - run: npm run test:local
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+        env:
+          SEBBY_QA_DIR: ${{ runner.temp }}/sebby-browser-evidence
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sebby-browser-evidence
+          path: ${{ runner.temp }}/sebby-browser-evidence
+          if-no-files-found: ignore
+
+  companion-windows:
+    runs-on: windows-2022
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run test:http
+      - run: npm run test:local
+
+      - name: Assemble Windows x64 test ZIP
+        run: ./scripts/package-windows.ps1 -OutputDirectory "${{ runner.temp }}/sebby-package"
+      - name: Test the extracted Windows ZIP
+        run: |
+          $archive = "${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-3.zip"
+          $directory = "${{ runner.temp }}/Sebby Windows Test"
+          Expand-Archive -LiteralPath $archive -DestinationPath $directory
+          $env:SEBBY_WINDOWS_TEST_ROOT = Join-Path $directory 'Sebby'
+          node --test tests/local-launcher.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/smoke-workspace.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Sebby-Windows-x64-Test-3
+          path: |
+            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-3.zip
+            ${{ runner.temp }}/sebby-package/Sebby-Windows-x64-Test-3.zip.sha256
+          compression-level: 0
+          if-no-files-found: error
+
+  isolated-worker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Enable user service manager for rootless resource controls
+        run: |
+          sudo mkdir -p /etc/systemd/system/user@.service.d
+          printf '[Service]\nDelegate=cpu cpuset io memory pids\n' | sudo tee /etc/systemd/system/user@.service.d/sebby-delegate.conf
+          sudo systemctl daemon-reload
+          sudo loginctl enable-linger "$(id -un)"
+          sudo systemctl start "user@$(id -u).service"
+          echo "XDG_RUNTIME_DIR=/run/user/$(id -u)" >> "$GITHUB_ENV"
+          echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus" >> "$GITHUB_ENV"
+      - uses: docker/setup-docker-action@v5
+        with:
+          rootless: true
+          set-host: true
+          daemon-config: |
+            {"exec-opts": ["native.cgroupdriver=systemd"]}
+      - name: Provision trusted Node fixture image
+        run: |
+          docker pull node:22-bookworm-slim
+          echo "SEBBY_RUNNER_IMAGE=$(docker image inspect node:22-bookworm-slim --format '{{index .RepoDigests 0}}')" >> "$GITHUB_ENV"
+          echo "SEBBY_DOCKER_BIN=$(command -v docker)" >> "$GITHUB_ENV"
+      - run: npm run test:docker
+      - name: Provision and verify trusted React dependency image
+        run: npm run test:docker-dependencies

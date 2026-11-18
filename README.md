@@ -1,116 +1,73 @@
 # Sebby
 
-Your local-first Windows work companion, with an ice-blue Orbit character and a named specialist team.
+A cloud-oriented coding workspace and 3D Studio, built on [Bot HQ](https://github.com/nickvasilescu/bot-hq).
 
-**Version 0.10: a local workbench with optional, approval-gated AI.** OpenAI, Anthropic and xAI adapters support streaming chat and bounded specialist/coordinator work. Live provider access and native Windows behavior have not been verified. MCP metadata discovery is read-only; a separate authenticated manual-tool subset requires endpoint-bound credentials, an exact session grant and full-input/native confirmation. No agent automatically calls remote tools. Sebby never fabricates replies or claims unfinished tasks ran.
+This is the **v2 foundation**, not a finished autonomous coding OS. The previous Electron application is preserved on [`archive/sebby-v0.10`](https://github.com/MadGenius9/Sebby/tree/archive/sebby-v0.10). Development happens on `sebby-v2`; `main` remains the previous app until review.
 
-## Start
+## Try the workspace locally
 
-First Windows launch? Use the [short first-run guide](docs/WINDOWS-FIRST-RUN.md): check existing prerequisites, explicitly choose dependency installation, then test local features without any API key.
+On Windows 11, extract this branch and double-click **Start-Sebby.cmd**. It checks prerequisites, installs dependencies as needed, builds and opens the local workspace. See [Windows setup](docs/V2-WINDOWS.md) for limits, diagnostics and migration.
 
-Prerequisites: Node.js 24 LTS and npm. In PowerShell, from this project:
+Requires Node.js 22.12 or newer, npm and Git. From the repository root:
 
-```powershell
+```bash
 npm ci
-npm test
-npm run test:components
-npm start
+npm run workspace
 ```
 
-`npm start` typechecks/builds the renderer and launches Electron. No credentials are required for local features. `npm run dev` is a **browser preview**, not desktop access; memory/personality/draft use separate browser local storage and desktop-only features disclose that limitation. For desktop hot reload, run `npm run dev` and then `npx electron . --dev` in another terminal.
+Open **http://127.0.0.1:8787/workspace**. The email form selects a local development profile; it is not verified authentication and does not connect Google. This server binds to loopback. Do not expose it publicly or use a tunnel. It needs no AI, Orgo, Composio or Google credentials and makes no model calls.
 
-## What works in source
+Workspace projects are stored in SQLite under `data/grokbot.db` unless `DB_PATH` is set. Stop the server and preserve the entire `data/` directory when moving the workspace. Browser tabs are not the source of truth. Save explicitly or use Ctrl/Cmd+S before closing. A JSON export preserves current project content; Import project JSON creates a new project from it. Import source ZIP reviews source files and exclusions before creating a separate project; see [source import](docs/V2-SOURCE-IMPORT.md) and [GitHub import](docs/V2-GITHUB-IMPORT.md).
 
-| Area | Implemented | Honest boundary |
-|---|---|---|
-| Chat | Persistent conversations, streaming/cancel, explicit memory/skills/files context, reported token usage | Requires own API key and explicit model; native approval before dispatch; no live calls tested |
-| Memory | Personal and folder-scoped editable memory | Plaintext; never store keys/passwords |
-| Workspace | Native folder selection; bounded text browsing; confirmed note creation | No unrestricted filesystem access |
-| File changes | Hash-checked whole-file previews, native approval, original backups, session undo | Not an adversarial filesystem sandbox; ACL/xattr preservation and Windows behavior unverified |
-| Commands | Fixed Git status after native trusted-executable selection and per-run approval | No shell; no arbitrary commands; npm execution unavailable in UI and disabled on Windows pending process-tree containment |
-| Skills | Three real bundled playbooks; persistent imported instruction skills | Imports are untrusted text, not executable plugins or tool permissions |
-| Team | Sebby-assigned names, specialty/job, rename/retire, matching-role task assignment | Names come from an authored pool; provider reasoning requires approved runs |
-| Tasks | Durable queue/logs plus real deterministic inventory/brief utilities, cancellation, separate result review | AI goals require provider setup and native approval; bounded tools and separate coordinator review, then user acceptance; up to four sequential specialists plus one explicit final critique |
-| Connections | GitHub metadata/tree/verified text-blob reads, encrypted token setup; MCP metadata discovery | Explicit consent per read; separately approved new-branch commits and draft PRs, no force/merge/clone; separately reviewed authenticated MCP calls; live authentication untested |
-| Companion | Persisted personality, nine original 3D pals, material palettes, explicit local response reading and optional voice-to-draft transcription | Local speech needs a device-local English voice; microphone/audio API use requires separate consents and remains native/live untested |
-| Reminders | Durable dates, due state, snooze/dismiss; opt-in silent desktop notifications until quit | Native display unverified; no notifications before consent and nothing runs when closed |
-| Backup | Plaintext export, validated preview, native-approved restore, rollback/recovery journal | Excludes project files, edit originals, credentials; not a power-loss atomicity guarantee |
+## Implemented in this milestone
 
-These paths have service/component test coverage, not Windows-native release certification. Read [verification](docs/VERIFICATION.md) before treating this as a finished product.
+- Create and reopen projects with persisted files and scenes.
+- Add and edit bounded text files in a plain-text editor.
+- Create primitives and editable polygon meshes in a Three.js viewport.
+- Select objects; use transform gizmos/snapping, numeric transforms and material color.
+- Extrude/inset faces, triangulate and edit vertices with validated polygon topology.
+- Duplicate/remove objects, undo/redo changes within the open session, and export scenes as GLB.
+- Save with revision checks; a stale tab cannot overwrite a newer save.
+- Import project JSON, inspect a small source ZIP, or review a public GitHub commit snapshot before creating a new project.
+- Create a working Web starter and preview saved HTML/CSS/classic JavaScript.
+- Compare saved source revisions through Git diffs and [review restoration](docs/V2-RESTORATION.md) before creating a new revision from earlier code, notes and scenes.
+- Keep a project brief/requirements/decisions with source-backed search and scoped agent retrieval.
+- Connect Google Drive for selected-file references and new project exports after configuring OAuth.
+- Pair a selected-folder companion for source reads and opt-in reviewed writes with local backups.
+- Capture private Git snapshots and persist/stream build/test run records through a configured isolated Docker adapter.
+- Cancel runs and track timeouts, output limits, interruptions and cleanup failures.
+- Retain validated successful build files with revision/source/image/lock provenance.
+- Download owner-only build ZIPs/files and prepare limited sandbox previews of retained static frontends.
+- Assign existing agents to a project with scoped read/propose tools and optional build/test permission.
+- Review exact file/scene proposals, then apply/reject them with revision protection.
+- Let assigned agents propose validated modeling operations on a copy of the saved scene.
+- Select dependency images through exact npm lock hashes and prepare minimal operator build contexts.
+- User-scoped project API, schema validation, request limits and cross-origin write checks.
+- Light/dark token support inherited from Bot HQ and responsive workspace layout.
 
-## Bring your own API account
+**Not connected yet:** an interactive terminal, private GitHub access/sync, Blender automation, advanced modeling, deployment, GBrain and cloud hosting. Connection controls report actual setup/connection state. Live Google authorization and native Windows installation/permissions validation are still pending. The real companion HTTP flow passes on hosted Windows.
 
-In **Settings**, select OpenAI GPT, Anthropic Claude, or xAI Grok; enter an explicit model ID and output budget. Use an enabled provider-specific environment key or store a key through the masked field and native confirmation. Never paste keys in chat, project memory, source, or GitHub. The password field is transient renderer memory, not React state or local storage. Secure storage is not available in browser preview. Key availability does not prove account/model access. An optional native-approved connection test may incur API charges. Consumer chat subscriptions do not include API billing. See [existing-key setup](docs/EXISTING-KEY.md), [providers](docs/PROVIDERS.md), and [privacy](docs/PRIVACY.md).
+Projects currently contain up to 40 virtual text files (100,000 characters each), 100 scene objects and a 1 MB save request. Files are stored as project data; build/test runs materialize a private Git snapshot and transfer source to an ephemeral container. Docker readiness and native worker verification are required; no host execution fallback exists. See [connection setup](docs/V2-CONNECTIONS.md), [modeling](docs/V2-MODELING.md), [project knowledge](docs/V2-KNOWLEDGE.md), [runtime setup and limits](docs/V2-RUNTIME.md) and [build outputs/previews](docs/V2-BUILD-OUTPUTS.md).
 
-In **Settings → Appearance**, select Orbit, Scout, Wisp, Luma, Nook, Finch, Tidal, Moss or Piper and change body/accent/glow colors. Actual GLB material rendering requires WebGL; otherwise an explicitly unchanged original PNG is shown. Orbit remains the default; changing the pal does not change Sebby’s identity or permissions.
+## Existing Bot HQ services
 
-## GitHub and voice drafts
+Bot HQ's agent chat, Hermes adapter, Orgo viewer, voice and Composio service code are retained. The original service mode requires its own configured services, described in [.env.example](.env.example) and the [upstream architecture](docs/ARCHITECTURE.md). Copy `.env.example` to `.env`, configure your own deployment, then use `npm run build && npm start`. Agent chat links to `/workspace`; the workspace links back to chat in this mode. In agent chat, click **Voice off** to enable brief spoken excerpts of new replies in the current chat. It uses the selected agent voice and the server-side `XAI_API_KEY`, and stays quiet during calls or when the tab loses focus.
 
-**Connections** can read one explicitly configured GitHub repository: metadata, a bounded tree, and selected text blobs verified against their Git object hash. Public reads need no token; private access uses a locally encrypted, user-provided scoped token. Every read needs native consent. The separate publication panel can prepare full diffs for up to ten selected local text files, then create a new `sebby/*` branch and commit after an exact-repository grant and native confirmation. Draft PRs require another review; commit check runs are read-only. No existing branch update, force push, merge or deletion. Uploads may expose source and trigger repository CI costs. Partial failures are recorded as uncertain and never automatically retried. See [GitHub](docs/GITHUB.md) and [publication boundaries](docs/GITHUB-PUBLISH.md).
+The project API and scoped agent tools are integrated with existing sessions/MCP. Use the project Agents panel to assign a configured engine, review proposals and optionally enable runs. A pending proposal does not change source or scenes. See [project agents](docs/V2-AGENTS.md). We have not run live provider, OAuth, desktop or paid-service tests. The upstream shell/browser approval limitations still apply to that service mode. Do not treat this branch as a production deployment.
 
-Chat includes optional **voice drafts**: choose an OpenAI transcription model, approve local microphone use, record/stop, then separately approve paid upload. Review the transcript before sending. Audio stays in memory; no always-listening mode. Actual assistant responses can also be read aloud using an available device-local English voice, with an explicit button. See [voice boundaries](docs/VOICE.md).
+## Checks
 
-## Meet Sebby’s team
-
-In **Team**, choose a specialty and describe the job. Sebby assigns a distinct name—Mira for a planner, Finn for a coder, Sage for a reviewer, Nova for a researcher, with more names available. You can rename or retire them. Create a matching-role task under **Tasks**, then assign it. The UI shows real queue state. With a configured provider, start an AI goal explicitly in Tasks; Sebby assigns a specialist, runs bounded approved work, obtains a separate coordinator review, and waits for your acceptance. You can run an explicitly labeled deterministic inventory or project-brief-template utility, optionally attach a matching unassigned specialist name, read its observed report, then separately approve that utility as complete. This does not complete an arbitrary AI/app-building goal.
-
-Specialists inherit permission limits. Sebby reviews their evidence before user acceptance; a role or name never grants access.
-
-## Local data and control
-
-Desktop data lives in Electron's `userData` location, normally `%APPDATA%/Sebby/` on Windows. Versioned JSON files hold settings, conversations, skills, tasks, team, reminders, and connector bookmarks. Draft text also uses renderer local storage. Memory, logs, edit backups and exports are **not encrypted**. API keys are separately OS-encrypted and excluded from backups. Storage fails closed if secure OS encryption is unavailable; see [BYOK](docs/BYOK.md).
-
-Folder selection is not restored automatically. Reselect the same folder to restore its memory. Named drafts, task records and team are app-wide; task workspace references are metadata, not access grants. The composer draft is also app-wide. Existing file edits require a preview and native confirmation. Undo is session-only; original content persists under `edit-backups` for manual recovery. Restoring app data restarts Sebby and does not undo project-file edits.
-
-The app takes a single-instance lock. A restore stops new IPC work; incomplete restores roll back before stores load. Exports are plaintext and should be kept private. Export uses create-only writing: choose a new filename rather than replacing an existing backup.
-
-## Verify and package on Windows
-
-```powershell
-.\scripts\verify-windows.ps1
-# Or skip dependency install / installer packaging:
-.\scripts\verify-windows.ps1 -SkipInstall -SkipPackage
+```bash
+npm run typecheck
+npm run test:workspace
+npm run build
+npm run test:http
 ```
 
-The script runs install, Node tests, DOM component tests, build, and optional unsigned NSIS packaging with publishing disabled. It does not launch, sign, upload, install the generated app, bypass security, or connect accounts. See [release checklist](docs/RELEASE.md).
+71 tests cover SQLite/revision/proposal persistence, real Git snapshots/diffs, imports, preview compilation, owner/grant/review checks, actual MCP routing, a scripted headless gateway round trip, dependency selection/context preparation, runner lifecycle test doubles, bounded output collection, retained downloads and sandbox preview preparation. A trusted React/Vite fixture build passes; real base-image Docker and core desktop/mobile Chromium acceptance passed on GitHub Actions. A separate real HTTP smoke test passes for the built server, including the actual companion CLI. Blender independently imported the exported mesh fixture. A real React/Vite dependency-image build/test also passed on the hosted rootless worker. Live provider/Drive setup remains unverified. See [verification](docs/V2-VERIFICATION.md) for the current browser-testing limitation.
 
-`npm run package:win` writes to `release/`. **No Windows installer or native test result is supplied.** Windows packaging/install, PowerShell execution, native dialogs, signing, update trust, and OS accessibility remain unverified in this Linux cloud workspace. Do not bypass SmartScreen or other protections.
+See [the implementation roadmap](docs/V2-ROADMAP.md), [architecture decisions](docs/V2-ARCHITECTURE.md), and [provenance](docs/UPSTREAM.md).
 
-Additional tests: `npm run test:ui` uses Playwright and requires a locally available supported Chromium browser (`npx playwright install chromium` is an optional explicit browser download). Browser E2E tests have not run successfully in this environment. `npm run format:check` checks formatting.
+## License and assets
 
-## Architecture
-
-- `src/`: React/TypeScript UI; no Node.js privileges. Explicit feature bridges and honest browser fallbacks.
-- `electron/main.mjs`, `preload.cjs`: sandboxed/context-isolated window, trusted-frame checks, narrow IPC, native dialogs, no production renderer network.
-- `electron/services.mjs`: bounded workspace and memory services.
-- `electron/development*.mjs`: reviewed file operations and fixed command runner/IPC.
-- `electron/{tasks,team,skills,conversations,reminders,connectors}.mjs`: separately testable local stores.
-- `electron/{local-executor,mcp-discovery,notifications}*.mjs`: approved local utility execution, read-only network discovery, and session-only notification control.
-- `electron/backup*.mjs`: schema-validated backup/recovery and native path selection.
-- `skills/*.md`: authoritative desktop bundled instruction documents; `src/skills.ts` is the offline preview/suggestion mirror.
-- `public/orbit.png`, `build/icon.ico`: original chosen Orbit render and deterministic icon-format conversion.
-- `tests/`, `component-tests/`, `e2e/`: services, DOM with real local handlers, and pending browser E2E.
-
-Electron provides a practical Windows-capable shell and TypeScript ecosystem at the cost of a larger runtime and ongoing Chromium/Electron updates. This is a maintainable local foundation—not a sandbox for hostile code. See [security](electron/SECURITY.md), [development limits](docs/DEVELOPMENT.md), [roadmap](ROADMAP.md), and [current delivery status](docs/STATUS.md).
-
-## Windows execution remains gated
-
-`native/windows-job-runner/` contains an auditable .NET 10 Windows Job Object supervisor with explicit executable/hash/argument contract, process-lifetime containment, cancellation and output bounds. It is **not compiled, Windows-tested, integrated or enabled** in Sebby. It is not a security sandbox, and does not enable npm or shell commands. See [containment validation](docs/WINDOWS-CONTAINMENT.md).
-
-## Static preview and source release checks
-
-Workspace can open a native-approved static HTML/CSS subset in an isolated window. Scripts, external assets, network access and active controls are unavailable; this is not an interactive app runtime or proof of a successful build. [Preview policy](docs/PREVIEW.md) documents sanitization and native validation gaps.
-
-`npm run release:readiness` inventories source/lock/dependency licenses and packaging policy. It intentionally exits nonzero while native/runtime/signing/release gates remain unresolved. Settings can show the explicitly bundled dependency notices; those notices are not commercial clearance. See [onboarding](docs/ONBOARDING.md) and [distribution checklist](docs/DISTRIBUTION-CHECKLIST.md).
-
-## Coordinated plans, remote tools and build preparation
-
-Tasks can coordinate up to four sequential named specialists under one locked workspace/profile, with explicit scope ceilings and reserved budgets. Each child is reviewed before handing accepted evidence to the next; a separately consented final model critique and user acceptance finish the plan. No automatic retries or restart replay. See [orchestration](docs/ORCHESTRATION.md).
-
-The separate **Reviewed MCP tools** panel supports manually provisioned bearer tokens, not full OAuth. Review the exact endpoint, tool schema and complete JSON input. Server claims of safety/read-only behavior are untrusted; remote effects can be irreversible or charged. Post-dispatch failures are uncertain, not rolled back. Outputs are inert text, not model instructions. See [MCP boundaries](docs/MCP-REVIEWED.md).
-
-**Isolated build preparation** copies and verifies selected bounded local source files after native consent. Engine configuration, fixed command policy and artifact quarantine have source/mock coverage only. Production execution remains unavailable: no Docker/VM process, image pull, npm install or build is launched. Native engine trust, audited dependency-specific images and mount/permission validation remain required. See [execution path](docs/ISOLATED-EXECUTION.md) and [phase gaps](docs/PHASE-GAPS.md).
-
-Voice now has explicit **turn-based session controls** showing observed microphone, transcription, chat and local-reading state. “Stop voice activity” does not cancel unrelated work; the separate “Stop voice and current chat” also cancels the owned chat request. Nothing records, uploads, sends or reads automatically. This is not realtime voice conversation.
-
-A reviewed **image-wrapper source contract** now transfers bounded snapshot content through stdin rather than mounting private host files. It validates the exact dependency-lock identity before a fixed web build/test recipe, with preprovisioned dependencies only. No image has been built, pulled or run; production execution remains disabled and container/daemon trust still needs native validation. The wrapper is not a sandbox or proof against hostile project code.
+Bot HQ code retains its [MIT license](LICENSE) and [third-party notices](THIRD_PARTY_NOTICES.md). The Orbit image is carried forward from this repository's earlier Sebby version. Third-party artwork is not relicensed by this project; see the notices. Upstream marketing screenshots and the large voice-test audio fixture are omitted from this foundation. The retained upstream e2e test requires real configured services and is not the workspace test suite.

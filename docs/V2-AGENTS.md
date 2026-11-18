@@ -1,0 +1,47 @@
+# Project-aware agents
+
+## User workflow
+
+1. Run the full Sebby service with a configured Hermes engine. The provider-free local workspace remains useful for manual editing, but does not start AI engines.
+2. Create/open a project and save your files. Open **Agents**, select an existing configured agent, choose whether it may start builds/tests, and assign it.
+3. Open that agent's chat and request a change. Assignment shares this project's saved source/scene with the agent's configured model provider when the tools request it; source is not automatically sent merely by opening the panel.
+4. The agent reads project metadata, files and/or scene, then creates a proposal. The source does not change yet.
+5. Return to **Agents**, refresh proposals, and select one. Review the complete source diff and, when applicable, the previous/proposed scene JSON. Apply or reject it. Save/export manual edits before applying.
+6. Once applied, the agent can observe the applied revision. If build/test permission is enabled and an isolated worker is available, it can start a run and read actual persisted results.
+
+Assignment applies to the agent's turns until unassigned, including any existing recurring tasks configured for that agent. Reassignment, permission changes and unassignment rotate/revoke its grant and invalidate pending proposals. New calls are refused under old grants. Already-running builds are not undone; cancel them in **Runs**.
+
+## Tools
+
+| Tool | Result |
+|---|---|
+| `project_overview` | Assigned project/grant IDs, saved revision, file metadata, scene count and run permission |
+| `project_read_file` | One exact-revision text file |
+| `project_read_scene` | The exact-revision scene, including validated polygon meshes |
+| `project_search` | Keyword matches with saved revision, path, line range and source hash |
+| `project_propose_scene_operations` | Validated, ordered modeling operations producing a pending full-scene proposal |
+| `project_propose_changes` | Persistent pending proposal of up to ten file changes and/or a replacement scene |
+| `project_proposal_status` | Pending/applied/rejected/revoked status, staleness and applied revision |
+| `project_start_run` | An isolated build/test request, only under explicit run permission |
+| `project_run_status` | Persisted state, source/image/lock provenance and bounded run output |
+| `project_build_outputs` | Retained file manifest for a successful run; preview candidacy is not visual verification |
+
+There is no model tool to apply a proposal. Only the user's authenticated apply endpoint updates source. The review hash binds the stored candidate, author, grant, summary and base revision. Apply checks ownership, pending state, current grant, the exact review hash and unchanged base revision in one database transaction. Repeated, stale, revoked and no-op proposals cannot silently overwrite work.
+
+Every app-owned agent turn captures its assignment grant. The MCP context pins subsequent calls to that grant; changing assignments mid-turn does not redirect old task calls into another project. Run authorization is checked before dispatch, after worker readiness and again after asynchronous snapshot preparation.
+
+## Desktop separation and honest boundaries
+
+A project-bound turn skips automatic Orgo desktop provisioning; it uses the project tools. Ordinary unassigned turns keep their upstream desktop behavior. This does not remove Bot HQ's existing agent-count limit or certify managed-engine startup on a real host.
+
+The project MCP layer enforces these grants. Hermes' existing native shell/browser capabilities are separate and retain the upstream approval/isolation limitations. Prompt instructions tell the agent to use project tools, but instructions are not a security sandbox. Further engine isolation is necessary before treating the entire agent as confined to its project.
+
+## Verification
+
+Tests exercise real proposal persistence, Git diffs, HTTP handlers, exact-review application, stale/revoked grants, ownership, and actual MCP tool dispatch. A scripted local Hermes-compatible gateway drives one real turn queue/SSE/MCP round trip and confirms no desktop lease is created. That gateway is a test fixture, not a live model. Live Hermes/provider calls remain unverified. Browser acceptance exercises assignment and the real modeling tool candidate, review/apply, rejection and stale-proposal refusal using a disposable fixture agent; this is not a live model. See the draft PR for hosted results.
+
+## Validated modeling operations
+
+Read `project_read_scene` before choosing IDs and zero-based face/vertex indices. `project_propose_scene_operations` accepts an exact project/grant/revision, a summary and 1–24 operations. `add` creates a box, sphere, cylinder or editable cube under a new UUID; `update` changes its name, transforms or color; `duplicate` requires a new UUID and name; `remove` requires an existing ID. Mesh operations are `extrude` (face/distance), `inset` (face/ratio), `triangulate` and `vertex` (index/position). Operations run in order, so a newly created object can be edited later in the same batch.
+
+All changes are built on a copy and checked against the existing scene, geometry and save limits. A failure creates no proposal and leaves saved data unchanged. Successful batches enter the same owner-reviewed proposal workflow as source changes; agents cannot apply them. Transform coordinates use meters, rotation degrees, positive scale; vertex edits use local coordinates. Inset is a centroid ratio, not an architectural offset. The pure operation builder and MCP integration are tested; autonomous modeling through a live provider remains a separate acceptance step.

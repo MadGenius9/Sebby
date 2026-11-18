@@ -1,8 +1,17 @@
 node_modules/
 dist/
-release/
-.env*
-*.log
+.env
+.env.*
+!.env.example
+*.db
+*.db-*
+data/
+.DS_Store
 
-playwright-report/
-test-results/
+# Local-only material (not part of the open-source repo)
+design/
+docs/research/
+docs/INTERNAL-*.md
+docs/SPEC.md
+web/screenshots/
+tests/out/
